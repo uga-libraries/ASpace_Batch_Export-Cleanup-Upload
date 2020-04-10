@@ -1,0 +1,7 @@
+.idea
+__pycache__/
+secrets.py
+venv/
+SSH/
+logs/
+clean_eads
