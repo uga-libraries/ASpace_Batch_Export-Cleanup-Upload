@@ -110,20 +110,20 @@ def run_gui():
                   'About']
                  ]
                 ]
-    layout_simple = [
-        [sg.Menu(menu_def, key="_TOP_MENU_SIMPLE_")],
-        [sg.Text("Enter Resource Identifiers here:"),
-         sg.Text("                "),
-         sg.Text("Output Terminal:")],
-        [sg.Multiline(key="resource_id_input", size=(35, 30), focus=True),
-         sg.Output(size=(100, 30), key="_output_")],
-        [sg.Button(button_text="Search and clean", key="_SEARCH_CLEAN_"),
-         sg.Checkbox("Open raw ASpace exports", key="_OPEN_RAW_")],
-        [sg.Button(button_text="Open Output", key="_OPEN_CLEAN_B_"),
-         sg.Button(button_text="Upload", key="_UPLOAD_")]
-    ]
+    simple_col1 = [[sg.Text("Enter Resource Identifiers here:")],
+                   [sg.Multiline(key="resource_id_input", size=(35, 30), focus=True)],
+                   [sg.Button(button_text="Search and clean", key="_SEARCH_CLEAN_"),
+                    sg.Checkbox("Open raw ASpace exports", key="_OPEN_RAW_")],
+                   [sg.Button(button_text="Open Output", key="_OPEN_CLEAN_B_")],
+                   [sg.Button(button_text="Upload", key="_UPLOAD_")]
+                   ]
+    simple_col2 = [[sg.Text("Output Terminal:")],
+                   [sg.Output(size=(100, 30), key="_output_")]
+                   ]
+    layout_simple = [[sg.Menu(menu_def)],
+                     [sg.Column(simple_col1), sg.Column(simple_col2)]
+                     ]
     window_simple = sg.Window("ArchivesSpace EAD Export/Cleanup/Upload Program", layout_simple)
-
     while True:
         # will need a first time setup popup - see if there is a way to take that data and keep it.
         event_simple, values_simple = window_simple.Read()
@@ -134,23 +134,25 @@ def run_gui():
             input_ids = values_simple["resource_id_input"]
             resources = input_ids.splitlines()
             for input_id in resources:
-                if asx.fetch_results(input_id, as_username, as_password, as_api)[0] is not None:
-                    resource_uri, resource_repo = asx.fetch_results(input_id, as_username, as_password, as_api)
-                    # export_result = asx.export_ead(input_id, resource_repo, resource_uri, as_username, as_password,
-                    #                                as_api)
-                    asx_id = input_id
-                    print("Beginning AS Export...", end='', flush=True)
-                    thread_id = threading.Thread(target=as_export_wrapper, args=(asx_id, gui_queue, input_id,
-                                                                                 resource_repo, resource_uri,
-                                                                                 as_username, as_password, as_api))
-                    thread_id.start()
-        try:
-            message = gui_queue.get_nowait()
-        except queue.Empty:  # get_nowait() will get exception when Queue is empty
-            message = None  # break from the loop if no more messages are queued up
-        # if message received from queue, display the message in the Window
-        if message:
-            print('Got a message back from the thread: ', message)
+                results_returned = asx.fetch_results(input_id, as_username, as_password, as_api)
+                if results_returned[0] is not None:
+                    resource_uri, resource_repo = results_returned
+                    export_result = asx.export_ead(input_id, resource_repo, resource_uri, as_username, as_password,
+                                                   as_api)
+                    if export_result[0] is not None:
+                        print(export_result[1])
+                    else:
+                        print(export_result[1])
+                    # asx_id = input_id
+                    # try:
+                    #     thread_id = threading.Thread(target=as_export_wrapper, args=(asx_id, gui_queue, input_id,
+                    #                                                                  resource_repo, resource_uri,
+                    #                                                                  as_username, as_password, as_api))
+                    #     thread_id.start()
+                    # except:
+                    #     print("Exception occurred blah blah")
+                else:
+                    print(results_returned[1])
             if values_simple["_OPEN_RAW_"] is True:
                 if cleanup_options:  # if cleanup_options is not empty
                     path = clean.cleanup_eads(custom_clean=cleanup_default, keep_raw_exports=True)
@@ -269,16 +271,24 @@ def run_gui():
                 if event_upl == "_UPLOAD_TO_XTF_":
                     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
                     files = fetch_files.fetch_local_files(sec.xtf_local_path, values_upl["_SELECT_FILES_"])
-                    xtfup_id = files
-                    thread_id = threading.Thread(target=xtf_upload_wrapper, args=(xtfup_id, gui_queue, remote, files,
-                                                                                  xtf_hostname),
-                                                 daemon=True)
-                    thread_id.start()
-                    # xtfup_id = xtfup_id + 1 if xtfup_id < 19 else 0
-                    try:
-                        message = gui_queue.get_nowait()
-                    except queue.Empty:
-                        message = None
+                    remote.bulk_upload(files)
+                    cmds_output = remote.execute_commands(
+                        ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
+                    print(cmds_output)
+                    remote.disconnect()
+                    # xtfup_id = files
+                    # thread_id = threading.Thread(target=xtf_upload_wrapper,
+                    #                              args=(xtfup_id, gui_queue, remote, files,
+                    #                                    xtf_hostname),
+                    #                              daemon=True)
+                    # thread_id.start()
+                    # try:
+                    #     message = gui_queue.get_nowait()
+                    # except queue.Empty:
+                    #     message = None
+                    # if message:
+                    #     print(" Done")
+                    #     print(message)
                     window_upl.close()
                     window_upl_active = False
                 if event_upl is None:
@@ -340,7 +350,7 @@ def get_xtf_log():
     window_xtflog_active = True
     correct_creds = False
     close_program = False
-    while correct_creds is False: # while not
+    while correct_creds is False:  # while not
         xtflog_col1 = [[sg.Text("Enter your XTF username:")],
                        [sg.Text("Enter your XTF password:")],
                        [sg.Text("Enter XTF Hostname:")],
@@ -354,7 +364,7 @@ def get_xtf_log():
             [sg.Button("Save and Close", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
         ]
         window_xtfcred = sg.Window("XTF Login Credentials", layout_xtflog)
-        while window_xtflog_active is True: # while window_xtflog_active
+        while window_xtflog_active is True:  # while window_xtflog_active
             event_xlog, values_xlog = window_xtfcred.Read()
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
                 xtf_username = values_xlog["_XTF_UNAME_"]
@@ -386,30 +396,18 @@ def get_xtf_log():
 def as_export_wrapper(asx_id, gui_queue, input_id, resource_repo, resource_uri, as_username, as_password, as_api):
     # LOCATION 1
     # this is our "long running function call"
-    asx.export_ead(input_id, resource_repo, resource_uri, as_username, as_password, as_api)
+    export_results = asx.export_ead(input_id, resource_repo, resource_uri, as_username, as_password, as_api)
     # time.sleep(5)  # sleep for a while as a simulation of a long-running computation
     # at the end of the work, before exiting, send a message back to the GUI indicating end
-    gui_queue.put('{} ::: done'.format(asx_id))
     # at this point, the thread exits
     return
 
 
 def xtf_upload_wrapper(xtfup_id, gui_queue, remote, files, xtf_host):
-    loading_screen = True
-    uploading_popup_layout = [[sg.Image(r'assets/loading.gif')],
-                              [sg.Cancel(key="Cancel")]]
-    loading_window = sg.Window("Uploading and Re-Indexing", uploading_popup_layout)
-    while loading_screen is True:
-        events, values = loading_window.Read()
-        sg.Image.update_animation(source=r'assets/loading.gif', time_between_frames=0)
-        remote.bulk_upload(files)
-        remote.execute_commands(['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
-        remote.disconnect()
-        gui_queue.put('{} ::: done'.format(xtfup_id))
-        if events is None or events == 'Cancel':
-            loading_window.close()
-            loading_screen = False
-    loading_window.close()
+    remote.bulk_upload(files)
+    remote.execute_commands(['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
+    remote.disconnect()
+    gui_queue.put('{} ::: done'.format(xtfup_id))
     return
 
 

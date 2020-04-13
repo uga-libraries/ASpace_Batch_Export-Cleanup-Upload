@@ -84,8 +84,8 @@ class RemoteClient:
             for line in response:
                 output_string += (f'INPUT: {cmd} | OUTPUT: {line}\n')
                 logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
-                print("OUTPUT: " + line)
-        # return output_string
+                # print("OUTPUT: " + line)
+        return output_string
 
     def bulk_upload(self, files):
         # upload multiple files to a remote directory

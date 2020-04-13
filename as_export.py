@@ -79,17 +79,17 @@ def export_ead(input_id, resource_repo, resource_uri, as_username, as_password, 
                                      'print_pdf': False, 'ead3': False})
     # save the record to a designated folder in the same directory.
     if request_ead.status_code == 200:
-        result = " Done"
         if "/" in input_id:
             input_id = input_id.replace("/", "_")
         filepath = "source_eads/{}.xml".format(input_id)
         with open(filepath, "wb") as local_file:
             local_file.write(request_ead.content)
             local_file.close()
+            result = " Done"
             return filepath, result
     else:
         error = " The following errors were found when exporting {}: {}\n".format(input_id, request_ead.status_code)
-        return error + str(request_ead.content)
+        return None, error
 
 
 # search for existance of a source folder for ArchivesSpace EAD records
