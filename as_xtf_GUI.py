@@ -125,9 +125,7 @@ def run_gui():
                      ]
     window_simple = sg.Window("ArchivesSpace EAD Export/Cleanup/Upload Program", layout_simple)
     while True:
-        # will need a first time setup popup - see if there is a way to take that data and keep it.
         event_simple, values_simple = window_simple.Read()
-        # use sg.print to output a scrolling debug window
         if event_simple == 'Cancel' or event_simple is None:
             break
         if event_simple == "_SEARCH_CLEAN_":

@@ -69,7 +69,7 @@ def fetch_results(input_id, as_username, as_password, as_api):
 
 
 # make a request to the API for an ASpace ead
-def export_ead(input_id, resource_repo, resource_uri, as_username, as_password, as_api):
+def export_ead(input_id, resource_repo, resource_uri, as_username, as_password, as_api): # NEED TO ADD OPTIONAL EXPORT PARAMETERS AND INTEGRATE WITH GUI
     # Initiate AS client
     client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
     client.authorize()
