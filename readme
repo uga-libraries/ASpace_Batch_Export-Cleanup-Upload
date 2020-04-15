@@ -272,4 +272,67 @@ export an EAD.xml file of a specific resource record.
     with assigning a filepath, so we swap / with _
 4. `with open(filepath, "wb") as local_file:` - write the file's content to the 
 source_eads folder and return the filepath and result string (" Done")
+###cleanup.py
+This script runs a series of xml and string cleanup operations on an EAD.xml file. The
+function `cleanup_eads` iterates through all the files in the folder source_eads
+and creates a class instance of `EADRecord`, running a host of class methods on the 
+EAD.xml file and returns it to the function, which writes the new file to the folder
+clean_eads.
 
+The code begins with a for loop checking if the folders source_eads and clean_eads
+exist. If either do not exist, they are created there.
+####Class EADRecord
+This class hosts 12 different methods, each designed to modify an EAD.xml file according
+to guidelines set by the Hargrett and Russell library for display on their XTF finding
+aid websites, as well as other measures to match some of Harvard's EAD schematron
+checks. This produces an EAD.xml file that is EAD2002 compliant.
+
+The following methods will be described briefly.
+1. `add_eadid()` - Takes the resource identifier as listed in ArchivesSpace and
+copies it to the <eadid> element in the EAD.xml file.
+2. `delete_empty_notes()` - Searches for every `<p>` element in the EAD.xml file and 
+checks if there is content in the element. If not, it is deleted.
+3. `edit_extents()` - Does 2 things. It deletes any empty `<extent>` elements and 
+removes non-alphanumeric characters from the beginning of extent elements. An example
+would be: `<extent>(13.5x2.5")</extent>`. This would change to `<extent>13.5x2.5"</extent>`.
+4. `add_certainty_attr()` - Adds the attribute `certainty="approximate"` to all dates
+that include words such as circa, ca. approximately, etc.
+5. `add_label_attr()` - Adds the attribute `label="Mixed Materials"` to any container
+element that does not already have a label attribute.
+6. `delete_empty_containers()` - Searches an EAD.xml file for all container elements
+and deletes any that are empty.
+7. `update_barcode()` - This adds a `physloc` element to an element when a container has
+a label attribute. It takes an appended barcode to the label and makes it the value
+of the physloc tag.
+8. `remote_at_leftovers()` - Finds any unitid element with a type that includes an 
+Archivists Toolkit unique identifier. Deletes that element.
+9. `count_xlinks()` - Counts every attribute that occurs in a `<dao>` element.
+10. `clean_unused_ns()` - Removes any unused namespaces in the EAD.xml file.
+11. `clean_do_dec()` - Removes `xlink:` prefixes in all attributes. Replaces other
+namespaces not removed by `clean_unused_ns()` in the `<ead>` element with an empty
+`<ead>` element.
+12. `clean_suite()` - Runs the above methods according to what the user specified
+in the custom_clean parameter. Will also add a doctype to the EAD.xml file and encode
+it in UTF-8.
+####cleanup_eads()
+This function iterates through all the files located in source_eads, uses the lxml
+package to parse the file into an lxml element, passes the lxml elemnent through the
+EADRecord class, runs the clean suite against the lxml element, then writes it
+to a file in our clean_eads folder.
+#####Parameters
+1. custom_clean (list)- A list of strings as passed from as_xtf_GUI.py that determines
+what methods will be run against the lxml element when running the `clean_suite()`
+method. The user can specify what they want cleaned in as_xtf_GUI.py, so this
+is how those specifications are passed.
+2. keep_raw_exports=False - Optional Parameter - if a user in as_xtf_GUI.py specifies
+to keep the exports that come from as_export.py, this parameter will prevent the
+function from deleting those files in source_eads. NOT SURE is this is how I want it
+to be designed.
+###xtf_upload.py
+This script comes mostly from Todd Birchard's blog post found here:
+https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
+
+It allows for a connection to XTF website using the the paramiko package. While the
+blog post connects via SSH, this program connects via user login credentials. This 
+substitutes SSH key verification in the function `connect_remote()` for username
+and password.

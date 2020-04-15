@@ -258,35 +258,30 @@ class EADRecord:
 
 # cycle through EAD files in directory
 def cleanup_eads(custom_clean, keep_raw_exports=False):
-    if custom_clean is not None:
-        if isinstance(custom_clean, list):
-            parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
-            for file in os.listdir("source_eads/"):
-                # run schemaclean.pl
-                #                 # if file.endswith(".xml"):
-                #                 #     addcmd = ['perl5.30.1.exe',
-                #                 #               'schemaclean.pl',
-                #                 #               'source_eads/',
-                #                 #               str(file)]
-                #                 #     subprocess.call(addcmd + sys.argv)
-                tree = etree.parse('source_eads/{}'.format(file), parser=parser)
-                ead_root = tree.getroot()
-                ead = EADRecord(ead_root)
-                clean_ead = ead.clean_suite(ead, ead_root, custom_clean)
-                # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
-                clean_ead_file_root = 'clean_eads/{}'.format(file)
-                with open(clean_ead_file_root, "wb") as CLEANED_EAD:
-                    CLEANED_EAD.write(clean_ead)
-                    CLEANED_EAD.close()
-                print("\n" + "-" * 50)
-            if keep_raw_exports is False:
-                for file in os.listdir("source_eads/"):  # prevents program from rerunning cleanup on cleaned files
-                    path = "source_eads/" + file
-                    os.remove(path)
-        else:
-            print("Input for custom_clean was invalid. Must be a list.\n"
-                  "Input: {}".format(custom_clean))
-            return None
+    if isinstance(custom_clean, list):
+        parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
+        for file in os.listdir("source_eads/"):
+            # run schemaclean.pl
+            #                 # if file.endswith(".xml"):
+            #                 #     addcmd = ['perl5.30.1.exe',
+            #                 #               'schemaclean.pl',
+            #                 #               'source_eads/',
+            #                 #               str(file)]
+            #                 #     subprocess.call(addcmd + sys.argv)
+            tree = etree.parse('source_eads/{}'.format(file), parser=parser)
+            ead_root = tree.getroot()
+            ead = EADRecord(ead_root)
+            clean_ead = ead.clean_suite(ead, ead_root, custom_clean)
+            # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
+            clean_ead_file_root = 'clean_eads/{}'.format(file)
+            with open(clean_ead_file_root, "wb") as CLEANED_EAD:
+                CLEANED_EAD.write(clean_ead)
+                CLEANED_EAD.close()
+            print("\n" + "-" * 50)
+        if keep_raw_exports is False:
+            for file in os.listdir("source_eads/"):  # prevents program from rerunning cleanup on cleaned files
+                path = "source_eads/" + file
+                os.remove(path)
     else:
         print("Input for custom_clean was invalid. Must be a list.\n"
               "Input: {}".format(custom_clean))
