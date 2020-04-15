@@ -1,4 +1,4 @@
-#ArchivesSpace & XTF Program - DEV
+# ArchivesSpace & XTF Program - DEV
 This application acts in 2 parts: 
 
 1. It takes resource identifiers from ArchivesSpace as inputs, searches
@@ -8,7 +8,7 @@ specified, cleans the EAD.xml files, and saves them locally.
 XTF finding aid website/database and the program indexes just those records
 uploaded/changed.
 
-##Requirements
+## Requirements
 1. secrets.py - this file contains the following information:
 
     1. as_api = "" - The ArchivesSpace API URL
@@ -22,15 +22,15 @@ uploaded/changed.
 the program.
 3. A computer with a processor that has at least 2 cores and 2 threads.
 
-##Process
+## Process
 This is a walkthrough of the program and how it functions.
-###Login Windows
+### Login Windows
 Upon running the program, the user is met with 2 windows:
 1. ArchivesSpace login credentials - input your username, password, and the ArchivesSpace
 API URL (if not specified in secrets.py)
 2. XTF login credentials - input your username, password, the XTF Hostname and XTF Remote
 Path (if not specified in secrets.py)
-###Main Screen
+### Main Screen
 This screen displays a multiline text input (Large Box # 1) on the left 
 used for inputting resource identifiers. On the right is an output terminal (Large Box # 2), 
 which displays messages from the program for the user.
@@ -48,14 +48,14 @@ called cleanup.py and save them to a local folder called clean_eads.
 where all exported EAD.xml files are stored after they are run through cleanup.py.
 3. Upload - This generates a window allowing a user to select one ore more files stored in 
 clean_eads (EAD.xml files after run through cleanup.py).
-###Upload Window
+### Upload Window
 This screen displays a window with a listbox with all the files stored in the folder 
 clean_eads. Users can select what files they want and click the Upload to XTF button. This 
 button does 2 things:
 1. It uploads the files to the xtf_remote_path as specified in secrets.py or whatever else
 was specified by the user upon logging in.
 2. It re-indexes only the records that were uploaded/changed by the user.
-##Settings
+## Settings
 TO BE FILLED IN LATER
 ##Testing
 Right now, the best way to test the program is to input resource identifiers and try uploading
@@ -71,15 +71,15 @@ them to XTF. Some examples of Hargrett and Russell resource identifiers include:
 
 If you want to generate errors, input any string or random numbers, such as "hello world"
 or 42
-##Code Structure
-###as_xtf_GUI.py
+## Code Structure
+### as_xtf_GUI.py
 This file acts as the Graphics User Interface (GUI) for the program. It uses 
 PySimpleGUI and its dependencies. There are _5_ functions in the program.
-####run_gui()
+#### run_gui()
 There's a lot to this function, so get ready for a wild and long ride.... This function 
 handles the GUI operation as outlined by PySimpleGUI's guidelines. There are 2 components
 to it, the setup code and the _while_ loop.
-#####Setup Code
+##### Setup Code
 `sg.ChangeLookAndFeel()` changes the theme of the GUI (colors, button styles, etc.).
 `cleanup_default` and `cleanup_options` store the options if a user wants to specify what 
 cleanup operations to run through cleanup.py.
@@ -92,7 +92,7 @@ with them. These are used to help read them as "events" in our while loop below.
 `layout_simple` sets the layout for the GUI.
 `window_simple` sets the window for the main screen. Any variable with _window follows the
 same logic.
-#####while loop
+##### while loop
 The way the loop works is that the program "reads" the Window we made above in the setup code
 and returns events and values (`event_simple` and `values_simple`). If a user selects a button
 with a specific key as outlined in the layout, that is acted upon under the following
@@ -127,10 +127,10 @@ true and let users uncheck options??). Outlined in the toolbar menu (Edit or Fil
 (window) for users to upload to XTF. Links out to xtf_upload.py to upload and execute 
 an indexing of the most recent files to be uploaded
 12. `if event_simple == "Exit":` - exits the program
-####get_aspace_log()
+#### get_aspace_log()
 This function gets a user's ArchiveSpace credentials. There are 3 components
 to it, the setup code, correct_creds while loop, and the window_asplog_active while loop.
-#####Setup Code
+##### Setup Code
     as_username = None # ArchivesSpace credentials to to be set later in the function
     as_password = None # ArchivesSpace credentials to to be set later in the function
     as_api = None # Defaults in the secrets.py file, otherwise enter here
@@ -138,13 +138,13 @@ to it, the setup code, correct_creds while loop, and the window_asplog_active wh
     correct_creds = False # To help break out of the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the 
     # run_gui() function which closes the program entirely.
-#####while correct_creds is False
+##### while correct_creds is False
 Yes, I know it's weird. I need to change this. This while loop keeps the ArchivesSpace
 login window open until a user fills in the correct credentials and sets `correct_creds`
 to True.
 
 It sets the columns for the layout, the layout, and the window.
-#####while window_asplog_active is True
+##### while window_asplog_active is True
 Again, I know I could leave off the "is True" part. Just trying to be explicit. The way 
 the loop works is that the program "reads" the Window we made above in the setup code and 
 returns events and values (event_log and values_log). The window takes the inputs 
@@ -154,10 +154,10 @@ The try, except statement tries to authorize the user using the ArchivesSpace AS
 client, which is a package for handling API requests to ArchivesSpace. If it fails to 
 authenticate, a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
-####get_xtf_log()
+#### get_xtf_log()
 This function gets a user's XTF credentials. There are 3 components to it, the setup code,
 correct_creds while loop, and window_xtflog_active while loop.
-#####Setup Code
+##### Setup Code
     xtf_username = None # XTF credentials to to be set later in the function
     xtf_password = None # XTF credentials to to be set later in the function
     xtf_host = None # Defaults in the secrets.py file, otherwise enter here
@@ -166,12 +166,12 @@ correct_creds while loop, and window_xtflog_active while loop.
     correct_creds = False # To help break from the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the
     # run_gui() function which closes the program entirely.
-#####while correct_creds is False
+##### while correct_creds is False
 This while loop keeps the ArchivesSpace login window open until a user fills in the correct
  credentials and sets `correct_creds` to True.
 
 It sets the columns for the layout, the layout, and the window.
-#####while window_asplog_active is True
+##### while window_asplog_active is True
 The way the loop works is that the program "reads" the Window we made above in the setup 
 code and returns events and values (`event_xlog` and `values_xlog`). The window takes the 
 inputs provided by the user using `xtf_username = values_xlog["_XTF_UNAME_"]` for instance.
@@ -181,19 +181,19 @@ The try, except statement tries to authorize the user by checking the class vari
 in the function `connect_remote(self)` in xtf_upload.py. If it fails to authenticate, 
 a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
-####as_export_wrapper()
+#### as_export_wrapper()
 My attempt at threading the ArchivesSpace export
-####xtf_upload_wrapper()
+#### xtf_upload_wrapper()
 My attempt at threading the XTF upload and re-indexing
-###as_export.py
+### as_export.py
 This script searches the ArchivesSpace database for a user-input resource identifier and 
 exports an EAD.xml file of the resource if found. There are 2 functions in the script.
 
 The script executes a try, except clause searching for the existance of a folder called
 source_eads. If it does not find the folder, it will generate it at the same level as
 the script.
-####fetch_results()
-#####Required Parameters:
+#### fetch_results()
+##### Required Parameters:
 1. input_id - accepts 1 resource identifier at a time (str)
 2. as_username - (str)
 3. as_password - (str)
@@ -238,8 +238,8 @@ the ArchivesSpace API. Assign the client as variable `client`.
  `resource_repo`
  9. Any results that fail this are put in the `non_match_results` dictionary and None is
  returned along with an error message detailing what resources did show up in the search.
-####export_ead()
-#####Parameters
+#### export_ead()
+##### Parameters
 1. input_id - accepts 1 resource identifier at a time (str)
 2. resource_repo - resource repository number (int)
 3. resource_uri - resource URI (int). Really this is the identifier ArchivesSpace uses
@@ -272,7 +272,7 @@ export an EAD.xml file of a specific resource record.
     with assigning a filepath, so we swap / with _
 4. `with open(filepath, "wb") as local_file:` - write the file's content to the 
 source_eads folder and return the filepath and result string (" Done")
-###cleanup.py
+### cleanup.py
 This script runs a series of xml and string cleanup operations on an EAD.xml file. The
 function `cleanup_eads` iterates through all the files in the folder source_eads
 and creates a class instance of `EADRecord`, running a host of class methods on the 
@@ -281,7 +281,7 @@ clean_eads.
 
 The code begins with a for loop checking if the folders source_eads and clean_eads
 exist. If either do not exist, they are created there.
-####Class EADRecord
+#### Class EADRecord
 This class hosts 12 different methods, each designed to modify an EAD.xml file according
 to guidelines set by the Hargrett and Russell library for display on their XTF finding
 aid websites, as well as other measures to match some of Harvard's EAD schematron
@@ -314,12 +314,12 @@ namespaces not removed by `clean_unused_ns()` in the `<ead>` element with an emp
 12. `clean_suite()` - Runs the above methods according to what the user specified
 in the custom_clean parameter. Will also add a doctype to the EAD.xml file and encode
 it in UTF-8.
-####cleanup_eads()
+#### cleanup_eads()
 This function iterates through all the files located in source_eads, uses the lxml
 package to parse the file into an lxml element, passes the lxml elemnent through the
 EADRecord class, runs the clean suite against the lxml element, then writes it
 to a file in our clean_eads folder.
-#####Parameters
+##### Parameters
 1. custom_clean (list)- A list of strings as passed from as_xtf_GUI.py that determines
 what methods will be run against the lxml element when running the `clean_suite()`
 method. The user can specify what they want cleaned in as_xtf_GUI.py, so this
@@ -328,7 +328,7 @@ is how those specifications are passed.
 to keep the exports that come from as_export.py, this parameter will prevent the
 function from deleting those files in source_eads. NOT SURE is this is how I want it
 to be designed.
-###xtf_upload.py
+### xtf_upload.py
 This script comes mostly from Todd Birchard's blog post found here:
 https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
 
