@@ -9,18 +9,9 @@ XTF finding aid website/database and the program indexes just those records
 uploaded/changed.
 
 ## Requirements
-1. secrets.py - this file contains the following information:
-
-    1. as_api = "" - The ArchivesSpace API URL
-    2. xtf_host = "" - The XTF hostname URL
-    3. xtf_remote_path = "" - The path where EAD.xml files are to be 
-    uploaded
-    4. xtf_local_path = os.getcwd() + "/clean_eads" - The local path for 
-    EAD.xml files after ArchivesSpace export and cleanup.
-
-2. requirements.txt - this file contains all the dependencies needed to run
+1. requirements.txt - this file contains all the dependencies needed to run
 the program.
-3. A computer with a processor that has at least 2 cores and 2 threads.
+2. A computer with a processor that has at least 2 cores and 2 threads.
 
 ## Process
 This is a walkthrough of the program and how it functions.
