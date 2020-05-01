@@ -5,3 +5,8 @@ venv/
 SSH/
 logs/
 clean_eads
+defaults.json
+source_marcs
+source_pdfs
+source_labels
+source_eads

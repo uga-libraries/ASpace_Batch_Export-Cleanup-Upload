@@ -82,7 +82,7 @@ class RemoteClient:
             output_string = ""
             response = stdout.readlines()
             for line in response:
-                output_string += (f'INPUT: {cmd} | OUTPUT: {line}\n')
+                output_string += f'{line}'
                 logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
                 # print("OUTPUT: " + line)
         return output_string
