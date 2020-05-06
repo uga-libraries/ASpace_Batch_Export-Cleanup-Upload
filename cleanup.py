@@ -27,10 +27,8 @@ class EADRecord:
                             self.eadid = child.text
                             ead_file_root[0][0].text = self.eadid
                     else:
-                        print(child.text)
                         self.eadid = child.text
                         ead_file_root[0][0].text = self.eadid
-            print("Added " + str(self.eadid) + " as eadid")
         results = "Added " + str(self.eadid) + " as eadid"
         return ead_file_root, results
 
@@ -47,8 +45,6 @@ class EADRecord:
                     count2_notes += 1
             # if "p" in child.tag:
             #     print(child.tag)
-        print("We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(count2_notes) +
-              " empty notes")
         results = "We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(
             count2_notes) + " empty notes"
         return ead_file_root, results
@@ -59,6 +55,7 @@ class EADRecord:
         count_ext2 = 0
         count_ext3 = 0
         ead_file_root = file_root
+        results = ""
         for child in ead_file_root.iter():
             if "extent" in child.tag:
                 count_ext1 += 1
@@ -75,12 +72,9 @@ class EADRecord:
                     try:
                         parent.remove(child)
                     except Exception as e:
-                        print("Could not remove empty extent field, error:\n" + str(e))
+                        results = ("Could not remove empty extent field, error:\n" + str(e) + "\n")
                     count_ext2 += 1
-        print("We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
-            count_ext2) + " empty extents and corrected " + str(count_ext3) + " extent descriptions starting "
-                                                                              "with non-numeric character")
-        results = "We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
+        results += "We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
             count_ext2) + " empty extents and corrected " + str(
             count_ext3) + " extent descriptions starting with non-numeric character"
         return ead_file_root, results
@@ -99,8 +93,6 @@ class EADRecord:
                     if date in EADRecord.cert_attrib:
                         child.set("certainty", "approximate")
                         count_appr += 1
-        print("We found " + str(count_ud) + " unitdates in " + str(self.eadid) + " and set " + str(count_appr) +
-              " certainty attributes")
         results = "We found " + str(count_ud) + " unitdates in " + str(self.eadid) + " and set " + str(
             count_appr) + " certainty attributes"
         return ead_file_root, results
@@ -118,8 +110,6 @@ class EADRecord:
                     count_cont += 1
                 else:
                     count_cont += 1
-        print("We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
-            count_lb) + " label attributes")
         results = "We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
             count_lb) + " label attributes"
         return ead_file_root, results
@@ -129,18 +119,17 @@ class EADRecord:
         count1_notes = 0
         count2_notes = 0
         ead_file_root = file_root
+        results = ""
         for child in ead_file_root.iter():
             if "container" in child.tag:
                 count1_notes += 1
                 if child.text is None:
-                    print("Found empty container, deleting...")
+                    results += "Found empty container, deleting..."
                     parent = child.getparent()
                     parent.remove(child)
-                    print("Removed empty container")
+                    results += "Removed empty container\n"
                     count2_notes += 1
-        print("We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " +
-              str(count2_notes) + " empty containers")
-        results = "We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + str(
+        results += "We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + str(
             count2_notes) + " empty containers"
         return ead_file_root, results
 
@@ -161,8 +150,6 @@ class EADRecord:
                         parent = child.getparent()
                         barcode_tag = etree.SubElement(parent, "physloc", type="barcode")
                         barcode_tag.text = "{}".format(barcode)
-        print("We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + " and added " +
-              str(count2_barcodes) + " barcodes in the physloc tag")
         results = "We found " + str(count1_barcodes) + " <container labels>'s in " + str(
             self.eadid) + " and added " + str(count2_barcodes) + " barcodes in the physloc tag"
         return ead_file_root, results
@@ -171,6 +158,7 @@ class EADRecord:
         count1_at = 0
         count2_at = 0
         ead_file_root = file_root
+        results = ""
         for element in ead_file_root.iter():
             if "unitid" in element.tag:
                 attributes = element.attrib
@@ -182,10 +170,8 @@ class EADRecord:
                         parent = element.getparent()
                         parent.remove(element)
                     else:
-                        print("'Archivists Toolkit Database' not found in: " + str(attributes["label"]))
-        print("We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " +
-              str(count2_at) + " Archivists Toolkit legacy ids")
-        results = "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
+                        results += "'Archivists Toolkit Database' not found in: " + str(attributes["label"]) + "\n"
+        results += "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
             count2_at) + " Archivists Toolkit legacy ids"
         return ead_file_root, results
 
@@ -200,8 +186,6 @@ class EADRecord:
                 count1_xlink += 1
                 attributes = element.attrib
                 count2_xlink += len(attributes)
-        print("We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " +
-              str(count2_xlink) + " xlink prefaces in attributes")
         results = "We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " + str(
             count2_xlink) + " xlink prefaces in attributes"
         ead_string = etree.tostring(file_root, encoding="unicode", pretty_print=True,
@@ -300,29 +284,31 @@ class EADRecord:
 
 
 # cycle through EAD files in source directory
-def cleanup_eads(custom_clean, output_dir="clean_eads", keep_raw_exports=False):
+def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_exports=False):
     results = []
+    file = filepath.split("/")[1]  # get file name + extension
     if isinstance(custom_clean, list):
         parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
-        for file in os.listdir("source_eads/"):
-            tree = etree.parse('source_eads/{}'.format(file), parser=parser)
-            ead_root = tree.getroot()
-            ead = EADRecord(ead_root)
-            clean_ead, results = ead.clean_suite(ead, ead_root, custom_clean)
-            # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
-            clean_ead_file_root = output_dir + '/{}'.format(file)
-            print(clean_ead_file_root)
-            with open(clean_ead_file_root, "wb") as CLEANED_EAD:
-                CLEANED_EAD.write(clean_ead)
-                CLEANED_EAD.close()
-            print("\n" + "-" * 50)
+        tree = etree.parse(filepath, parser=parser)
+        ead_root = tree.getroot()
+        ead = EADRecord(ead_root)
+        clean_ead, results = ead.clean_suite(ead, ead_root, custom_clean)
+        results.append("\n" + "-" * 50)
+        # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
+        clean_ead_file_root = output_dir + '/{}'.format(file)
+        with open(clean_ead_file_root, "wb") as CLEANED_EAD:
+            CLEANED_EAD.write(clean_ead)
+            CLEANED_EAD.close()
+        # TODO Not actually deleting files from source_eads
         if keep_raw_exports is False:
             for file in os.listdir("source_eads/"):  # prevents program from rerunning cleanup on cleaned files
                 path = "source_eads/" + file
                 os.remove(path)
-        return '\\source_eads', results
+            return '\\source_eads', results
+        else:
+            results.append("Keeping raw ASpace exports in {}\n".format(output_dir))
+            return '\\source_eads', results
     else:
         results.append("Input for custom_clean was invalid. Must be a list.\n" + "Input: {}".format(custom_clean))
-        print("Input for custom_clean was invalid. Must be a list.\n"
-              "Input: {}".format(custom_clean))
         return None, results
+

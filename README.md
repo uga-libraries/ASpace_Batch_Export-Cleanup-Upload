@@ -1,4 +1,5 @@
 # ArchivesSpace & XTF Program - DEV
+![homepage-ead-001](https://user-images.githubusercontent.com/62658840/81198762-d97a7d00-8f8f-11ea-9326-ad7da0ad6233.gif)
 This application acts in 2 parts: 
 
 1. It takes resource identifiers from ArchivesSpace as inputs, searches

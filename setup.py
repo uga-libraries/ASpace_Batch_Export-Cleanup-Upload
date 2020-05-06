@@ -10,9 +10,9 @@ def set_default_file():
     source_pdfs = str(os.getcwd()) + "\\source_pdfs"
     source_labels = str(os.getcwd()) + "\\source_labels"
     standard_defaults = ["ead_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                         "_OPEN_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_OPEN_RAW_",
+                         "_KEEP_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
                          "pdf_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                         "_OPEN_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
+                         "_KEEP_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
                          "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_",
                          "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api"]
     defaults_keys = []
@@ -31,12 +31,12 @@ def set_default_file():
     except Exception as standard_error:
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_OPEN_RAW_": False, "_CLEAN_EADS_": True,
+                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
                                                "_OUTPUT_DIR_": clean_eads},
-                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_OPEN_RAW_": False,
+                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_KEEP_RAW_": False,
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_OPEN_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
+                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
                         "labels_export_default": source_labels,
                         "ead_cleanup_defaults": {"_ADD_EADID_": True, "_DEL_NOTES_": True, "_CLN_EXTENTS_": True,
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_CONTAIN_": True,
@@ -60,9 +60,9 @@ def set_default_file_xtf():
     source_pdfs = str(os.getcwd()) + "\\source_pdfs"
     source_labels = str(os.getcwd()) + "\\source_labels"
     xtf_default = ["ead_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                   "_OPEN_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_OPEN_RAW_",
+                   "_KEEP_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
                    "pdf_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                   "_OPEN_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
+                   "_KEEP_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
                    "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_",
                    "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "xtf_default", "xtf_host",
                    "xtf_remote_path", "xtf_local_path", "xtf_login_popup"]
@@ -84,12 +84,12 @@ def set_default_file_xtf():
     except Exception as xtf_error:
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_OPEN_RAW_": False, "_CLEAN_EADS_": True,
+                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
                                                "_OUTPUT_DIR_": clean_eads},
-                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_OPEN_RAW_": False,
+                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_KEEP_RAW_": False,
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_OPEN_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
+                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
                         "labels_export_default": source_labels,
                         "ead_cleanup_defaults": {"_ADD_EADID_": True, "_DEL_NOTES_": True, "_CLN_EXTENTS_": True,
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_CONTAIN_": True,

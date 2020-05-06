@@ -16,6 +16,7 @@ class ASExport:
         self.client = None
         self.error = None
         self.result = None
+        self.filepath = ""
         try:
             self.client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
             self.client.authorize()
@@ -84,7 +85,6 @@ class ASExport:
 
     # make a request to the API for an ASpace ead
     def export_ead(self, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False, ):
-        print("Exporting EAD files...", end='', flush=True)
         request_ead = self.client.get('repositories/{}/resource_descriptions/{}.xml'.format(self.resource_repo,
                                                                                             self.resource_id),
                                       params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
@@ -93,12 +93,12 @@ class ASExport:
         if request_ead.status_code == 200:
             if "/" in self.input_id:
                 self.input_id = self.input_id.replace("/", "_")
-            filepath = "source_eads/{}.xml".format(self.input_id)
-            with open(filepath, "wb") as local_file:
+            self.filepath = "source_eads/{}.xml".format(self.input_id)
+            with open(self.filepath, "wb") as local_file:
                 local_file.write(request_ead.content)
                 local_file.close()
                 self.result = "Done"
-                return filepath, self.result
+                return self.filepath, self.result
         else:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_ead,
@@ -106,19 +106,18 @@ class ASExport:
             return None, self.error
 
     def export_marcxml(self, output_dir, include_unpublished=False):
-        print("Exporting MARCXML files...", end='', flush=True)
         request_marcxml = self.client.get('/repositories/{}/resources/marc21/{}.xml'.format(self.resource_repo,
                                                                                             self.resource_id),
                                           params={'include_unpublished_marc': include_unpublished})
         if request_marcxml.status_code == 200:
             if "/" in self.input_id:
                 self.input_id = self.input_id.replace("/", "_")
-            filepath = output_dir + "/{}.xml".format(self.input_id)
-            with open(filepath, "wb") as local_file:
+            self.filepath = output_dir + "/{}.xml".format(self.input_id)
+            with open(self.filepath, "wb") as local_file:
                 local_file.write(request_marcxml.content)
                 local_file.close()
                 self.result = "Done"
-                return filepath, self.result
+                return self.filepath, self.result
         else:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_marcxml,
@@ -126,23 +125,19 @@ class ASExport:
             return None, self.error
 
     def export_pdf(self, output_dir, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False):
-        print("Exporting PDF files...", end='', flush=True)
         request_pdf = self.client.get('repositories/{}/resource_descriptions/{}.pdf'.format(self.resource_repo,
                                                                                             self.resource_id),
                                       params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
                                               'numbered_cs': numbered_cs, 'print_pdf': True, 'ead3': ead3})
-        print(request_pdf.url)
-        print(request_pdf.json())
-        print(request_pdf.text)
         if request_pdf.status_code == 200:
             if "/" in self.input_id:
                 self.input_id = self.input_id.replace("/", "_")
-            filepath = output_dir + "/{}.pdf".format(self.input_id)
-            with open(filepath, "wb") as local_file:
+            self.filepath = output_dir + "/{}.pdf".format(self.input_id)
+            with open(self.filepath, "wb") as local_file:
                 local_file.write(request_pdf.content)
                 local_file.close()
                 self.result = "Done"
-                return filepath, self.result
+                return self.filepath, self.result
         else:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_pdf,
@@ -150,18 +145,17 @@ class ASExport:
             return None, self.error
 
     def export_labels(self, output_dir):
-        print("Exporting Container Labels files...", end='', flush=True)
         request_labels = self.client.get('repositories/{}/resource_labels/{}.tsv'.format(self.resource_repo,
                                                                                          self.resource_id))
         if request_labels.status_code == 200:
             if "/" in self.input_id:
                 self.input_id = self.input_id.replace("/", "_")
-            filepath = output_dir + "{}.tsv".format(self.input_id)
-            with open(filepath, "wb") as local_file:
+            self.filepath = output_dir + "{}.tsv".format(self.input_id)
+            with open(self.filepath, "wb") as local_file:
                 local_file.write(request_labels.content)
                 local_file.close()
                 self.result = "Done"
-                return filepath, self.result
+                return self.filepath, self.result
         else:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_labels,
