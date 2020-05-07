@@ -2,7 +2,9 @@ import json
 import re
 
 from asnake.client import ASnakeClient
-id_regex = re.compile(r"(^id_+\d)")
+
+id_field_regex = re.compile(r"(^id_+\d)")
+id_combined_regex = re.compile('[\W_]+', re.UNICODE)
 
 
 class ASExport:
@@ -27,16 +29,10 @@ class ASExport:
 
     # take input of resource identifiers and search for them
     def fetch_results(self):
-        # sort multi-line identifiers
-        id_lines = []
-        if "-" in self.input_id:
-            id_lines = self.input_id.split("-")
-        elif "." in self.input_id:
-            id_lines = self.input_id.split(".")
-        else:
-            id_lines.append(self.input_id)
+        combined__user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
         search_resources = self.client.get('/search', params={"q": 'four_part_id:' + self.input_id, "page": 1,
-                                                              "type": ['resource']})  # need to change to get_paged - but returns a generator object - maybe for loop that?
+                                                              "type": [
+                                                                  'resource']})  # need to change to get_paged - but returns a generator object - maybe for loop that?
         if search_resources.status_code != 200:
             return None, "There was an issue connecting to ArchivesSpace" + str(search_resources.status_code)
         else:
@@ -48,29 +44,26 @@ class ASExport:
                 match_results = {}
                 for result in search_results["results"]:
                     json_info = json.loads(result["json"])
-                    total_ids = []
+                    combined_aspace_id = ""
                     for key, value in json_info.items():
-                        id_match = id_regex.match(key)
+                        id_match = id_field_regex.match(key)
                         if id_match:
-                            total_ids.append(value)
-                    combined_id = ""
+                            combined_aspace_id += value + "-"
+                    combined_aspace_id_clean = id_combined_regex.sub('', combined_aspace_id)  # remove all non-alphanumeric characters
                     user_id_index = 0
-                    for json_id in total_ids:
-                        try:
-                            if json_id == id_lines[user_id_index]:
-                                resource_full_uri = result["uri"].split("/")
-                                self.resource_id = resource_full_uri[-1]
-                                self.resource_repo = resource_full_uri[2]
-                                match_results[combined_id[:-1]] = json_info["title"]
-                                user_id_index += 1
-                            else:
-                                raise Exception
-                        except Exception:
-                            for json_id_2 in total_ids:
-                                combined_id += json_id_2 + "-"
-                            # strip extra - at end
-                            non_match_results[combined_id[:-1]] = json_info["title"]  # had to insert [:-1] in else to
+                    try:
+                        if combined__user_id == combined_aspace_id_clean:
+                            resource_full_uri = result["uri"].split("/")
+                            self.resource_id = resource_full_uri[-1]
+                            self.resource_repo = resource_full_uri[2]
+                            match_results[combined_aspace_id[:-1]] = json_info["title"]
                             user_id_index += 1
+                        else:
+                            raise Exception
+                    except Exception:
+                        # strip extra - at end
+                        non_match_results[combined_aspace_id[:-1]] = json_info["title"]  # had to insert [:-1] in else to
+                        user_id_index += 1
                 if non_match_results:  # if non_match_results contains non-matches, return error
                     self.error = "{} results were found, but the resource identifier did not match. " \
                                  "Have you entered the resource id correctly?".format(result_count) + \

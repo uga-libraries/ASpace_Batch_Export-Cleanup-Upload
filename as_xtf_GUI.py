@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess
 import sys
 import webbrowser
@@ -81,7 +82,7 @@ def run_gui(defaults):
     as_username, as_password, as_api, close_program_as = get_aspace_log(defaults)
     if close_program_as is True:
         sys.exit()
-    # TODO For XTF Users Only
+    # For XTF Users Only
     xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
     if close_program_xtf is True:
         sys.exit()
@@ -159,8 +160,8 @@ def run_gui(defaults):
     layout_simple = [[sg.Menu(menu_def)],
                      [sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12)),
                       sg.Text("           Output Terminal:", font=("Roboto", 12))],
-                     [sg.Multiline(key="resource_id_input", size=(35, 30), focus=True),
-                      sg.Output(size=(100, 30), key="_output_")],
+                     [sg.Multiline(key="resource_id_input", size=(35, 20), focus=True),
+                      sg.Output(size=(100, 20), key="_output_")],
                      [sg.Text("Choose your export option:")],
                      [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
                       sg.Radio("MARCXML", "RADIO1", key="_EXPORT_MARCXML_RAD_", enable_events=True),
@@ -203,7 +204,10 @@ def run_gui(defaults):
         # ------------- EAD SECTION -------------
         if event_simple == "_EXPORT_EAD_":
             input_ids = values_simple["resource_id_input"]
-            resources = input_ids.splitlines()
+            if "," in input_ids:
+                resources = [user_input.strip() for user_input in input_ids.split(",")]
+            else:
+                resources = [user_input.strip() for user_input in input_ids.splitlines()]
             for input_id in resources:
                 resource_export = asx.ASExport(input_id, as_username, as_password, as_api)
                 resource_export.fetch_results()
@@ -276,9 +280,9 @@ def run_gui(defaults):
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
                 cwd = os.getcwd()
                 filepath_eads = cwd + "\clean_eads"
-                subprocess.Popen('explorer "{}"'.format(filepath_eads))
+                open_file(filepath_eads)
             else:
-                subprocess.Popen('explorer "{}"'.format(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
+                open_file(defaults["ead_export_default"]["_OUTPUT_DIR_"])
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
             input_ids = values_simple["resource_id_input"]
@@ -323,9 +327,9 @@ def run_gui(defaults):
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = os.getcwd() + "\\source_marcs"
-                subprocess.Popen('explorer "{}"'.format(filepath_marcs))
+                open_file(filepath_marcs)
             else:
-                subprocess.Popen('explorer "{}"'.format(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
+                open_file(defaults["marc_export_default"]["_OUTPUT_DIR_"])
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
@@ -376,9 +380,9 @@ def run_gui(defaults):
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 cwd = os.getcwd()
                 filepath_pdfs = cwd + "\source_pdfs"
-                subprocess.Popen('explorer "{}"'.format(filepath_pdfs))
+                open_file(filepath_pdfs)
             else:
-                subprocess.Popen('explorer "{}"'.format(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
+                open_file(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
         if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
@@ -432,14 +436,14 @@ def run_gui(defaults):
             if not defaults["labels_export_default"]:
                 cwd = os.getcwd()
                 filepath_labels = cwd + "\source_labels"
-                subprocess.Popen('explorer "{}"'.format(filepath_labels))
+                open_file(filepath_labels)
             else:
-                subprocess.Popen('explorer "{}"'.format(defaults["labels_export_default"]))
+                open_file(defaults["labels_export_default"])
         # ------------- MENU OPTIONS SECTION -------------
         if event_simple == "Open Raw ASpace Exports":
             cwd = os.getcwd()
             source_path = cwd + "\source_eads"
-            subprocess.Popen('explorer "{}"'.format(source_path))
+            open_file(source_path)
         if event_simple == "Change ASpace Login Credentials":
             as_username, as_password, as_api, close_program_as = get_aspace_log(defaults)
         if event_simple == 'Change XTF Login Credentials':
@@ -587,7 +591,7 @@ def get_xtf_log(defaults):
     window_xtflog_active = True
     correct_creds = False
     close_program = False
-    while correct_creds is False:  # while not
+    while correct_creds is False:  # TODO while not
         xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 10))],
                        [sg.Text("Enter your XTF password:", font=("Roboto", 10))],
                        [sg.Text("Enter XTF Hostname:", font=("Roboto", 10))],
@@ -637,7 +641,6 @@ def get_xtf_log(defaults):
 
 
 # TODO Add ability for user to specify output folder for RAW ASpace exports and cleaned EAD files
-# TODO Add popup that when Keep raw ASpace Exports and Clean EAD records on export are false - give warning to user
 def get_ead_options(defaults):
     correct_opts = False
     while correct_opts is False:
@@ -841,6 +844,15 @@ def xtf_upload_wrapper(xtfup_id, gui_queue, remote, files, xtf_host):
     return
 
 
+def open_file(filepath):
+    if platform.system() == "Windows":
+        os.startfile(filepath)
+    elif platform.system() == "Darwin":
+        subprocess.Popen(["open", filepath])
+    else:
+        subprocess.Popen(["xdg-open", filepath])
+
+
 # sg.preview_all_look_and_feel_themes()
 if __name__ == "__main__":
     current_directory = os.getcwd()
@@ -864,9 +876,9 @@ if __name__ == "__main__":
     except Exception as defaults_error:
         print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...",
               end='', flush=True)
-        # TODO For non-XTF users, use this code:
+        # For non-XTF users, use this code:
         # json_data = setup.set_default_file()
-        # TODO For XTF users, use this code:
+        # For XTF users, use this code:
         json_data = setup.set_default_file_xtf()
         print("Done")
     run_gui(json_data)

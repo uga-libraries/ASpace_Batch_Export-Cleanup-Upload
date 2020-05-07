@@ -299,7 +299,6 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         with open(clean_ead_file_root, "wb") as CLEANED_EAD:
             CLEANED_EAD.write(clean_ead)
             CLEANED_EAD.close()
-        # TODO Not actually deleting files from source_eads
         if keep_raw_exports is False:
             for file in os.listdir("source_eads/"):  # prevents program from rerunning cleanup on cleaned files
                 path = "source_eads/" + file
