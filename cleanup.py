@@ -1,7 +1,7 @@
 import os
 import re
-import PySimpleGUI
 
+from pathlib import Path
 from lxml import etree
 
 extent_regex = re.compile(r"(\D)")
@@ -286,7 +286,7 @@ class EADRecord:
 # cycle through EAD files in source directory
 def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_exports=False):
     results = []
-    file = filepath.split("/")[1]  # get file name + extension
+    file = Path(filepath).name  # get file name + extension
     if isinstance(custom_clean, list):
         parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
         tree = etree.parse(filepath, parser=parser)
@@ -295,19 +295,18 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         clean_ead, results = ead.clean_suite(ead, ead_root, custom_clean)
         results.append("\n" + "-" * 50)
         # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
-        clean_ead_file_root = output_dir + '/{}'.format(file)
+        clean_ead_file_root = str(Path.cwd().joinpath(output_dir, '{}'.format(file)))
         with open(clean_ead_file_root, "wb") as CLEANED_EAD:
             CLEANED_EAD.write(clean_ead)
             CLEANED_EAD.close()
         if keep_raw_exports is False:
-            for file in os.listdir("source_eads/"):  # prevents program from rerunning cleanup on cleaned files
-                path = "source_eads/" + file
+            for file in os.listdir("source_eads"):  # prevents program from rerunning cleanup on cleaned files
+                path = Path("source_eads", file)
                 os.remove(path)
-            return '\\source_eads', results
+            return results
         else:
             results.append("Keeping raw ASpace exports in {}\n".format(output_dir))
-            return '\\source_eads', results
+            return results
     else:
         results.append("Input for custom_clean was invalid. Must be a list.\n" + "Input: {}".format(custom_clean))
-        return None, results
-
+        return results

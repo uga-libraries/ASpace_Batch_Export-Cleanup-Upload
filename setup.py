@@ -1,20 +1,23 @@
 import json
 import os
 
+from pathlib import Path
+
 
 def set_default_file():
     create_default_folders()
-    clean_eads = str(os.getcwd()) + "\\clean_eads"
-    source_eads = str(os.getcwd()) + "\\source_eads"
-    source_marcs = str(os.getcwd()) + "\\source_marcs"
-    source_pdfs = str(os.getcwd()) + "\\source_pdfs"
-    source_labels = str(os.getcwd()) + "\\source_labels"
+    clean_eads = str(Path(os.getcwd(), "clean_eads"))
+    source_eads = str(Path(os.getcwd(), "source_eads"))
+    source_marcs = str(Path(os.getcwd(), "source_marcs"))
+    source_pdfs = str(Path(os.getcwd(), "source_pdfs"))
+    source_labels = str(Path(os.getcwd(), "source_labels"))
     standard_defaults = ["ead_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                         "_KEEP_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
+                         "_KEEP_RAW_", "_CLEAN_EADS_", "_OUTPUT_DIR_", "_SOURCE_DIR_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
                          "pdf_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
                          "_KEEP_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
                          "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_",
-                         "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api"]
+                         "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "repo_default",
+                         "_REPO_NAME_", "_REPO_ID_"]
     defaults_keys = []
     try:
         with open("defaults.json", "r") as DEFAULTS:
@@ -32,7 +35,7 @@ def set_default_file():
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
                                                "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
-                                               "_OUTPUT_DIR_": clean_eads},
+                                               "_OUTPUT_DIR_": clean_eads, "_SOURCE_DIR_": source_eads},
                         "marc_export_default": {"_INCLUDE_UNPUB_": False, "_KEEP_RAW_": False,
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
@@ -42,7 +45,9 @@ def set_default_file():
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_CONTAIN_": True,
                                                  "_ADD_PHYSLOC_": True, "_DEL_ATIDS_": True, "_CNT_XLINKS_": True,
                                                  "_DEL_NMSPCS_": True, "_DEL_ALLNS_": True},
-                        "as_api": ""}
+                        "as_api": "",
+                        "repo_default": {"_REPO_NAME_": "", "_REPO_ID_": ""}
+                        }
             dump_defaults = json.dumps(defaults)
             DEFAULTS.write(dump_defaults)
             DEFAULTS.close()
@@ -54,18 +59,18 @@ def set_default_file():
 
 def set_default_file_xtf():
     create_default_folders()
-    clean_eads = str(os.getcwd()) + "\\clean_eads"
-    source_eads = str(os.getcwd()) + "\\source_eads"
-    source_marcs = str(os.getcwd()) + "\\source_marcs"
-    source_pdfs = str(os.getcwd()) + "\\source_pdfs"
-    source_labels = str(os.getcwd()) + "\\source_labels"
+    clean_eads = str(Path(os.getcwd(), "clean_eads"))
+    source_eads = str(Path(os.getcwd(), "source_eads"))
+    source_marcs = str(Path(os.getcwd(), "source_marcs"))
+    source_pdfs = str(Path(os.getcwd(), "source_pdfs"))
+    source_labels = str(Path(os.getcwd(), "source_labels"))
     xtf_default = ["ead_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                   "_KEEP_RAW_", "_CLEAN_EADS_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
+                   "_KEEP_RAW_", "_CLEAN_EADS_", "_OUTPUT_DIR_", "_SOURCE_DIR_", "marc_export_default", "_INCLUDE_UNPUB_", "_KEEP_RAW_",
                    "pdf_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
                    "_KEEP_RAW_", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
                    "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_",
-                   "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "xtf_default", "xtf_host",
-                   "xtf_remote_path", "xtf_local_path", "xtf_login_popup"]
+                   "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "repo_default", "_REPO_NAME_", "_REPO_ID_",
+                   "xtf_default", "xtf_host", "xtf_remote_path", "xtf_local_path", "xtf_login_popup", "_REINDEX_AUTO_"]
     defaults_keys = []
     try:
         with open("defaults.json", "r") as DEFAULTS:
@@ -85,7 +90,7 @@ def set_default_file_xtf():
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
                                                "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
-                                               "_OUTPUT_DIR_": clean_eads},
+                                               "_OUTPUT_DIR_": clean_eads, "_SOURCE_DIR_": source_eads},
                         "marc_export_default": {"_INCLUDE_UNPUB_": False, "_KEEP_RAW_": False,
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
@@ -96,10 +101,12 @@ def set_default_file_xtf():
                                                  "_ADD_PHYSLOC_": True, "_DEL_ATIDS_": True, "_CNT_XLINKS_": True,
                                                  "_DEL_NMSPCS_": True, "_DEL_ALLNS_": True},
                         "as_api": "",
+                        "repo_default": {"_REPO_NAME_": "", "_REPO_ID_": ""},
                         "xtf_default": {"xtf_host": "",
                                         "xtf_remote_path": "",
-                                        "xtf_local_path": os.getcwd() + "\\clean_eads",
-                                        "xtf_login_popup": False}}
+                                        "xtf_local_path": str(Path(os.getcwd(), "clean_eads")),
+                                        "xtf_login_popup": False,
+                                        "_REINDEX_AUTO_": True}}
             dump_defaults = json.dumps(defaults)
             DEFAULTS.write(dump_defaults)
             DEFAULTS.close()
@@ -160,7 +167,6 @@ def create_default_folders():
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
             if "source_pdfs" in directories:
-                source_path = current_directory + "/source_pdfs"
                 break
             else:
                 raise Exception
@@ -176,7 +182,6 @@ def create_default_folders():
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
             if "source_labels" in directories:
-                source_path = current_directory + "/source_labels"
                 break
             else:
                 raise Exception

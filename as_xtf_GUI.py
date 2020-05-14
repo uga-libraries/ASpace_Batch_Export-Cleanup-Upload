@@ -3,9 +3,10 @@ import platform
 import subprocess
 import sys
 import webbrowser
-import queue
-import threading
+# import queue
+# import threading
 import json
+from pathlib import Path
 
 import PySimpleGUI as sg
 from asnake.client import ASnakeClient
@@ -13,7 +14,6 @@ from asnake.client import ASnakeClient
 import as_export as asx
 import cleanup as clean
 import files as fetch_files
-import secrets as sec
 import xtf_upload as xup
 import setup as setup
 
@@ -79,13 +79,20 @@ import setup as setup
 # Input from GUI
 def run_gui(defaults):
     sg.ChangeLookAndFeel('LightBlue2')
-    as_username, as_password, as_api, close_program_as = get_aspace_log(defaults)
+    as_username, as_password, as_api, close_program_as, client = get_aspace_log(defaults)
     if close_program_as is True:
         sys.exit()
-    # For XTF Users Only
+    client.authorize()
+    repo_results = client.get('/repositories')
+    repo_results_dec = json.loads(repo_results.content.decode())
+    repositories = {"Search Across Repositories (Sys Admin Only)": None}
+    for result in repo_results_dec:
+        repositories[result["name"]] = result["uri"][-1]
+    # # For XTF Users Only
     xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
     if close_program_xtf is True:
         sys.exit()
+
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
                         "_DEL_ALLNS_"]
@@ -100,7 +107,9 @@ def run_gui(defaults):
                   '---',
                   'Settings',
                   ['Change ASpace Login Credentials',
+                   '---'
                    'Change XTF Login Credentials',
+                   'Change XTF Options',
                    '---',
                    'Change EAD Cleanup Defaults',
                    'Change EAD Export Options',
@@ -112,7 +121,9 @@ def run_gui(defaults):
                  ],
                 ['Edit',
                  ['Change ASpace Login Credentials',
+                  '---'
                   'Change XTF Login Credentials',
+                  'Change XTF Options',
                   '---',
                   'Change EAD Cleanup Defaults',
                   'Change EAD Export Options',
@@ -126,53 +137,71 @@ def run_gui(defaults):
                   'About']
                  ]
                 ]
-    ead_layout = [[sg.Text("Export EAD Records", font=("Roboto", 14))],
-                  [sg.Button(button_text="EXPORT", key="_EXPORT_EAD_")],
+    ead_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_EAD_"),
+                   sg.Text("* The program may become unresponsive")],
+                  [sg.Text("Output", font=("Roboto", 11))],
+                  [sg.Button(button_text="Open Cleaned EAD Folder", key="_OPEN_CLEAN_B_"),
+                   sg.Button(button_text="Open Raw ASpace Exports", key="_OPEN_RAW_EXPORTS_")],
                   [sg.Text("Options", font=("Roboto", 11))],
-                  [sg.Button("EAD Export Options", key="_EAD_OPTIONS_"),
+                  [sg.Button("EAD Export Options", key="_EAD_OPTIONS_", ),
                    sg.Button("Cleanup Options", key="Change Cleanup Defaults")],
-                  [sg.Button(button_text="Open Output", key="_OPEN_CLEAN_B_")],
-                  [sg.Text("-" * 245)],
-                  [sg.Text("Upload to XTF", font=("Roboto", 14))],
-                  [sg.Button(button_text="Upload", key="_UPLOAD_")]
+                  [sg.Text(" " * 140)]
                   ]
-    marc_layout = [[sg.Text("Export MARCXML Records", font=("Roboto", 14))],
-                   [sg.Button(button_text="EXPORT", key="_EXPORT_MARCXML_")],
+    xtf_layout = [[sg.Button(button_text="Upload Files", key="_UPLOAD_"),
+                   sg.Text(" " * 3),
+                   sg.Button(button_text="Index Changed Records", key="_INDEX_"),
+                   sg.Text("* The program may become unresponsive")],
+                  [sg.Text("Options", font=("Roboto", 11))],
+                  [sg.Button(button_text="XTF Options", key="_XTF_OPTIONS_")],
+                  [sg.Text(" " * 140)]
+                  ]
+    marc_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_MARCXML_")],
                    [sg.Text("Options", font=("Roboto", 11))],
                    [sg.Button("MARCXML Export Options", key="_MARCXML_OPTIONS_")],
                    [sg.Button(button_text="Open Output", key="_OPEN_MARC_DEST_")],
+                   [sg.Text(" " * 140)]
                    ]
-    contlabel_layout = [[sg.Text("Export Container Labels", font=("Roboto", 14))],
-                        [sg.Button(button_text="EXPORT", key="_EXPORT_LABEL_")],
+    contlabel_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_LABEL_")],
                         [sg.Text("Options", font=("Roboto", 11))],
                         [sg.Button(button_text="Open Output", key="_OPEN_LABEL_DEST_")],
                         [sg.FolderBrowse("Choose Output Folder:", key="_OUTPUT_DIR_LABEL_",
                                          initial_folder=defaults["labels_export_default"]),
                          sg.InputText(defaults["labels_export_default"], key="_OUTPUT_DIR_LABEL_INPUT_",
-                                      enable_events=True)]
+                                      enable_events=True)],
+                        [sg.Text(" " * 140)]
                         ]
-    pdf_layout = [[sg.Text("Export PDFs", font=("Roboto", 14))],
-                  [sg.Button(button_text="EXPORT", key="_EXPORT_PDF_")],
+    pdf_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_PDF_")],
                   [sg.Text("Options", font=("Roboto", 11))],
                   [sg.Button("PDF Export Options", key="_PDF_OPTIONS_")],
                   [sg.Button(button_text="Open Output", key="_OPEN_PDF_DEST_")],
+                  [sg.Text(" " * 140)]
                   ]
+    simple_layout_col1 = [[sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12))],
+                          [sg.Multiline(key="resource_id_input", size=(35, 47), focus=True)]
+                          ]
+    simple_layout_col2 = [[sg.Text("Choose your export option:", font=("Roboto", 12))],
+                          [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
+                           sg.Radio("MARCXML", "RADIO1", key="_EXPORT_MARCXML_RAD_", enable_events=True),
+                           sg.Radio("Container Labels", "RADIO1", key="_EXPORT_CONTLABS_RAD_", enable_events=True),
+                           sg.Radio("PDF", "RADIO1", key="_EXPORT_PDF_RAD_", enable_events=True)],
+                          [sg.Text("Choose your repository:", font=("Roboto", 12))],
+                          [sg.DropDown([repo for repo in repositories.keys()], readonly=True,
+                                       default_value=defaults["repo_default"]["_REPO_NAME_"], key="_REPO_SELECT_",
+                                       font=("Roboto", 11))],
+                          [sg.Button("Save Repository as Default", key="_REPO_DEFAULT_")],
+                          [sg.Frame("Export EAD", ead_layout, font=("Roboto", 14), key="_EAD_LAYOUT_", visible=True),
+                           sg.Frame("Export MARCXML", marc_layout, font=("Roboto", 14), key="_MARC_LAYOUT_",
+                                    visible=False),
+                           sg.Frame("Export Container Labels", contlabel_layout, font=("Roboto", 14),
+                                    key="_LABEL_LAYOUT_",
+                                    visible=False),
+                           sg.Frame("Export PDF", pdf_layout, font=("Roboto", 14), key="_PDF_LAYOUT_", visible=False)],
+                          [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 14), key="_XTF_LAYOUT_", visible=True)],
+                          [sg.Text("Output Terminal:", font=("Roboto", 12))],
+                          [sg.Output(size=(80, 18), key="_output_")]
+                          ]
     layout_simple = [[sg.Menu(menu_def)],
-                     [sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12)),
-                      sg.Text("           Output Terminal:", font=("Roboto", 12))],
-                     [sg.Multiline(key="resource_id_input", size=(35, 20), focus=True),
-                      sg.Output(size=(100, 20), key="_output_")],
-                     [sg.Text("Choose your export option:")],
-                     [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
-                      sg.Radio("MARCXML", "RADIO1", key="_EXPORT_MARCXML_RAD_", enable_events=True),
-                      sg.Radio("Container Labels", "RADIO1", key="_EXPORT_CONTLABS_RAD_", enable_events=True),
-                      sg.Radio("PDF", "RADIO1", key="_EXPORT_PDF_RAD_", enable_events=True)],
-                     [sg.Text("-" * 248)],
-                     [sg.Column(ead_layout, key="_EAD_LAYOUT_", visible=True),
-                      sg.Column(marc_layout, key="_MARC_LAYOUT_", visible=False),
-                      sg.Column(contlabel_layout, key="_LABEL_LAYOUT_", visible=False),
-                      sg.Column(pdf_layout, key="_PDF_LAYOUT_", visible=False)],
-                     [sg.Text("")]
+                     [sg.Column(simple_layout_col1), sg.Column(simple_layout_col2)]
                      ]
     window_simple = sg.Window("ArchivesSpace EAD Export/Cleanup/Upload Program", layout_simple)
     while True:
@@ -183,54 +212,48 @@ def run_gui(defaults):
         # ------------- CHANGE LAYOUTS SECTION -------------
         if event_simple == "_EXPORT_EAD_RAD_":
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=True)
-            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=True)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         if event_simple == "_EXPORT_MARCXML_RAD_":
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
-            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=True)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         if event_simple == "_EXPORT_PDF_RAD_":
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
-            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=True)
+            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=True)
         if event_simple == "_EXPORT_CONTLABS_RAD_":
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
-            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
+            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=True)
+            window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
+        # ------------- REPOSITORY SECTION -------------
+        if event_simple == "_REPO_DEFAULT_":
+            with open("defaults.json", "w") as DEFAULT:
+                defaults["repo_default"]["_REPO_NAME_"] = values_simple["_REPO_SELECT_"]
+                defaults["repo_default"]["_REPO_ID_"] = repositories[values_simple["_REPO_SELECT_"]]
+                json.dump(defaults, DEFAULT)
+                DEFAULT.close()
         # ------------- EAD SECTION -------------
         if event_simple == "_EXPORT_EAD_":
-            input_ids = values_simple["resource_id_input"]
-            if "," in input_ids:
-                resources = [user_input.strip() for user_input in input_ids.split(",")]
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
             else:
-                resources = [user_input.strip() for user_input in input_ids.splitlines()]
-            for input_id in resources:
-                resource_export = asx.ASExport(input_id, as_username, as_password, as_api)
-                resource_export.fetch_results()
-                if resource_export.error is None:
-                    print("Exporting EAD files...", end='', flush=True)
-                    resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
-                                               include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
-                                               numbered_cs=defaults["ead_export_default"]["_NUMBERED_CS_"],
-                                               ead3=defaults["ead_export_default"]["_USE_EAD3_"])
-                    if resource_export.error is None:
-                        print(resource_export.result)
-                        if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
-                            if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
-                                filepath, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
-                                                                       keep_raw_exports=True)
-                            else:
-                                filepath, results = clean.cleanup_eads(resource_export.filepath, cleanup_options)
-                            for result in results:
-                                print(result)
-                    else:
-                        print(resource_export.error)
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = values_simple["resource_id_input"]
+                        get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple)
                 else:
-                    print(resource_export.error)
+                    input_ids = values_simple["resource_id_input"]
+                    get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple)
         # asx_id = input_id
         # try:
         #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -278,30 +301,39 @@ def run_gui(defaults):
             get_ead_options(defaults)
         if event_simple == "_OPEN_CLEAN_B_" or event_simple == 'Open Cleaned EAD Folder':
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
-                cwd = os.getcwd()
-                filepath_eads = cwd + "\clean_eads"
+                filepath_eads = str(Path.cwd().joinpath("clean_eads"))
                 open_file(filepath_eads)
             else:
-                open_file(defaults["ead_export_default"]["_OUTPUT_DIR_"])
+                filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
+                open_file(filepath_eads)
+        if event_simple == "_OPEN_RAW_EXPORTS_" or event_simple == "Open RAW ASpace Exports":
+            if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
+                filepath_eads = str(Path.cwd().joinpath("source_eads"))
+                open_file(filepath_eads)
+            else:
+                filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
+                open_file(filepath_eads)
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
             input_ids = values_simple["resource_id_input"]
             resources = input_ids.splitlines()
             for input_id in resources:
-                resource_export = asx.ASExport(input_id, as_username, as_password, as_api)
+                resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
+                                               output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
                 resource_export.fetch_results()
                 if resource_export.error is None:
                     if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
-                        output_dir_marc = os.getcwd() + "\\source_marcs"
+                        output_dir_marc = str(Path.cwd().joinpath("source_marcs"))
                     else:
                         output_dir_marc = defaults["marc_export_default"]["_OUTPUT_DIR_"]
-                    print("Exporting MARCXML files...", end='', flush=True)
+                    print("Exporting {}...".format(input_id), end='', flush=True)
                     resource_export.export_marcxml(output_dir=output_dir_marc,
-                                                   include_unpublished=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])
+                                                   include_unpublished=defaults["marc_export_default"][
+                                                       "_INCLUDE_UNPUB_"])
                     if resource_export.error is None:
-                        print(resource_export.result)
+                        print(resource_export.result + "\n")
                     else:
-                        print(resource_export.error)
+                        print(resource_export.error + "\n")
                     # asx_id = input_id
                     # try:
                     #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -326,10 +358,13 @@ def run_gui(defaults):
                     print(resource_export.error)
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
-                filepath_marcs = os.getcwd() + "\\source_marcs"
-                open_file(filepath_marcs)
+                filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
+                open_file(
+                    filepath_marcs)
             else:
-                open_file(defaults["marc_export_default"]["_OUTPUT_DIR_"])
+                filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
+                open_file(
+                    filepath_marcs)
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
@@ -337,23 +372,24 @@ def run_gui(defaults):
             input_ids = values_simple["resource_id_input"]
             resources = input_ids.splitlines()
             for input_id in resources:
-                resource_export = asx.ASExport(input_id, as_username, as_password, as_api)
+                resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
+                                               output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
                 resource_export.fetch_results()
                 if resource_export.error is None:
                     if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
-                        output_dir_pdf = os.getcwd() + "\\source_pdfs"
+                        output_dir_pdf = str(Path.cwd().joinpath("source_pdfs"))
                     else:
                         output_dir_pdf = defaults["pdf_export_default"]["_OUTPUT_DIR_"]
-                    print("Exporting PDF files...", end='', flush=True)
+                    print("Exporting {}...".format(input_id), end='', flush=True)
                     resource_export.export_pdf(output_dir=output_dir_pdf,
                                                include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                                include_daos=defaults["pdf_export_default"]["_INCLUDE_DAOS_"],
                                                numbered_cs=defaults["pdf_export_default"]["_NUMBERED_CS_"],
                                                ead3=defaults["pdf_export_default"]["_USE_EAD3_"])
                     if resource_export.error is None:
-                        print(resource_export.result)
+                        print(resource_export.result + "\n")
                     else:
-                        print(resource_export.error)
+                        print(resource_export.error + "\n")
                     # asx_id = input_id
                     # try:
                     #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -378,11 +414,11 @@ def run_gui(defaults):
                     print(resource_export.error)
         if event_simple == "_OPEN_PDF_DEST_":
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
-                cwd = os.getcwd()
-                filepath_pdfs = cwd + "\source_pdfs"
+                filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
                 open_file(filepath_pdfs)
             else:
-                open_file(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
+                filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
+                open_file(filepath_pdfs)
         if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
@@ -390,19 +426,20 @@ def run_gui(defaults):
             input_ids = values_simple["resource_id_input"]
             resources = input_ids.splitlines()
             for input_id in resources:
-                resource_export = asx.ASExport(input_id, as_username, as_password, as_api)
+                resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
+                                               output_dir=defaults["labels_export_default"])
                 resource_export.fetch_results()
                 if resource_export.error is None:
                     if not defaults["labels_export_default"]:
-                        output_dir_label = os.getcwd() + "\\source_labels"
+                        output_dir_label = str(Path.cwd().joinpath("source_labels"))
                     else:
                         output_dir_label = defaults["labels_export_default"]
-                    print("Exporting Container Labels files...", end='', flush=True)
+                    print("Exporting {}...".format(input_id), end='', flush=True)
                     resource_export.export_labels(output_dir=output_dir_label)
                     if resource_export.error is None:
-                        print(resource_export.result)
+                        print(resource_export.result + "\n")
                     else:
-                        print(resource_export.error)
+                        print(resource_export.error + "\n")
                     # asx_id = input_id
                     # try:
                     #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -428,24 +465,22 @@ def run_gui(defaults):
                     print(resource_export.error)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             with open("defaults.json", "w") as defaults_labels:
-                print(values_simple["_OUTPUT_DIR_LABEL_"])
                 defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
                 json.dump(defaults, defaults_labels)
                 defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
             if not defaults["labels_export_default"]:
-                cwd = os.getcwd()
-                filepath_labels = cwd + "\source_labels"
+                filepath_labels = str(Path.cwd().joinpath("source_labels"))
                 open_file(filepath_labels)
             else:
-                open_file(defaults["labels_export_default"])
+                filepath_labels = str(Path(defaults["labels_export_default"]))
+                open_file(filepath_labels)
         # ------------- MENU OPTIONS SECTION -------------
         if event_simple == "Open Raw ASpace Exports":
-            cwd = os.getcwd()
-            source_path = cwd + "\source_eads"
+            source_path = Path(os.getcwd(), "source_eads")
             open_file(source_path)
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as = get_aspace_log(defaults)
+            as_username, as_password, as_api, close_program_as, client = get_aspace_log(defaults)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
         if event_simple == "Clear Cleaned EAD Folder":
@@ -454,7 +489,7 @@ def run_gui(defaults):
                 file_count = 0
                 for file in path:
                     file_count += 1
-                    full_path = os.getcwd() + "\\clean_eads\\" + file
+                    full_path = str(Path.cwd().joinpath("clean_eads", file))
                     os.remove(full_path)
                 print("Deleted {} files in clean_eads".format(str(file_count)))
             except Exception as e:
@@ -465,7 +500,7 @@ def run_gui(defaults):
                 file_count = 0
                 for file in path:
                     file_count += 1
-                    full_path = os.getcwd() + "\\source_eads\\" + file
+                    full_path = str(Path.cwd().joinpath("source_eads", file))
                     os.remove(full_path)
                 print("Deleted {} files in source_eads".format(str(file_count)))
             except Exception as e:
@@ -494,20 +529,27 @@ def run_gui(defaults):
         # ------------- UPLOAD TO XTF SECTION -------------
         if event_simple == "_UPLOAD_":
             window_upl_active = True
-            files_list = [ead_file for ead_file in os.listdir("clean_eads")]
+            files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])]
             layout_upload = [
                 [sg.Text("Choose which files you would like uploaded:")],
                 [sg.Listbox(files_list, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
                             key="_SELECT_FILES_")],
-                [sg.Button("Upload to XTF", key="_UPLOAD_TO_XTF_")]
+                [sg.Button("Upload to XTF", key="_UPLOAD_TO_XTF_"),
+                 sg.Button("XTF Options", key="_XTF_OPTIONS_2_")]
             ]
             window_upl = sg.Window("Upload Files to XTF", layout_upload)
             while window_upl_active is True:
                 event_upl, values_upl = window_upl.Read()
+                if event_upl is None:
+                    window_upl.close()
+                    window_upl_active = False
+                if event_upl == "_XTF_OPTIONS_2_":
+                    get_xtf_options(defaults)
                 if event_upl == "_UPLOAD_TO_XTF_":
                     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
-                    files = fetch_files.fetch_local_files(sec.xtf_local_path, values_upl["_SELECT_FILES_"])
-                    remote.bulk_upload(files)
+                    xtf_files = fetch_files.fetch_local_files(defaults["xtf_default"]["xtf_local_path"],
+                                                              values_upl["_SELECT_FILES_"])
+                    remote.bulk_upload(xtf_files)
                     cmds_output = remote.execute_commands(
                         ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
                     print("-" * 130)
@@ -528,9 +570,16 @@ def run_gui(defaults):
                     #     print(message)
                     window_upl.close()
                     window_upl_active = False
-                if event_upl is None:
-                    window_upl.close()
-                    window_upl_active = False
+        if event_simple == "_INDEX_":
+            print("Beginning Re-Index, this may take awhile...\nThe program might become unresponsive.")
+            remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+            cmds_output = remote.execute_commands(
+                ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
+            print("-" * 130)
+            print(cmds_output)
+            remote.disconnect()
+        if event_simple == "_XTF_OPTIONS_":
+            get_xtf_options(defaults)
     window_simple.close()
 
 
@@ -538,6 +587,7 @@ def get_aspace_log(defaults):
     as_username = None
     as_password = None
     as_api = None
+    client = None
     window_asplog_active = True
     correct_creds = False
     close_program = False
@@ -580,7 +630,7 @@ def get_aspace_log(defaults):
                 close_program = True
                 break
         window_login.close()
-    return as_username, as_password, as_api, close_program
+    return as_username, as_password, as_api, close_program, client
 
 
 def get_xtf_log(defaults):
@@ -640,6 +690,38 @@ def get_xtf_log(defaults):
     return xtf_username, xtf_password, xtf_host, xtf_remote_path, close_program
 
 
+def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple):
+    if "," in input_ids:
+        resources = [user_input.strip() for user_input in input_ids.split(",")]
+    else:
+        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+    for input_id in resources:
+        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
+                                       output_dir=defaults["ead_export_default"]["_SOURCE_DIR_"])
+        resource_export.fetch_results()
+        if resource_export.error is None:
+            print("Exporting {}...".format(input_id), end='', flush=True)
+            resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
+                                       include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
+                                       numbered_cs=defaults["ead_export_default"]["_NUMBERED_CS_"],
+                                       ead3=defaults["ead_export_default"]["_USE_EAD3_"])
+            if resource_export.error is None:
+                print(resource_export.result + "\n")
+                if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
+                    if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
+                        results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
+                                                     keep_raw_exports=True)
+                    else:
+                        print("Cleaning up EAD record...\n")
+                        results = clean.cleanup_eads(resource_export.filepath, cleanup_options)  # BREAKS HERE
+                    for result in results:
+                        print(result)
+            else:
+                print(resource_export.error + "\n")
+        else:
+            print(resource_export.error + "\n")
+
+
 # TODO Add ability for user to specify output folder for RAW ASpace exports and cleaned EAD files
 def get_ead_options(defaults):
     correct_opts = False
@@ -656,11 +738,16 @@ def get_ead_options(defaults):
                                       default=defaults["ead_export_default"]["_USE_EAD3_"])],
                          [sg.Checkbox("Keep raw ASpace Exports", key="_KEEP_RAW_",
                                       default=defaults["ead_export_default"]["_KEEP_RAW_"])],
+                         [sg.FolderBrowse("Set raw ASpace output folder:",
+                                          initial_folder=defaults["ead_export_default"]["_SOURCE_DIR_"]),
+                          sg.InputText(default_text=defaults["ead_export_default"]["_SOURCE_DIR_"],
+                                       key="_SOURCE_DIR_",)],
                          [sg.Checkbox("Clean EAD records on export", key="_CLEAN_EADS_",
                                       default=defaults["ead_export_default"]["_CLEAN_EADS_"])],
-                         # [sg.FolderBrowse("Set output folder:", key="_OUTPUT_DIR_",
-                         #                  initial_folder=defaults["ead_export_default"]["_OUTPUT_DIR_"]),
-                         #  sg.InputText(default_text=defaults["ead_export_default"]["_OUTPUT_DIR_"])],
+                         [sg.FolderBrowse("Set clean ASpace output folder:",
+                                          initial_folder=defaults["ead_export_default"]["_OUTPUT_DIR_"]),
+                          sg.InputText(default_text=defaults["ead_export_default"]["_OUTPUT_DIR_"],
+                                       key="_OUTPUT_DIR_")],
                          [sg.Button("Save Settings", key="_SAVE_SETTINGS_EAD_", bind_return_key=True)]]
         eadopt_window = sg.Window("EAD Options", eadopt_layout)
         while window_eadopt_active is True:
@@ -681,15 +768,13 @@ def get_ead_options(defaults):
                         defaults["ead_export_default"]["_USE_EAD3_"] = values_eadopt["_USE_EAD3_"]
                         defaults["ead_export_default"]["_KEEP_RAW_"] = values_eadopt["_KEEP_RAW_"]
                         defaults["ead_export_default"]["_CLEAN_EADS_"] = values_eadopt["_CLEAN_EADS_"]
-                        # if "/" in values_eadopt["_OUTPUT_DIR_"]:
-                        #     defaults["ead_export_default"]["_OUTPUT_DIR_"] = values_eadopt["_OUTPUT_DIR_"].replace("/", "\\")
-                        # else:
-                        #     defaults["ead_export_default"]["_OUTPUT_DIR_"] = values_eadopt["_OUTPUT_DIR_"]
+                        defaults["ead_export_default"]["_SOURCE_DIR_"] = str(Path(values_eadopt["_SOURCE_DIR_"]))
+                        defaults["ead_export_default"]["_OUTPUT_DIR_"] = str(Path(values_eadopt["_OUTPUT_DIR_"]))
                         json.dump(defaults, DEFAULT)
                         DEFAULT.close()
                     window_eadopt_active = False
                     correct_opts = True
-            eadopt_window.close()
+        eadopt_window.close()
 
 
 def get_cleanup_defaults(cleanup_defaults, defaults):
@@ -764,9 +849,9 @@ def get_marc_options(defaults):
                                 default=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])],
                    [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
                                 default=defaults["marc_export_default"]["_KEEP_RAW_"])],
-                   [sg.FolderBrowse("Set output folder:", key="_MARC_OUT_DIR_",
+                   [sg.FolderBrowse("Set output folder:",
                                     initial_folder=defaults["marc_export_default"]["_OUTPUT_DIR_"]),
-                    sg.InputText(default_text=defaults["marc_export_default"]["_OUTPUT_DIR_"])],
+                    sg.InputText(default_text=defaults["marc_export_default"]["_OUTPUT_DIR_"], key="_MARC_OUT_DIR_")],
                    [sg.Button("Save Settings", key="_SAVE_SETTINGS_MARC_", bind_return_key=True)]
                    ]
     window_marc = sg.Window("MARCXML Export Options", marc_layout)
@@ -779,7 +864,7 @@ def get_marc_options(defaults):
             with open("defaults.json", "w") as defaults_marc:
                 defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
                 defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
-                defaults["marc_export_default"]["_OUTPUT_DIR_"] = values_marc["_MARC_OUT_DIR_"].replace("/", "\\")
+                defaults["marc_export_default"]["_OUTPUT_DIR_"] = str(Path(values_marc["_MARC_OUT_DIR_"]))
                 json.dump(defaults, defaults_marc)
                 defaults_marc.close()
             window_marc_active = False
@@ -799,9 +884,9 @@ def get_pdf_options(defaults):
                                default=defaults["pdf_export_default"]["_USE_EAD3_"])],
                   [sg.Checkbox("Open ASpace Exports on Export", key="_KEEP_RAW_",
                                default=defaults["pdf_export_default"]["_KEEP_RAW_"])],
-                  [sg.FolderBrowse("Set output folder:", key="_OUTPUT_DIR_",
+                  [sg.FolderBrowse("Set output folder:",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
-                   sg.InputText(default_text=defaults["pdf_export_default"]["_OUTPUT_DIR_"])],
+                   sg.InputText(default_text=defaults["pdf_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_")],
                   [sg.Button("Save Settings", key="_SAVE_SETTINGS_PDF_", bind_return_key=True)]
                   ]
     window_pdf = sg.Window("PDF Export Options", pdf_layout)
@@ -817,11 +902,39 @@ def get_pdf_options(defaults):
                 defaults["pdf_export_default"]["_NUMBERED_CS_"] = values_pdf["_NUMBERED_CS_"]
                 defaults["pdf_export_default"]["_USE_EAD3_"] = values_pdf["_USE_EAD3_"]
                 defaults["pdf_export_default"]["_KEEP_RAW_"] = values_pdf["_KEEP_RAW_"]
-                defaults["pdf_export_default"]["_OUTPUT_DIR_"] = values_pdf["_OUTPUT_DIR_"].replace("/", "\\")
+                defaults["pdf_export_default"]["_OUTPUT_DIR_"] = str(Path(values_pdf["_OUTPUT_DIR_"]))
                 json.dump(defaults, defaults_pdf)
                 defaults_pdf.close()
             window_pdf_active = False
         window_pdf.close()
+
+
+def get_xtf_options(defaults):
+    xtf_option_active = True
+    xtf_option_layout = [[sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
+                                      default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
+                         [sg.FolderBrowse(button_text="Select source folder:",
+                                          initial_folder=defaults["xtf_default"]["xtf_local_path"]),
+                          sg.InputText(default_text=defaults["xtf_default"]["xtf_local_path"], key="_XTF_SOURCE_")],
+                         [sg.Button("Change XTF Login Credentials", key="_XTFOPT_CREDS_")],
+                         [sg.Button("Save Settings", key="_SAVE_SETTINGS_XTF_", bind_return_key=True)]
+                         ]
+    window_xtf_option = sg.Window("XTF Options", xtf_option_layout)
+    while xtf_option_active is True:
+        event_xtfopt, values_xtfopt = window_xtf_option.Read()
+        if event_xtfopt is None or event_xtfopt == 'Cancel':
+            xtf_option_active = False
+            window_xtf_option.close()
+        if event_xtfopt == "_XTFOPT_CREDS_":
+            get_xtf_log(defaults)
+        if event_xtfopt == "_SAVE_SETTINGS_XTF_":
+            with open("defaults.json", "w") as defaults_xtf:
+                defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
+                defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
+                json.dump(defaults, defaults_xtf)
+                defaults_xtf.close()
+            xtf_option_active = False
+            window_xtf_option.close()
 
 
 def as_export_wrapper(resource_instance, include_unpublished, include_daos, numbered_cs, ead3):
@@ -874,8 +987,7 @@ if __name__ == "__main__":
             json_data = json.load(DEFAULTS)
             DEFAULTS.close()
     except Exception as defaults_error:
-        print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...",
-              end='', flush=True)
+        print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...")
         # For non-XTF users, use this code:
         # json_data = setup.set_default_file()
         # For XTF users, use this code:
