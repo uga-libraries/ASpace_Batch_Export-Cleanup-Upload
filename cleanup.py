@@ -39,12 +39,10 @@ class EADRecord:
         for child in ead_file_root.findall(".//*"):
             if child.tag == '{urn:isbn:1-931666-22-9}p':  # {urn:isbn:1-931666-22-9}p dependency on using urn:isbn:
                 count1_notes += 1
-                if child.text is None:
+                if child.text is None and list(child) is None:
                     parent = child.getparent()
                     parent.remove(child)
                     count2_notes += 1
-            # if "p" in child.tag:
-            #     print(child.tag)
         results = "We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(
             count2_notes) + " empty notes"
         return ead_file_root, results
@@ -295,7 +293,7 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         clean_ead, results = ead.clean_suite(ead, ead_root, custom_clean)
         results.append("\n" + "-" * 50)
         # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
-        clean_ead_file_root = str(Path.cwd().joinpath(output_dir, '{}'.format(file)))
+        clean_ead_file_root = str(Path(output_dir, '{}'.format(file)))
         with open(clean_ead_file_root, "wb") as CLEANED_EAD:
             CLEANED_EAD.write(clean_ead)
             CLEANED_EAD.close()

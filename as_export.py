@@ -3,8 +3,6 @@ import re
 
 from pathlib import Path
 
-from asnake.client import ASnakeClient
-
 id_field_regex = re.compile(r"(^id_+\d)")
 id_combined_regex = re.compile('[\W_]+', re.UNICODE)
 
@@ -13,14 +11,16 @@ class ASExport:
     def __init__(self, input_id, repo_id, client, output_dir):
         self.input_id = input_id
         if "/" in self.input_id:
-            self.input_id = self.input_id.replace("/", "_")
+            self.filename = self.input_id.replace("/", "") + ".xml"  # Replace backslashes with nothing - xtf builds urls with no spaces in-between
+        else:
+            self.filename = self.input_id + ".xml"
         self.repo_id = repo_id
         self.resource_id = None
         self.resource_repo = None
         self.client = client
         self.error = None
         self.result = None
-        self.filepath = output_dir
+        self.filepath = str(Path(output_dir, self.filename))
 
     # take input of resource identifiers and search for them
     def fetch_results(self):
@@ -51,7 +51,7 @@ class ASExport:
                     combined_aspace_id_clean = id_combined_regex.sub('', combined_aspace_id)  # remove all non-alphanumeric characters
                     user_id_index = 0
                     try:
-                        if combined__user_id == combined_aspace_id_clean:
+                        if combined__user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
                             resource_full_uri = result["uri"].split("/")
                             self.resource_id = resource_full_uri[-1]
                             self.resource_repo = resource_full_uri[2]
@@ -94,7 +94,7 @@ class ASExport:
                                                                                                  request_ead.text)
             return None, self.error
 
-    def export_marcxml(self, output_dir, include_unpublished=False):
+    def export_marcxml(self, include_unpublished=False):
         request_marcxml = self.client.get('/repositories/{}/resources/marc21/{}.xml'.format(self.resource_repo,
                                                                                             self.resource_id),
                                           params={'include_unpublished_marc': include_unpublished})
@@ -110,7 +110,7 @@ class ASExport:
                                                                                                  request_marcxml.text)
             return None, self.error
 
-    def export_pdf(self, output_dir, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False):
+    def export_pdf(self, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False):
         request_pdf = self.client.get('repositories/{}/resource_descriptions/{}.pdf'.format(self.resource_repo,
                                                                                             self.resource_id),
                                       params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
@@ -127,7 +127,7 @@ class ASExport:
                                                                                                  request_pdf.text)
             return None, self.error
 
-    def export_labels(self, output_dir):
+    def export_labels(self):
         request_labels = self.client.get('repositories/{}/resource_labels/{}.tsv'.format(self.resource_repo,
                                                                                          self.resource_id))
         if request_labels.status_code == 200:

@@ -104,7 +104,7 @@ def set_default_file_xtf():
                         "repo_default": {"_REPO_NAME_": "", "_REPO_ID_": ""},
                         "xtf_default": {"xtf_host": "",
                                         "xtf_remote_path": "",
-                                        "xtf_local_path": str(Path(os.getcwd(), "clean_eads")),
+                                        "xtf_local_path": clean_eads,
                                         "xtf_login_popup": False,
                                         "_REINDEX_AUTO_": True}}
             dump_defaults = json.dumps(defaults)
