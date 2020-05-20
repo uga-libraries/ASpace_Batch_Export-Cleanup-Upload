@@ -893,7 +893,7 @@ def fetch_local_files(local_file_dir, select_files):
     https://hackersandslackers.com/automate-ssh-scp-python-paramiko/"""
     local_files = os.walk(local_file_dir)
     for root, dirs, files in local_files:
-        return [f'{root}/{file}' for file in files if file in select_files]
+        return [str(Path(root, file)) for file in files if file in select_files]
 
 
 # sg.preview_all_look_and_feel_themes()
