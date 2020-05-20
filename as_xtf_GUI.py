@@ -857,6 +857,7 @@ def get_xtf_options(defaults):
             window_xtf_option.close()
 
 
+# Add threading to allow loading screen
 # def as_export_wrapper(resource_instance, include_unpublished, include_daos, numbered_cs, ead3):
 #     # LOCATION 1
 #     # this is our "long running function call"
