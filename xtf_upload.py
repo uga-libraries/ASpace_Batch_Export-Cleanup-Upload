@@ -93,6 +93,8 @@ class RemoteClient:
             self.client = self.connect_remote()
         uploads = [self.__upload_single_file(file) for file in files]
         logger.info(f'Uploaded {len(uploads)} files to {self.remote_path} on {self.host}')
+        output_upload = f'Uploaded {len(uploads)} files to {self.remote_path} on {self.host}'
+        return output_upload
 
     def __upload_single_file(self, file):
         # upload a single file to a remote directory

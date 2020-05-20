@@ -11,9 +11,9 @@ class ASExport:
     def __init__(self, input_id, repo_id, client, output_dir):
         self.input_id = input_id
         if "/" in self.input_id:
-            self.filename = self.input_id.replace("/", "") + ".xml"  # Replace backslashes with nothing - xtf builds urls with no spaces in-between
+            self.filename = self.input_id.replace("/", "")  # Replace backslashes with nothing - xtf builds urls with no spaces in-between
         else:
-            self.filename = self.input_id + ".xml"
+            self.filename = self.input_id
         self.repo_id = repo_id
         self.resource_id = None
         self.resource_repo = None
@@ -83,6 +83,7 @@ class ASExport:
                                       params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
                                               'numbered_cs': numbered_cs, 'print_pdf': False, 'ead3': ead3})
         if request_ead.status_code == 200:
+            self.filepath += ".xml"
             with open(self.filepath, "wb") as local_file:
                 local_file.write(request_ead.content)
                 local_file.close()
@@ -99,6 +100,7 @@ class ASExport:
                                                                                             self.resource_id),
                                           params={'include_unpublished_marc': include_unpublished})
         if request_marcxml.status_code == 200:
+            self.filepath += ".xml"
             with open(self.filepath, "wb") as local_file:
                 local_file.write(request_marcxml.content)
                 local_file.close()
@@ -116,6 +118,7 @@ class ASExport:
                                       params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
                                               'numbered_cs': numbered_cs, 'print_pdf': True, 'ead3': ead3})
         if request_pdf.status_code == 200:
+            self.filepath += ".pdf"
             with open(self.filepath, "wb") as local_file:
                 local_file.write(request_pdf.content)
                 local_file.close()
@@ -131,6 +134,7 @@ class ASExport:
         request_labels = self.client.get('repositories/{}/resource_labels/{}.tsv'.format(self.resource_repo,
                                                                                          self.resource_id))
         if request_labels.status_code == 200:
+            self.filepath += ".tsv"
             with open(self.filepath, "wb") as local_file:
                 local_file.write(request_labels.content)
                 local_file.close()

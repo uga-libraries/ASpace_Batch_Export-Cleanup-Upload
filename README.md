@@ -3,7 +3,7 @@
 This application acts in 2 parts: 
 
 1. It takes resource identifiers from ArchivesSpace as inputs, searches
-the ArchivesSpace database, exports EAD.xml records for the resources
+the ArchivesSpace database, exports EAD, MARCXML, Container Labels, or PDF files for the resources
 specified, cleans the EAD.xml files, and saves them locally.
 2. Upon Upload, EAD.xml files as selected by the user are uploaded to the 
 XTF finding aid website/database and the program indexes just those records

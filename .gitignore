@@ -10,3 +10,7 @@ source_marcs
 source_pdfs
 source_labels
 source_eads
+ASpace.spec
+ASpace_Batching.spec
+dist
+build
