@@ -27,7 +27,7 @@ class ASExport:
         combined__user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
         if self.repo_id is not None:
             search_resources = self.client.get('/repositories/{}/search'.format(self.repo_id), params={"q": 'four_part_id:' + self.input_id, "page": 1,
-                                                                  "type": ['resource']})  # need to change to get_paged - but returns a generator object - maybe for loop that?
+                                                                  "type": ['resource']})  # TODO need to change to get_paged - but returns a generator object - maybe for loop that?
         else:
             search_resources = self.client.get('/search', params={"q": 'four_part_id:' + self.input_id, "page": 1,
                                                                   "type": ['resource']})
@@ -35,7 +35,7 @@ class ASExport:
             self.error = "There was an issue connecting to ArchivesSpace\n Error: "\
                          + str(search_resources.status_code) + "\nContent: " + str(search_resources.content)
         else:
-            search_results = json.loads(search_resources.content.decode())  # .decode().strip()
+            search_results = search_resources.json()  # .decode().strip()
             if search_results["results"]:
                 # after searching for them, get their URI
                 result_count = len(search_results["results"])
