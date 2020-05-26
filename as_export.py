@@ -24,57 +24,65 @@ class ASExport:
 
     # take input of resource identifiers and search for them
     def fetch_results(self):
-        combined__user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
+        combined_user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
         if self.repo_id is not None:
-            search_resources = self.client.get('/repositories/{}/search'.format(self.repo_id), params={"q": 'four_part_id:' + self.input_id, "page": 1,
-                                                                  "type": ['resource']})  # TODO need to change to get_paged - but returns a generator object - maybe for loop that?
+            search_resources = self.client.get_paged('/repositories/{}/search'.format(self.repo_id),
+                                                     params={"q": 'four_part_id:' + self.input_id,
+                                                             "type": ['resource']})
         else:
-            search_resources = self.client.get('/search', params={"q": 'four_part_id:' + self.input_id, "page": 1,
-                                                                  "type": ['resource']})
-        if search_resources.status_code != 200:
-            self.error = "There was an issue connecting to ArchivesSpace\n Error: "\
-                         + str(search_resources.status_code) + "\nContent: " + str(search_resources.content)
+            search_resources = self.client.get_paged('/search', params={"q": 'four_part_id:' + self.input_id,
+                                                                        "type": ['resource']})
+        search_results = []
+        for result in search_resources:
+            search_results.append(result)
+        if not search_results:
+            self.error = "No results were found. Have you entered the correct repository and/or resource ID?\n" \
+                         "Results: " + str(search_results) + \
+                         "\nUser Input: {}\n".format(self.input_id) + "-" * 135
+            # self.error = "There was an issue connecting to ArchivesSpace\n Error: "\
+            #              + str(search_resources.status_code) + "\nContent: " + str(search_resources.content)
         else:
-            search_results = search_resources.json()  # .decode().strip()
-            if search_results["results"]:
-                # after searching for them, get their URI
-                result_count = len(search_results["results"])
-                non_match_results = {}
-                match_results = {}
-                for result in search_results["results"]:
-                    json_info = json.loads(result["json"])
-                    combined_aspace_id = ""
-                    for key, value in json_info.items():
-                        id_match = id_field_regex.match(key)
-                        if id_match:
-                            combined_aspace_id += value + "-"
-                    combined_aspace_id_clean = id_combined_regex.sub('', combined_aspace_id)  # remove all non-alphanumeric characters
-                    user_id_index = 0
-                    try:
-                        if combined__user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
-                            resource_full_uri = result["uri"].split("/")
-                            self.resource_id = resource_full_uri[-1]
-                            self.resource_repo = resource_full_uri[2]
-                            match_results[combined_aspace_id[:-1]] = json_info["title"]
-                            user_id_index += 1
-                        else:
-                            raise Exception
-                    except Exception:
-                        # strip extra - at end
-                        non_match_results[combined_aspace_id[:-1]] = json_info["title"]  # had to insert [:-1] in else to
+            # after searching for them, get their URI
+            result_count = len(search_results)
+            aspace_id = ""
+            non_match_results = {}
+            match_results = {}
+            for result in search_results:
+                combined_aspace_id = ""
+                json_info = json.loads(result["json"])
+                for key, value in json_info.items():
+                    id_match = id_field_regex.match(key)
+                    if id_match:
+                        combined_aspace_id += value + "-"
+                combined_aspace_id_clean = id_combined_regex.sub('', combined_aspace_id)  # remove all non-alphanumeric characters
+                user_id_index = 0
+                try:
+                    if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
+                        aspace_id = combined_aspace_id[:-1]
+                        resource_full_uri = result["uri"].split("/")
+                        self.resource_id = resource_full_uri[-1]
+                        self.resource_repo = resource_full_uri[2]
+                        match_results[combined_aspace_id[:-1]] = json_info["title"]
                         user_id_index += 1
-                if non_match_results:  # if non_match_results contains non-matches, return error
-                    self.error = "{} results were found, but the resource identifier did not match. " \
-                                 "Have you entered the resource id correctly?".format(result_count) + \
-                                 "\nStatus code: " + \
-                                 str(search_resources.status_code) + "\nUser Input: {}".format(self.input_id) + \
-                                 "\nResults: "
-                    for ident, title in non_match_results.items():
-                        self.error += "\n     Resource ID: {:15} {:>1}{:<5} Title: {} \n".format(ident, "|", "", title)
-            else:
-                self.error = "No results were found. Have you entered the resource id or repository correctly?\n" \
-                             "Status code: " + str(search_resources.status_code) + \
-                             "\nUser Input: {}\n".format(self.input_id)
+                    else:
+                        raise Exception
+                except Exception:
+                    # strip extra - at end
+                    non_match_results[combined_aspace_id[:-1]] = json_info["title"]  # had to insert [:-1] in else to
+                    user_id_index += 1
+            if non_match_results and not match_results:  # if non_match_results contains non-matches, return error
+                self.error = "{} results were found, but the resource identifier did not match. " \
+                             "Have you entered the resource id correctly?".format(result_count) + \
+                             "\nUser Input: {}".format(self.input_id) + \
+                             "\nResults: "
+                for ident, title in non_match_results.items():
+                    self.error += "\n     Resource ID: {:15} {:>1}{:<5} Title: {} \n".format(ident, "|", "", title)
+                self.error += "-" * 135
+            if non_match_results and match_results:
+                self.result = "Returning {}...\nOther results:\n\n".format(aspace_id)
+                for ident, title in non_match_results.items():
+                    self.result += "Resource ID: {:15} {}{:<5} Title: {} \n\n".format(ident, "|", "", title)
+                self.result += "-" * 135
 
     # make a request to the API for an ASpace ead
     def export_ead(self, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False):
@@ -93,6 +101,7 @@ class ASExport:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_ead,
                                                                                                  request_ead.text)
+            self.error += "-" * 135
             return None, self.error
 
     def export_marcxml(self, include_unpublished=False):
@@ -110,6 +119,7 @@ class ASExport:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_marcxml,
                                                                                                  request_marcxml.text)
+            self.error += "-" * 135
             return None, self.error
 
     def export_pdf(self, include_unpublished=False, include_daos=True, numbered_cs=True, ead3=False):
@@ -128,6 +138,7 @@ class ASExport:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_pdf,
                                                                                                  request_pdf.text)
+            self.error += "-" * 135
             return None, self.error
 
     def export_labels(self):
@@ -144,4 +155,5 @@ class ASExport:
             self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
                                                                                                  request_labels,
                                                                                                  request_labels.text)
+            self.error += "-" * 135
             return None, self.error

@@ -291,7 +291,7 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         ead_root = tree.getroot()
         ead = EADRecord(ead_root)
         clean_ead, results = ead.clean_suite(ead, ead_root, custom_clean)
-        results.append("\n" + "-" * 50)
+        results.append("\n" + "-" * 135)
         # insert line here to check for filename and rename to have ms1234 or RBRL-123 in front
         clean_ead_file_root = str(Path(output_dir, '{}'.format(file)))
         with open(clean_ead_file_root, "wb") as CLEANED_EAD:

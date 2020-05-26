@@ -17,15 +17,9 @@ import setup as setup
 
 def run_gui(defaults):
     sg.ChangeLookAndFeel('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, version = get_aspace_log(defaults)
+    as_username, as_password, as_api, close_program_as, client, version, repositories = get_aspace_log(defaults)
     if close_program_as is True:
         sys.exit()
-    client.authorize()
-    repo_results = client.get('/repositories')
-    repo_results_dec = json.loads(repo_results.content.decode())
-    repositories = {"Search Across Repositories (Sys Admin Only)": None}
-    for result in repo_results_dec:
-        repositories[result["name"]] = result["uri"][-1]
     # # For XTF Users Only
     xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
     if close_program_xtf is True:
@@ -285,7 +279,7 @@ def run_gui(defaults):
             source_path = Path(os.getcwd(), "source_eads")
             open_file(source_path)
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, version = get_aspace_log(defaults)
+            as_username, as_password, as_api, close_program_as, client, version, repositories = get_aspace_log(defaults)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
         if event_simple == "Clear Cleaned EAD Folder":
@@ -335,7 +329,7 @@ def run_gui(defaults):
         if event_simple == "_UPLOAD_":
             window_upl_active = True
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
-                          if Path(ead_file).suffix == ".xml"]
+                          if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
             upload_options_layout = [[sg.Button("Upload to XTF", key="_UPLOAD_TO_XTF_"),
                                       sg.Text("* The program may be unresponsive, please wait.")],
                                      [sg.Text("Options", font=("Roboto", 12))],
@@ -362,10 +356,10 @@ def run_gui(defaults):
                     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
                         cmds_output = remote.execute_commands(
                             ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
-                        print("-" * 130)
+                        print("-" * 135)
                         print(cmds_output)
                     else:
-                        print("-" * 130)
+                        print("-" * 135)
                     remote.disconnect()
                     # xtfup_id = files
                     # thread_id = threading.Thread(target=xtf_upload_wrapper,
@@ -387,7 +381,7 @@ def run_gui(defaults):
             remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
             cmds_output = remote.execute_commands(
                 ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
-            print("-" * 130)
+            print("-" * 135)
             print(cmds_output)
             remote.disconnect()
         if event_simple == "_XTF_OPTIONS_":
@@ -400,7 +394,7 @@ def get_aspace_log(defaults):
     as_password = None
     as_api = None
     client = None
-    version = None
+    repositories = {"Search Across Repositories (Sys Admin Only)": None}
     window_asplog_active = True
     correct_creds = False
     close_program = False
@@ -426,15 +420,8 @@ def get_aspace_log(defaults):
                 try:
                     client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
                     client.authorize()
-                    version = client.get("/version").content.decode().split(" ")[1]
-                    with open("defaults.json",
-                              "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
-                        defaults["as_api"] = values_log["_ASPACE_API_"]
-                        json.dump(defaults, defaults_asp)
-                        defaults_asp.close()
                     window_asplog_active = False
                     correct_creds = True
-                    break
                 except Exception as e:
                     sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" + str(e))
             if event_log is None or event_log == 'Cancel':
@@ -444,7 +431,17 @@ def get_aspace_log(defaults):
                 close_program = True
                 break
         window_login.close()
-    return as_username, as_password, as_api, close_program, client, version
+    version = client.get("/version").content.decode().split(" ")[1]
+    with open("defaults.json",
+              "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
+        defaults["as_api"] = as_api
+        json.dump(defaults, defaults_asp)
+        defaults_asp.close()
+    repo_results = client.get('/repositories')
+    repo_results_dec = json.loads(repo_results.content.decode())
+    for result in repo_results_dec:
+        repositories[result["name"]] = result["uri"][-1]
+    return as_username, as_password, as_api, close_program, client, version, repositories
 
 
 def get_xtf_log(defaults):
@@ -455,7 +452,7 @@ def get_xtf_log(defaults):
     window_xtflog_active = True
     correct_creds = False
     close_program = False
-    while correct_creds is False:  # TODO while not
+    while correct_creds is False:
         xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 10))],
                        [sg.Text("Enter your XTF password:", font=("Roboto", 10))],
                        [sg.Text("Enter XTF Hostname:", font=("Roboto", 10))],
@@ -514,6 +511,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                                        defaults["ead_export_default"]["_SOURCE_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            if resource_export.result is not None:
+                print(resource_export.result)
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -687,11 +686,11 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                 defaults["ead_cleanup_defaults"]["_DEL_ALLNS_"] = values_adv["_DEL_ALLNS_"]
                 json.dump(defaults, defaults_cleanup)
                 defaults_cleanup.close()
-            window_adv_active = False
+            # window_adv_active = False
             window_adv.close()
             return cleanup_defaults, cleanup_options
         if event_adv is None:
-            window_adv_active = False
+            # window_adv_active = False
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
                                bool_val is True]
             window_adv.close()
