@@ -21,7 +21,8 @@ def run_gui(defaults):
     if close_program_as is True:
         sys.exit()
     # # For XTF Users Only
-    xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
+    xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+        get_xtf_log(defaults)
     if close_program_xtf is True:
         sys.exit()
 
@@ -275,13 +276,11 @@ def run_gui(defaults):
                 filepath_labels = str(Path(defaults["labels_export_default"]))
                 open_file(filepath_labels)
         # ------------- MENU OPTIONS SECTION -------------
-        if event_simple == "Open Raw ASpace Exports":
-            source_path = Path(os.getcwd(), "source_eads")
-            open_file(source_path)
         if event_simple == "Change ASpace Login Credentials":
             as_username, as_password, as_api, close_program_as, client, version, repositories = get_aspace_log(defaults)
         if event_simple == 'Change XTF Login Credentials':
-            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, close_program_xtf = get_xtf_log(defaults)
+            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+                get_xtf_log(defaults)
         if event_simple == "Clear Cleaned EAD Folder":
             path = os.listdir("clean_eads/")
             try:
@@ -355,7 +354,7 @@ def run_gui(defaults):
                     print(upload_output)
                     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
                         cmds_output = remote.execute_commands(
-                            ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
+                            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
                         print("-" * 135)
                         print(cmds_output)
                     else:
@@ -380,7 +379,7 @@ def run_gui(defaults):
             print("Beginning Re-Index, this may take awhile...\nThe program might become unresponsive.")
             remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
             cmds_output = remote.execute_commands(
-                ['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
+                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
             print("-" * 135)
             print(cmds_output)
             remote.disconnect()
@@ -449,6 +448,7 @@ def get_xtf_log(defaults):
     xtf_password = None
     xtf_host = None
     xtf_remote_path = None
+    xtf_indexer_path = None
     window_xtflog_active = True
     correct_creds = False
     close_program = False
@@ -456,11 +456,13 @@ def get_xtf_log(defaults):
         xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 10))],
                        [sg.Text("Enter your XTF password:", font=("Roboto", 10))],
                        [sg.Text("Enter XTF Hostname:", font=("Roboto", 10))],
-                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 10))]]
+                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 10))],
+                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 10))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
-                       [sg.InputText(defaults["xtf_default"]["xtf_remote_path"], key="_XTF_REMPATH_")]]
+                       [sg.InputText(defaults["xtf_default"]["xtf_remote_path"], key="_XTF_REMPATH_")],
+                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")]]
         layout_xtflog = [
             [sg.Column(xtflog_col1), sg.Column(xtflog_col2)],
             [sg.Button("Save and Close", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
@@ -473,6 +475,7 @@ def get_xtf_log(defaults):
                 xtf_password = values_xlog["_XTF_PWORD_"]
                 xtf_host = values_xlog["_XTF_HOSTNAME_"]
                 xtf_remote_path = values_xlog["_XTF_REMPATH_"]
+                xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
                 try:
                     remote = xup.RemoteClient(xtf_host, xtf_username, xtf_password, xtf_remote_path)
                     remote.client = remote.connect_remote()
@@ -483,6 +486,7 @@ def get_xtf_log(defaults):
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
                             defaults["xtf_default"]["xtf_remote_path"] = values_xlog["_XTF_REMPATH_"]
+                            defaults["xtf_default"]["xtf_indexer_path"] = values_xlog["_XTF_INDPATH_"]
                             json.dump(defaults, defaults_xtf)
                             defaults_xtf.close()
                         window_xtflog_active = False
@@ -498,7 +502,7 @@ def get_xtf_log(defaults):
                 close_program = True
                 break
         window_xtfcred.close()
-    return xtf_username, xtf_password, xtf_host, xtf_remote_path, close_program
+    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
 
 
 def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple):

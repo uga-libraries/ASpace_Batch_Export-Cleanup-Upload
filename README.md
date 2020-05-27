@@ -1,54 +1,114 @@
-# ArchivesSpace & XTF Program - DEV
-![homepage-ead-001](https://user-images.githubusercontent.com/62658840/81198762-d97a7d00-8f8f-11ea-9326-ad7da0ad6233.gif)
-This application acts in 2 parts: 
-
-1. It takes resource identifiers from ArchivesSpace as inputs, searches
-the ArchivesSpace database, exports EAD, MARCXML, Container Labels, or PDF files for the resources
-specified, cleans the EAD.xml files, and saves them locally.
-2. Upon Upload, EAD.xml files as selected by the user are uploaded to the 
-XTF finding aid website/database and the program indexes just those records
-uploaded/changed.
+# ArchivesSpace Batching
+##Summary
+This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
+Additionally, it can run exported EAD records through a series of cleanup processes. Lastly, a user can
+download the XTF version to upload .xml or .pdf files to their instance of XTF.
 
 ## Requirements
-1. requirements.txt - this file contains all the dependencies needed to run
-the program.
-2. A computer with a processor that has at least 2 cores and 2 threads.
+1. Python 3 installed on your computer. You can install python using the following link:
+https://www.python.org/downloads/
+2. Your ArchivesSpace Instance's API URL (8089), XTF hostname URL, XTF remote path for EAD files, and XTF indexer
+path to re-index new and/or changed files.
 
 ## Process
 This is a walkthrough of the program and how it functions.
+
+1. It takes resource identifiers seperated by new lines or commas from ArchivesSpace as inputs, searches
+the ArchivesSpace database, exports EAD, MARCXML, Container Labels, or PDF files for the resources
+specified, cleans the EAD.xml files, and saves them locally.
+2. For XTF users, EAD.xml or .pdf files as selected by the user are uploaded to the 
+XTF finding aid website/database and the program indexes just those records
+uploaded/changed.
 ### Login Windows
 Upon running the program, the user is met with 2 windows:
 1. ArchivesSpace login credentials - input your username, password, and the ArchivesSpace
-API URL (if not specified in secrets.py)
+API URL.
 2. XTF login credentials - input your username, password, the XTF Hostname and XTF Remote
-Path (if not specified in secrets.py)
-### Main Screen
-This screen displays a multiline text input (Large Box # 1) on the left 
-used for inputting resource identifiers. On the right is an output terminal (Large Box # 2), 
-which displays messages from the program for the user.
+Path (where the EAD files are stored).
+### EAD Screen
+On the top right contains 4 radio buttons where users can select
+what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+repository they would like to export from. The default is Search Across Repositories, but you can save a different
+repository clicking on the "Save Repository as Default" button. 
 
-There are 3 buttons on the bottom:
-1. Search and Clean - When a user inputs a resource identifier in the multiline text import 
-(Large Box #1), this button will search the ArchivesSpace database for resource identifiers
-that match the inputs. It will then take those it found and run them through a cleanup script
-called cleanup.py and save them to a local folder called clean_eads.
+
+There are 3 sections of options:
+1. Export - When a user inputs a resource identifier in the multiline text import 
+(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+ArchivesSpace database for resource identifiers that match the inputs. It will then take those it found and
+ run them through a cleanup script, if set by EAD Export Options, and save them to a local folder called 
+ clean_eads by default.
 
     1. Open Raw ASpace exports (Optional Parameter) - Checking this will save the EAD.xml
     files as exported by ArchivesSpace and open a file explorer window in a folder called
     source_eads. These EAD.xml files are NOT run through cleanup.py script.
-2. Open Output - This button opens a file explorer window of the clean_eads folder. This is 
-where all exported EAD.xml files are stored after they are run through cleanup.py.
-3. Upload - This generates a window allowing a user to select one ore more files stored in 
-clean_eads (EAD.xml files after run through cleanup.py).
-### Upload Window
-This screen displays a window with a listbox with all the files stored in the folder 
-clean_eads. Users can select what files they want and click the Upload to XTF button. This 
-button does 2 things:
-1. It uploads the files to the xtf_remote_path as specified in secrets.py or whatever else
-was specified by the user upon logging in.
-2. It re-indexes only the records that were uploaded/changed by the user.
-## Settings
-TO BE FILLED IN LATER
+2. Options:
+    1. EAD Export Options - This button allows the user to customize how they would like the EAD records to 
+    be exported. This includes setting the options to keep the raw ASpace exports and running the cleanup
+    process on the exported EAD.xml records.
+    2. Cleanup Options - This button allows the user to select what sorts of cleanup they would like the 
+    EAD record to run through. The default is set to all.
+3. Output:
+    1. Open Cleaned EAD Folder - This button opens the folder where EAD records that have gone through the
+    cleanup process are saved. You can customize this folder in EAD Export Options.
+    2. Open Raw ASpace Exports - If a user has selected "Keep RAW ASpace Exports" in EAD Export Options, 
+    this button will open the folder where the raw ASpace EAD records are saved. You can customize this
+    folder in the EAD Export Options
+### MARCXML Screen
+On the top right contains 4 radio buttons where users can select
+what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+repository they would like to export from. The default is Search Across Repositories, but you can save a different
+repository clicking on the "Save Repository as Default" button.
+
+
+There are 2 options:
+1. EXPORT - When a user inputs a resource identifier in the multiline text import 
+(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
+to the default directory or one specified by the user.
+2. Options:
+    1. MARCXML Export Options - allows user to specify options on how to export their MARCXML and what folder
+    they want the records saved in.
+    2. Open Output - open the folder where MARCXML files are being exported to.
+
+###Container Labels Screen
+On the top right contains 4 radio buttons where users can select
+what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+repository they would like to export from. The default is Search Across Repositories, but you can save a different
+repository clicking on the "Save Repository as Default" button.
+
+
+There are 2 options:
+1. EXPORT - When a user inputs a resource identifier in the multiline text import 
+(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
+to the default directory or one specified by the user.
+2. Options:
+    1. Open Output - open the folder where MARCXML files are being exported to.
+    2. Choose Output Folder: - Choose the output folder where you would like container labels to be exported
+    to.
+ 
+###PDF Screen
+!WARNING! - This feature is only compatible with ArchivesSpace version 2.8.0 or greater. The program will
+tell you what version you are running on the WARNING label in this screen.
+
+
+On the top right contains 4 radio buttons where users can select
+what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+repository they would like to export from. The default is Search Across Repositories, but you can save a different
+repository clicking on the "Save Repository as Default" button.
+
+
+There are 2 options:
+1. EXPORT - When a user inputs a resource identifier in the multiline text import 
+(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
+to the default directory or one specified by the user.
+2. Options:
+    1. PDF Export Options - This button allows the user to customize how they would like the PDF records to 
+    be exported. This includes setting the output folder for exports.
+    2. Open Output - open the folder where MARCXML files are being exported to.
+
 ## Testing
 Right now, the best way to test the program is to input resource identifiers and try uploading
 them to XTF. Some examples of Hargrett and Russell resource identifiers include:
@@ -73,59 +133,103 @@ handles the GUI operation as outlined by PySimpleGUI's guidelines. There are 2 c
 to it, the setup code and the _while_ loop.
 ##### Setup Code
 `sg.ChangeLookAndFeel()` changes the theme of the GUI (colors, button styles, etc.).
+`as_username`, `as_password`, `as_api`, `close_program_as`, `client`, `version`, `repositories`
 `cleanup_default` and `cleanup_options` store the options if a user wants to specify what 
 cleanup operations to run through cleanup.py.
-`as_username`, `as_password`, `xtf_username`, `xtf_password`, `xtf_hostname`, and 
-`xtf_remote_path` set the values for their appropriate credentials.
 `menu_def` sets the options for the toolbar menu.
-`simple_col1` and `simple_col2` these are columns that help organize. Any variable with _col
-in it is a column for the layout of the GUI. The buttons and objects have keys associated
-with them. These are used to help read them as "events" in our while loop below.
+`ead_layout`, `xtf_layout`, `marc_layout`, `contlabel_layout`, `pdf_layout` 
+all set the various layouts for their respective screens.
+`simple_layout_col1` and `simple_layout_col2` divide the layout into two columns, the first being defined with the
+multiline input for resource identifiers, the second defining the above export layouts and Output console.
 `layout_simple` sets the layout for the GUI.
 `window_simple` sets the window for the main screen. Any variable with _window follows the
 same logic.
 ##### while loop
 The way the loop works is that the program "reads" the Window we made above in the setup code
-and returns events and values (`event_simple` and `values_simple`). If a user selects a button
+and returns events and values (`event_simple` and `values_simple`). If a user clicks a button
 with a specific key as outlined in the layout, that is acted upon under the following
 `if` statements.
 
-There are _12_ `if` statements in the while loop:
-1. `if event_simple == 'Cancel' or event_simple is None:` - This exits the program for the
-user.
-2. `if event_simple == "_SEARCH_CLEAN_":` - This activates searching ASpace, exporting, and 
+There are _28_ `if` statements in the while loop:
+1. `if event_simple == 'Cancel' or event_simple is None or event_simple == "Exit":` - This exits the program 
+for the user.
+2. `if event_simple == "_EXPORT_EAD_RAD_":` This sets the screen to the EAD layout
+3. `if event_simple == "_EXPORT_MARCXML_RAD_":` This sets the screen to the MARCXML layout
+4. `if event_simple == "_EXPORT_PDF_RAD_":` This sets the screen to the PDF layout
+5. `if event_simple == "_EXPORT_CONTLABS_RAD_":` This sets the screen to the Container Label layout
+6. `if event_simple == "_REPO_DEFAULT_":` This is the 'Save Repository as Default' button, which saves the 
+user's chosen repository as default in defaults.json.
+7. `if event_simple == "_EXPORT_EAD_":` - This activates searching ASpace, exporting, and 
 cleaning the EAD.xml files. Under this are `if values_simple["_OPEN_RAW_"] is True:`, which
 checks if the user selected the "Open raw ASpace exports" checkbox.
-3. `if event_simple == "_OPEN_CLEAN_B_" or event_simple == 'Open Cleaned EAD Folder':` - 
-Opens clean_eads folder. Outlined in the toolbar menu
-4. `if event_simple == "Open Raw ASpace Exports":` - Opens the source_eads folder. Outlined
-in the toolbar menu
-5. `if event_simple == "Change ASpace Login Credentials":` - runs the function 
+8. `if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":` This is the 'EAD Export
+Options' button.
+9. `if event_simple == "_OPEN_CLEAN_B_" or event_simple == 'Open Cleaned EAD Folder':` - This is the 'Open
+Cleaned EAD Folder' button. Opens clean_eads folder. Outlined in the toolbar menu
+10. `if event_simple == "_OPEN_RAW_EXPORTS_" or event_simple == "Open RAW ASpace Exports":` - This is the
+'Open Raw ASpace Exports' button. Opens the source_eads folder. Outlined in the toolbar menu and button
+11. `if event_simple == "_EXPORT_MARCXML_":` This activates searching ASpace, exporting, and placing 
+MARCXML files in the default folder or folder specified by the user
+12. `if event_simple == "_OPEN_MARC_DEST_":` This is the 'Open Output' button and will open the default
+MARCXML folder or folder as specified by the user
+13. `if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":` - This is the
+button 'MARCXML Export Options'
+14. `if event_simple == "_EXPORT_PDF_":` - This activates searching ASpace, exporting, and placing 
+PDF files in the default folder or folder specified by the user
+15. `if event_simple == "_OPEN_PDF_DEST_":` - This is the 'Open Output' button and will open the default
+MARCXML folder or folder as specified by the user
+16. `if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":` - This is the
+button 'PDF Export Options'
+17. `if event_simple == "_EXPORT_LABEL_":` - This activates searching ASpace, exporting, and placing 
+container label (.tsv) files in the default folder or folder specified by the user
+18. `if event_simple == "_OPEN_LABEL_DEST_":` - This is the 'Open Output' button and will open the default
+container label folder or folder as specified by the user
+19. `if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":` - This is the folder where container label files are exported
+20. `if event_simple == "Change ASpace Login Credentials":` - runs the function 
 `get_aspace_log()` to set ArchivesSpace login credentials. Outlined in the toolbar menu 
 (Edit or File/Settings)
-6. `if event_simple == 'Change XTF Login Credentials':` - runs the function `get_xtf_log()`
+21. `if event_simple == 'Change XTF Login Credentials':` - runs the function `get_xtf_log()`
 to set XTF login credentials. Outlined in the toolbar menu (Edit or File/Settings)
-7. `if event_simple == "About":` - displays a popup (really another window) describing info
-about the program version. Users can select the Check Github button, which will open a 
-browser tab to the Github version page for the program. Outlined in the toolbar menu (Help)
-8. `if event_simple == "Clear Cleaned EAD Folder":` - deletes all files in clean_eads. 
+22. `if event_simple == "Clear Cleaned EAD Folder":` - deletes all files in clean_eads. 
 Outlined in the toolbar menu (File)
-9. `if event_simple == "Clear Raw ASpace Export Folder":` - deletes all files in 
+23. `if event_simple == "Clear Raw ASpace Export Folder":` - deletes all files in 
 source_eads. Outlined in the toolbar menu (File)
-10. `if event_simple == "Change Cleanup Defaults":` - activates a popup (window) where users
+24. `if event_simple == "Change Cleanup Defaults":` - activates a popup (window) where users
 can change the operations of cleanup.py script. Still working on this (should set all to
 true and let users uncheck options??). Outlined in the toolbar menu (Edit or File/Settings)
-11. `if event_simple == "_UPLOAD_":` - clicking the button Upload, opens the popup 
+25. `if event_simple == "About":` - displays a popup (really another window) describing info
+about the program version. Users can select the Check Github button, which will open a 
+browser tab to the Github version page for the program. Outlined in the toolbar menu (Help)
+
+26. `if event_simple == "_UPLOAD_":` - clicking the button Upload, opens the popup 
 (window) for users to upload to XTF. Links out to xtf_upload.py to upload and execute 
 an indexing of the most recent files to be uploaded
-12. `if event_simple == "Exit":` - exits the program
+27. `if event_simple == "_INDEX_":` - This button re-indexes the XTF hostname specified by using a -index default.
+This will NOT do a clean index, but only indexing the any changed or new files added to the XTF remote path
+28. `if event_simple == "_XTF_OPTIONS_":` This button opens a popup letting the user modify XTF upload and indexing
+options
 #### get_aspace_log()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+##### Returns
+1. as_username
+2. as_password
+3. as_api
+4. close_program
+5. client
+6. version
+7. repositories
+
+
 This function gets a user's ArchiveSpace credentials. There are 3 components
 to it, the setup code, correct_creds while loop, and the window_asplog_active while loop.
 ##### Setup Code
     as_username = None # ArchivesSpace credentials to to be set later in the function
     as_password = None # ArchivesSpace credentials to to be set later in the function
-    as_api = None # Defaults in the secrets.py file, otherwise enter here
+    as_api = None
+    client = None
+    repositories = {"Search Across Repositories (Sys Admin Only)": None}
     window_asplog_active = True  # To help break from the login verification while loop
     correct_creds = False # To help break out of the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the 
@@ -147,13 +251,26 @@ client, which is a package for handling API requests to ArchivesSpace. If it fai
 authenticate, a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
 #### get_xtf_log()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+##### Returns
+1. xtf_username
+2. xtf_password
+3. xtf_host
+4. xtf_remote_path
+5. xtf_indexer_path
+6. close_program
+
+
 This function gets a user's XTF credentials. There are 3 components to it, the setup code,
 correct_creds while loop, and window_xtflog_active while loop.
 ##### Setup Code
     xtf_username = None # XTF credentials to to be set later in the function
     xtf_password = None # XTF credentials to to be set later in the function
-    xtf_host = None # Defaults in the secrets.py file, otherwise enter here
-    xtf_remote_path = None # Defaults in the secrets.py file, otherwise enter here
+    xtf_host = None
+    xtf_remote_path = None 
+    xtf_indexer_path = None 
     window_xtflog_active = True # To help break out of the GUI while loop
     correct_creds = False # To help break from the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the
@@ -173,10 +290,220 @@ The try, except statement tries to authorize the user by checking the class vari
 in the function `connect_remote(self)` in xtf_upload.py. If it fails to authenticate, 
 a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
-#### as_export_wrapper()
-My attempt at threading the ArchivesSpace export
-#### xtf_upload_wrapper()
-My attempt at threading the XTF upload and re-indexing
+#### get_eads()
+##### Parameters
+1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. cleanup_options - a list of options a user wants to run against an EAD.xml file after export to clean the file
+4. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
+5. client - a client object from ASnake.client to allow to connect to the ASpace API
+6. values_simple - a list of values as entered with the `run_gui()` function
+
+
+This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
+sends them to as_export.py to `fetch_results()` and `export_ead()`.
+
+It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
+called `resources`.
+
+##### for input_id in resources:
+The for loop begins by iterating through each user input as created in the resources list above. 
+It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
+function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
+and an if-else statement will default to else, printing the error statement in the Output Terminal.
+
+If there are results that both match and do not match exactly the input, those that did not match but were fetched
+are added to `self.result` and printed.
+
+For the singular result that matched, it is run against the class method `export_ead()`. If any errors are caught, the
+if-else statement will determine if `self.error` is not none and print the error to the Output terminal. If no error
+is detected, it will ask whether or not the user selected to run cleanup.py on the exported records and if the user
+wants to keep the raw ASpace EAD exports.
+
+#### get_ead_options()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+   1. Include unpublished components (default is false)
+   2. Include digital objects (default is true)
+   3. Use numbered container levels (default is true)
+   4. Convert to EAD3 (default is false)
+   5. Keep raw ASpace Exports (default is false)
+   6. Set raw ASpace output folder
+   7. Clean EAD records on export (default is true)
+   8. Set clean ASpace output folder
+   
+The function will write the options selected to the defaults.json file. Additionally, a user is alerted if Keep raw
+ASpace Exports and Clean EAD records on export are set to false - the result of which will mean no 
+file will be kept on export.
+
+#### get_cleanup_defaults()
+##### Parameters
+1. cleanup_defaults - a list of all the default values a user can select for cleaning an EAD.xml file
+2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+This function opens a window in the GUI that allows a user to choose what operations they want to run in order to
+clean any exported EAD.xml files. These options include:
+   1. Add Resource ID as EADID - Takes the resource identifier as listed in ArchivesSpace and
+   copies it to the <eadid> element in the EAD.xml file.
+   2. Delete Empty Notes - Searches for every `<p>` element in the EAD.xml file and 
+   checks if there is content in the element. If not, it is deleted.
+   3. Remove Non-Alphanumerics and Empty Extents - Does 2 things. It deletes any empty `<extent>` elements and 
+   removes non-alphanumeric characters from the beginning of extent elements. An example would be: 
+   `<extent>(13.5x2.5")</extent>`. This would change to `<extent>13.5x2.5"</extent>`.
+   4. Add Certainty Attribute - Adds the attribute `certainty="approximate"` to all dates
+   that include words such as circa, ca. approximately, etc.
+   5. Add label='Mixed Materials - Adds the attribute `label="Mixed Materials"` to any container
+   element that does not already have a label attribute.
+   6. Delete Empty Containers - Searches an EAD.xml file for all container elements
+   and deletes any that are empty.
+   7. Add Barcode as physloc Tag - This adds a `physloc` element to an element when a container has 
+   a label attribute. It takes an appended barcode to the label and makes it the value of the physloc tag.
+   8. Remove Archivists' Toolkit IDs - Finds any unitid element with a type that includes an 
+   Archivists Toolkit unique identifier. Deletes that element.
+   9. Remove xlink Prefixes from Digital Objects - Counts every attribute that occurs in a `<dao>` element.
+   10. Remove Unused Namespaces - Removes any unused namespaces in the EAD.xml file.
+   11. Remove All Namespaces - Replaces other namespaces not removed by `clean_unused_ns()` in the `<ead>` 
+   element with an empty `<ead>` element.
+
+The function will write the options selected to the defaults.json file.
+
+#### get_marcxml()
+##### Parameters
+1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - a list of values as entered with the `run_gui()` function
+
+This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
+sends them to as_export.py to `fetch_results()` and `export_marcxml()`.
+
+It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
+called `resources`.
+
+##### for input_id in resources:
+The for loop begins by iterating through each user input as created in the resources list above. 
+It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
+function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
+and an if-else statement will default to else, printing the error statement in the Output Terminal.
+
+If there are results that both match and do not match exactly the input, those that did not match but were fetched
+are added to `self.result` and printed.
+
+For the singular result that matched, it is run against the class method `export_marcxml()`. If any errors are caught,
+the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
+
+#### get_marc_options()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+   1. Include unpublished components (default is false)
+   2. Open output folder on export (default is false)
+   3. Set output folder
+   
+The function will write the options selected to the defaults.json file.
+
+#### get_pdfs()
+##### Parameters
+1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - a list of values as entered with the `run_gui()` function
+
+This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
+sends them to as_export.py to `fetch_results()` and `export_pdf()`.
+
+It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
+called `resources`.
+
+##### for input_id in resources:
+The for loop begins by iterating through each user input as created in the resources list above. 
+It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
+function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
+and an if-else statement will default to else, printing the error statement in the Output Terminal.
+
+If there are results that both match and do not match exactly the input, those that did not match but were fetched
+are added to `self.result` and printed.
+
+For the singular result that matched, it is run against the class method `export_pdf()`. If any errors are caught,
+the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
+
+#### get_pdf_options()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+   1. Include unpublished components (default is false)
+   2. Include digital objects (default is true)
+   3. Use numbered container levels (default is true)
+   4. Convert to EAD3 (default is false)
+   2. Open ASpace Exports on Export (default is false)
+   3. Set output folder
+   
+The function will write the options selected to the defaults.json file.
+
+#### get_contlabels()
+##### Parameters
+1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - a list of values as entered with the `run_gui()` function
+
+This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
+sends them to as_export.py to `fetch_results()` and `export_labels()`.
+
+It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
+called `resources`.
+
+##### for input_id in resources:
+The for loop begins by iterating through each user input as created in the resources list above. 
+It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
+function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
+and an if-else statement will default to else, printing the error statement in the Output Terminal.
+
+If there are results that both match and do not match exactly the input, those that did not match but were fetched
+are added to `self.result` and printed.
+
+For the singular result that matched, it is run against the class method `export_labels()`. If any errors are caught,
+the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
+
+#### get_xtf_options()
+##### Parameters
+1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+
+This function allows a user to select what options they want when uploading and re-indexing records in XTF. These
+options include:
+   1. Re-index changed records upon upload (default is true)
+   2. Select source folder
+   3. Change XTF Login Credentials - button that opens the XTF popup window
+
+The function will write the options selected to the defaults.json file.
+
+#### open_file()
+##### Parameters
+1. filepath - a filepath as input
+
+This function takes a filepath and opens the folder according to whichever Operating system the user is using including
+Windows, Mac, and Linux.
+
+#### fetch_local_files()
+##### Parameters
+1. local_file_dir - the local file directory path used to determine what file to use for uploading to XTF
+2. select_files - a list of files to be uploaded to XTF
+
+This function creates a list of the files to be uploaded to XTF, as written by Todd Birchard in his article
+'SSH & SCP in Python with Paramiko', https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
+#### if __name__ == "__main__"
+main checks for directories in the current directory the GUI or .exe is located. If one of the folders is not found,
+it runs the setup.py file. It also tries to open the defaults.json file and load it. If it does not work, it will
+run either the xtf `set_default_file_xtf()` or non-xtf `set_default_file()` setup.py functions. It will proceed to
+run the `run_gui()` function with the json_data loaded from defaults.json.
+
 ### as_export.py
 This script searches the ArchivesSpace database for a user-input resource identifier and 
 exports an EAD.xml file of the resource if found. There are 2 functions in the script.
@@ -185,7 +512,7 @@ The script executes a try, except clause searching for the existance of a folder
 source_eads. If it does not find the folder, it will generate it at the same level as
 the script.
 #### fetch_results()
-##### Required Parameters:
+##### Parameters:
 1. input_id - accepts 1 resource identifier at a time (str)
 2. as_username - (str)
 3. as_password - (str)
@@ -320,11 +647,3 @@ is how those specifications are passed.
 to keep the exports that come from as_export.py, this parameter will prevent the
 function from deleting those files in source_eads. NOT SURE is this is how I want it
 to be designed.
-### xtf_upload.py
-This script comes mostly from Todd Birchard's blog post found here:
-https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
-
-It allows for a connection to XTF website using the the paramiko package. While the
-blog post connects via SSH, this program connects via user login credentials. This 
-substitutes SSH key verification in the function `connect_remote()` for username
-and password.

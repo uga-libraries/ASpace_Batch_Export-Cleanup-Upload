@@ -14,3 +14,6 @@ ASpace.spec
 ASpace_Batching.spec
 dist
 build
+setup_script-001.iss
+setup_script-002.iss
+Output
