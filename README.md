@@ -73,7 +73,7 @@ to the default directory or one specified by the user.
     they want the records saved in.
     2. Open Output - open the folder where MARCXML files are being exported to.
 
-###Container Labels Screen
+### Container Labels Screen
 On the top right contains 4 radio buttons where users can select
 what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
 repository they would like to export from. The default is Search Across Repositories, but you can save a different
@@ -90,7 +90,7 @@ to the default directory or one specified by the user.
     2. Choose Output Folder: - Choose the output folder where you would like container labels to be exported
     to.
  
-###PDF Screen
+### PDF Screen
 !WARNING! - This feature is only compatible with ArchivesSpace version 2.8.0 or greater. The program will
 tell you what version you are running on the WARNING label in this screen.
 
