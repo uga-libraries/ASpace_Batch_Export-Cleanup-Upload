@@ -128,7 +128,7 @@ or 42
 ## Code Structure
 ### as_xtf_GUI.py
 This file acts as the Graphics User Interface (GUI) for the program. It uses 
-PySimpleGUI and its dependencies. There are _5_ functions in the program.
+PySimpleGUI and its dependencies. There are _14_ functions in the program.
 #### run_gui()
 There's a lot to this function, so get ready for a wild and long ride.... This function 
 handles the GUI operation as outlined by PySimpleGUI's guidelines. There are 2 components
