@@ -68,53 +68,53 @@ def run_gui(defaults):
                  ['About']
                  ]
                 ]
-    ead_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_EAD_"),
+    ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_"),
                    sg.Text("* The program may become unresponsive")],
-                  [sg.Text("Options", font=("Roboto", 11))],
-                  [sg.Button("EAD Export Options", key="_EAD_OPTIONS_", ),
-                   sg.Button("Cleanup Options", key="Change Cleanup Defaults")],
-                  [sg.Text("Output", font=("Roboto", 11)),
-                   sg.Text(" " * 125)],
-                  [sg.Button(button_text="Open Cleaned EAD Folder", key="_OPEN_CLEAN_B_"),
-                   sg.Button(button_text="Open Raw ASpace Exports", key="_OPEN_RAW_EXPORTS_")]
+                  [sg.Text("Options", font=("Roboto", 13)),
+                   sg.Text(" " * 123)],
+                  [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_", ),
+                   sg.Button(" Cleanup Options ", key="Change Cleanup Defaults")],
+                  [sg.Text("Output", font=("Roboto", 12))],
+                  [sg.Button(button_text=" Open Cleaned EAD Folder ", key="_OPEN_CLEAN_B_"),
+                   sg.Button(button_text=" Open Raw ASpace Exports ", key="_OPEN_RAW_EXPORTS_")]
                   ]
-    xtf_layout = [[sg.Button(button_text="Upload Files", key="_UPLOAD_"),
+    xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_"),
                    sg.Text(" " * 2),
-                   sg.Button(button_text="Index Changed Records", key="_INDEX_"),
+                   sg.Button(button_text=" Index Changed Records ", key="_INDEX_"),
                    sg.Text("* The program may become unresponsive")],
-                  [sg.Text("Options", font=("Roboto", 11))],
-                  [sg.Button(button_text="XTF Options", key="_XTF_OPTIONS_")],
-                  [sg.Text(" " * 140)]
+                  [sg.Text("Options", font=("Roboto", 13)),
+                   sg.Text(" " * 123)],
+                  [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_")]
                   ]
-    marc_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_MARCXML_"),
-                    sg.Text("* The program may become unresponsive")],
-                   [sg.Text("Options", font=("Roboto", 11))],
-                   [sg.Button("MARCXML Export Options", key="_MARCXML_OPTIONS_")],
-                   [sg.Button(button_text="Open Output", key="_OPEN_MARC_DEST_")],
+    marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_"),
+                    sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
+                   [sg.Text("Options", font=("Roboto", 13))],
+                   [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_")],
+                   [sg.Button(button_text=" Open Output ", key="_OPEN_MARC_DEST_")],
                    [sg.Text(" " * 140)]
                    ]
-    contlabel_layout = [[sg.Button(button_text="EXPORT", key="_EXPORT_LABEL_"),
+    contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_"),
                          sg.Text("* The program may become unresponsive")],
-                        [sg.Text("Options", font=("Roboto", 11))],
-                        [sg.Button(button_text="Open Output", key="_OPEN_LABEL_DEST_")],
-                        [sg.FolderBrowse("Choose Output Folder:", key="_OUTPUT_DIR_LABEL_",
+                        [sg.Text(" Options ", font=("Roboto", 12))],
+                        [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_")],
+                        [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
                                          initial_folder=defaults["labels_export_default"]),
                          sg.InputText(defaults["labels_export_default"], key="_OUTPUT_DIR_LABEL_INPUT_",
                                       enable_events=True)],
                         [sg.Text(" " * 140)]
                         ]
-    pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 16), text_color="Red"),
+    pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red"),
                    sg.Text("Compatible with ArchivesSpace version 2.8.0 and above\n"
                            "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 12))],
-                  [sg.Button(button_text="EXPORT", key="_EXPORT_PDF_"),
+                  [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_"),
                    sg.Text("* The program may become unresponsive")],
-                  [sg.Text("Options", font=("Roboto", 11)),
+                  [sg.Text("Options", font=("Roboto", 12)),
                    sg.Text(" " * 125)],
-                  [sg.Button("PDF Export Options", key="_PDF_OPTIONS_"),
-                   sg.Button(button_text="Open Output", key="_OPEN_PDF_DEST_")]
+                  [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_"),
+                   sg.Button(button_text=" Open Output ", key="_OPEN_PDF_DEST_")]
                   ]
     simple_layout_col1 = [[sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12))],
-                          [sg.Multiline(key="resource_id_input", size=(35, 47), focus=True)]
+                          [sg.Multiline(key="resource_id_input", size=(35, 44), focus=True)]
                           ]
     simple_layout_col2 = [[sg.Text("Choose your export option:", font=("Roboto", 12))],
                           [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
@@ -124,16 +124,16 @@ def run_gui(defaults):
                           [sg.Text("Choose your repository:", font=("Roboto", 12))],
                           [sg.DropDown([repo for repo in repositories.keys()], readonly=True,
                                        default_value=defaults["repo_default"]["_REPO_NAME_"], key="_REPO_SELECT_",
-                                       font=("Roboto", 11))],
-                          [sg.Button("Save Repository as Default", key="_REPO_DEFAULT_")],
-                          [sg.Frame("Export EAD", ead_layout, font=("Roboto", 14), key="_EAD_LAYOUT_", visible=True),
-                           sg.Frame("Export MARCXML", marc_layout, font=("Roboto", 14), key="_MARC_LAYOUT_",
+                                       font=("Roboto", 11)),
+                           sg.Button(" SAVE ", key="_REPO_DEFAULT_")],
+                          [sg.Frame("Export EAD", ead_layout, font=("Roboto", 15), key="_EAD_LAYOUT_", visible=True),
+                           sg.Frame("Export MARCXML", marc_layout, font=("Roboto", 15), key="_MARC_LAYOUT_",
                                     visible=False),
-                           sg.Frame("Export Container Labels", contlabel_layout, font=("Roboto", 14),
+                           sg.Frame("Export Container Labels", contlabel_layout, font=("Roboto", 15),
                                     key="_LABEL_LAYOUT_",
                                     visible=False),
-                           sg.Frame("Export PDF", pdf_layout, font=("Roboto", 14), key="_PDF_LAYOUT_", visible=False)],
-                          [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 14), key="_XTF_LAYOUT_",
+                           sg.Frame("Export PDF", pdf_layout, font=("Roboto", 15), key="_PDF_LAYOUT_", visible=False)],
+                          [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 15), key="_XTF_LAYOUT_",
                                     visible=True)],
                           [sg.Text("Output Terminal:", font=("Roboto", 12))],
                           [sg.Output(size=(80, 18), key="_output_")]
@@ -526,15 +526,17 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 print(resource_export.result + "\n")
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
+                        print("Cleaning up EAD record...", end='', flush=True)
                         results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                      defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                      keep_raw_exports=True)
+                        print("Done")
                     else:
-                        print("Cleaning up EAD record...\n")
+                        print("Cleaning up EAD record...", end='', flush=True)
                         results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
-                                                     defaults["ead_export_default"]["_OUTPUT_DIR_"])  # BREAKS HERE
-                    for result in results:
-                        print(result)
+                                                     defaults["ead_export_default"]["_OUTPUT_DIR_"])
+                        print("Done")
+                    print(results)
             else:
                 print(resource_export.error + "\n")
         else:

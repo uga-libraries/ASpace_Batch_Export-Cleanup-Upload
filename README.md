@@ -15,7 +15,7 @@ path to re-index new and/or changed files.
 ## Process
 This is a walkthrough of the program and how it functions.
 
-1. It takes resource identifiers seperated by new lines or commas from ArchivesSpace as inputs, searches
+1. It takes resource identifiers separated by new lines or commas from ArchivesSpace as inputs, searches
 the ArchivesSpace database, exports EAD, MARCXML, Container Labels, or PDF files for the resources
 specified, cleans the EAD.xml files, and saves them locally.
 2. For XTF users, EAD.xml or .pdf files as selected by the user are uploaded to the 
@@ -29,14 +29,14 @@ API URL.
 Path (where the EAD files are stored).
 ### EAD Screen
 On the top right contains 4 radio buttons where users can select
-what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+what export option they would like to use. The default is set to EAD. Additionally, a user must select which 
 repository they would like to export from. The default is Search Across Repositories, but you can save a different
 repository clicking on the "Save Repository as Default" button. 
 
 
 There are 3 sections of options:
 1. Export - When a user inputs a resource identifier in the multiline text import 
-(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+(Large Box #1) listing them in either newlines or separated by commas, this button will search the 
 ArchivesSpace database for resource identifiers that match the inputs. It will then take those it found and
  run them through a cleanup script, if set by EAD Export Options, and save them to a local folder called 
  clean_eads by default.
@@ -58,14 +58,14 @@ ArchivesSpace database for resource identifiers that match the inputs. It will t
     folder in the EAD Export Options
 ### MARCXML Screen
 On the top right contains 4 radio buttons where users can select
-what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+what export option they would like to use. The default is set to EAD. Additionally, a user must select which 
 repository they would like to export from. The default is Search Across Repositories, but you can save a different
 repository clicking on the "Save Repository as Default" button.
 
 
 There are 2 options:
 1. EXPORT - When a user inputs a resource identifier in the multiline text import 
-(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+(Large Box #1) listing them in either newlines or separated by commas, this button will search the 
 ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
 to the default directory or one specified by the user.
 2. Options:
@@ -75,14 +75,14 @@ to the default directory or one specified by the user.
 
 ### Container Labels Screen
 On the top right contains 4 radio buttons where users can select
-what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+what export option they would like to use. The default is set to EAD. Additionally, a user must select which 
 repository they would like to export from. The default is Search Across Repositories, but you can save a different
 repository clicking on the "Save Repository as Default" button.
 
 
 There are 2 options:
 1. EXPORT - When a user inputs a resource identifier in the multiline text import 
-(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+(Large Box #1) listing them in either newlines or separated by commas, this button will search the 
 ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
 to the default directory or one specified by the user.
 2. Options:
@@ -96,14 +96,14 @@ tell you what version you are running on the WARNING label in this screen.
 
 
 On the top right contains 4 radio buttons where users can select
-what export option they would like to use. The default is set to EAD. Addtionally, a user must select which 
+what export option they would like to use. The default is set to EAD. Additionally, a user must select which 
 repository they would like to export from. The default is Search Across Repositories, but you can save a different
 repository clicking on the "Save Repository as Default" button.
 
 
 There are 2 options:
 1. EXPORT - When a user inputs a resource identifier in the multiline text import 
-(Large Box #1) listing them in either newlines or seperated by commas, this button will search the 
+(Large Box #1) listing them in either newlines or separated by commas, this button will search the 
 ArchivesSpace database for resource identifiers that match the inputs. It will return the files according
 to the default directory or one specified by the user.
 2. Options:
@@ -212,20 +212,22 @@ This will NOT do a clean index, but only indexing the any changed or new files a
 options
 #### get_aspace_log()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 ##### Returns
-1. as_username
-2. as_password
-3. as_api
-4. close_program
-5. client
-6. version
-7. repositories
+1. as_username (str)
+2. as_password (str)
+3. as_api (str)
+4. close_program (bool)
+5. client (ASnake.client object)
+6. version (str)
+7. repositories (dict)
 
 
 This function gets a user's ArchiveSpace credentials. There are 3 components
-to it, the setup code, correct_creds while loop, and the window_asplog_active while loop.
+to it, the setup code, correct_creds while loop, and the window_asplog_active while loop. It uses ASnake.client
+to authenticate and stay connected to ArchivesSpace. Documentation for ASnake can be found here: 
+https://archivesspace-labs.github.io/ArchivesSnake/html/index.html
 ##### Setup Code
     as_username = None # ArchivesSpace credentials to to be set later in the function
     as_password = None # ArchivesSpace credentials to to be set later in the function
@@ -237,7 +239,7 @@ to it, the setup code, correct_creds while loop, and the window_asplog_active wh
     close_program = False # If a user hits the X button, it passes that on to the 
     # run_gui() function which closes the program entirely.
 ##### while correct_creds is False
-Yes, I know it's weird. I need to change this. This while loop keeps the ArchivesSpace
+Yes, I know it's weird. This while loop keeps the ArchivesSpace
 login window open until a user fills in the correct credentials and sets `correct_creds`
 to True.
 
@@ -254,15 +256,15 @@ authenticate, a popup is generated saying the credentials are incorrect. The cyc
 until the credentials are correct, or the user exits out of the login window.
 #### get_xtf_log()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 ##### Returns
-1. xtf_username
-2. xtf_password
-3. xtf_host
-4. xtf_remote_path
-5. xtf_indexer_path
-6. close_program
+1. xtf_username (str) 
+2. xtf_password (str) 
+3. xtf_host (str)
+4. xtf_remote_path (str)
+5. xtf_indexer_path (str)
+6. close_program (bool)
 
 
 This function gets a user's XTF credentials. There are 3 components to it, the setup code,
@@ -275,8 +277,8 @@ correct_creds while loop, and window_xtflog_active while loop.
     xtf_indexer_path = None 
     window_xtflog_active = True # To help break out of the GUI while loop
     correct_creds = False # To help break from the login verification while loop
-    close_program = False # If a user hits the X button, it passes that on to the
-    # run_gui() function which closes the program entirely.
+    close_program = False # If a user hits the X button, it passes that on to the run_gui() function which closes the
+    program entirely.
 ##### while correct_creds is False
 This while loop keeps the ArchivesSpace login window open until a user fills in the correct
  credentials and sets `correct_creds` to True.
@@ -294,12 +296,12 @@ a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
 #### get_eads()
 ##### Parameters
-1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
-3. cleanup_options - a list of options a user wants to run against an EAD.xml file after export to clean the file
-4. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
-5. client - a client object from ASnake.client to allow to connect to the ASpace API
-6. values_simple - a list of values as entered with the `run_gui()` function
+1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. cleanup_options - (list) a list of options a user wants to run against an EAD.xml file after export to clean the file
+4. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
+5. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+6. values_simple - (list) a list of values as entered with the `run_gui()` function
 
 
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
@@ -324,7 +326,7 @@ wants to keep the raw ASpace EAD exports.
 
 #### get_ead_options()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -342,8 +344,8 @@ file will be kept on export.
 
 #### get_cleanup_defaults()
 ##### Parameters
-1. cleanup_defaults - a list of all the default values a user can select for cleaning an EAD.xml file
-2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. cleanup_defaults - (list) a list of all the default values a user can select for cleaning an EAD.xml file
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 This function opens a window in the GUI that allows a user to choose what operations they want to run in order to
 clean any exported EAD.xml files. These options include:
@@ -373,11 +375,11 @@ The function will write the options selected to the defaults.json file.
 
 #### get_marcxml()
 ##### Parameters
-1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
-3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
-4. client - a client object from ASnake.client to allow to connect to the ASpace API
-5. values_simple - a list of values as entered with the `run_gui()` function
+1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_marcxml()`.
@@ -399,7 +401,7 @@ the if-else statement will determine if `self.error` is not none and print the e
 
 #### get_marc_options()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -410,11 +412,11 @@ The function will write the options selected to the defaults.json file.
 
 #### get_pdfs()
 ##### Parameters
-1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
-3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
-4. client - a client object from ASnake.client to allow to connect to the ASpace API
-5. values_simple - a list of values as entered with the `run_gui()` function
+1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_pdf()`.
@@ -436,7 +438,7 @@ the if-else statement will determine if `self.error` is not none and print the e
 
 #### get_pdf_options()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -450,11 +452,11 @@ The function will write the options selected to the defaults.json file.
 
 #### get_contlabels()
 ##### Parameters
-1. input_ids - a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
-3. repositories - a dictionary of repositories as listed in the ArchivesSpace instance
-4. client - a client object from ASnake.client to allow to connect to the ASpace API
-5. values_simple - a list of values as entered with the `run_gui()` function
+1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
+4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_labels()`.
@@ -476,7 +478,7 @@ the if-else statement will determine if `self.error` is not none and print the e
 
 #### get_xtf_options()
 ##### Parameters
-1. defaults - a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
 
 This function allows a user to select what options they want when uploading and re-indexing records in XTF. These
 options include:
@@ -488,14 +490,14 @@ The function will write the options selected to the defaults.json file.
 
 #### open_file()
 ##### Parameters
-1. filepath - a filepath as input
+1. filepath - (str) a filepath as input
 
 This function takes a filepath and opens the folder according to whichever Operating system the user is using including
 Windows, Mac, and Linux.
 
 #### fetch_local_files()
 ##### Parameters
-1. local_file_dir - the local file directory path used to determine what file to use for uploading to XTF
+1. local_file_dir - (str) the local file directory path used to determine what file to use for uploading to XTF
 2. select_files - a list of files to be uploaded to XTF
 
 This function creates a list of the files to be uploaded to XTF, as written by Todd Birchard in his article
@@ -506,81 +508,87 @@ it runs the setup.py file. It also tries to open the defaults.json file and load
 run either the xtf `set_default_file_xtf()` or non-xtf `set_default_file()` setup.py functions. It will proceed to
 run the `run_gui()` function with the json_data loaded from defaults.json.
 
+
 ### as_export.py
-This script searches the ArchivesSpace database for a user-input resource identifier and 
-exports an EAD.xml file of the resource if found. There are 2 functions in the script.
+This script searches the ArchivesSpace database for a user-input resource identifier and can export 
+EAD.xml, MARCXML, Container Labels (.tsv), and PDF files of the resource if found.
 
-The script executes a try, except clause searching for the existance of a folder called
-source_eads. If it does not find the folder, it will generate it at the same level as
-the script.
+#### Class ASExport
+##### Parameters
+1. input_id - (str) a string value the user generated from the Resource Identifier box in the GUI
+2. repo_id - (int) an integer that contains the number for which a repository is assigned via the ArchivesSpace instance
+3. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+4. output_dir - (str) a string of a filepath containing the folder a user wants files to be exported to
+
+
+##### Instance Variables
+1. self.input_id - (str) a string value the user generated
+2. self.filename - (str) the name assigned to the exported file, takes input_id and removes any "/"s
+3. self.repo_id - (int) an integer that contains the number for which a repository is assigned via the ArchivesSpace 
+instance
+4. self.resource_id - (int) an integer that is the ArchivesSpace's assigned resource identifier found in the resource
+URI
+5. self.resource_repo - (int) an integer that is the ArchivesSpace's assigned respository identifier also found in a 
+resource's URI
+6. self.client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
+7. self.error - (str) a string who's value is None unless an error occurs and is then populated with a string detailing
+the error
+8. self.result - (str) a string who's value is none unless an operation completes or multiple results are returned and
+is then populated with a string detailing the result(s)
+9. self.filepath - (str) a string that is the filepath where records will be exported to
+
+
 #### fetch_results()
-##### Parameters:
-1. input_id - accepts 1 resource identifier at a time (str)
-2. as_username - (str)
-3. as_password - (str)
-4. as_api - (str)
-
-This function takes a resource indentifier as input by the user in the GUI and searches 
-ArchivesSpace for a resource that matches the identifier. If it matches with a resource,
-it then extracts the resource URI and the resource repository number and returns them. If
-an error occurs in any step of the process, a tuple is returned with None as the first
-return and a string detailing the error.
+This method searches ArchivesSpace for a resource that matches the self.input_id. If it matches with a resource,
+it then extracts the resource identifier and the resource repository number from the URI and assigns them to 
+self.resource_id and self.resource_repo. If an error occurs, self.error will be populated with a string containing
+information about the error.
 
 The steps for the this function are as follows:
-1. Assign `resource_uri` and `resource_repo` to empty strings.
-2. Try, Except to initiate an ASnake client. ArchivesSnake is a package to help work with
-the ArchivesSpace API. Assign the client as variable `client`.
-3. If the input contains either a - or . in it, split the id and add each part to the list
- `id_lines`.
- 4. Perform a search using client.get (similar to request.get).
-    1. In the ArchivesSpace API, we use the endpoint /search to search across the entire 
-    instance. https://archivesspace.github.io/archivesspace/api/#search-this-archive
-    2. Parameters:
-        1. `"q": 'four_part_id:' + input_id` - q is the optional search query (str), we 
-        include "four_part_id:" as that narrows our search to looking for the complete
-        resource identifier. We add the input_id as a whole.
-        2. `"page": 1` - this is the only option so far, it will return 10 results if 
-        the user input returns multiple results. I need to change this to `get_paged`
-        and account for returning more than 10 results. So far, I haven't returned more
-        than 10.
-        3. `"type": ['resource']` - this specifies that we are looking for resources only
- 5. We check the status code of the value of `search_resources`. If it is not 200, 
- return None and a string with an error message to be output to the terminal.
- 6. Take the value of search_resources, load the it as a json string, extract the content
-  and decode it.
- 7. If there are results, begin counting the results and set matching and non-matching
- results as dictionaries with URI's as keys and the resource title as their values.
- 8. `for id_num in total_id_lines:` - the following is a little confusing, but the basic
- summary is we want to matchthe resource identifier with what the user input. If the 
- identifier is more than 1 part, we are checking that the splits we did above on the 
- user input match the number of id parts that exist in the json data for the resource.
- If the above is true, get the URI for the resource, split it on "/"'s and take the 
- last number as the value of `resource_uri` and the 3rd part [2] index as the 
- `resource_repo`
- 9. Any results that fail this are put in the `non_match_results` dictionary and None is
- returned along with an error message detailing what resources did show up in the search.
+1. Remove all non-alphanumeric characters using `id_combined_regex.sub()`
+2. Check if self.repo_id is None, if not, search using that specific repository with this API endpoint:
+'/repositories/{}/search'. If None, search across repositories with this API endpoint: '/search'. This was made because 
+only system administrators can search across repositories. All other users have to have the right permissions set
+within their repository to use the program.
+   1. Method - get_paged() More documentation on this can be found in the ASnake
+   readme: https://github.com/archivesspace-labs/ArchivesSnake#low-level-api
+   2. Parameters:
+       1. `"q": 'four_part_id:' + input_id` - q is the optional search query (str), we 
+       include "four_part_id:" as that narrows our search to looking for the complete
+       resource identifier. We add the input_id as a whole.
+       2. `"type": ['resource']` - this specifies that we are looking for resources only
+3. Go through all that is returned and append it to the list `search_results`. This happens because of ASnake's
+get_paged() function, which returns a list of JSON results.
+4. If there are no results in `search_results`, generate an error in self.error. Else:
+##### for result in search_results
+1. Begin counting the results and set `match_results` and `non-match_results`
+as dictionaries with URI's as keys and the resource title as their values.
+8. `for key, value in json_info.items()` - the following is a little confusing, but the basic
+summary is we want to match the resource identifier as listed in ArchivesSpace with the user input (self.input_id). If 
+the identifier is more than 1 part, we use regex to check all of the fields in the json record for id_0, id_1, etc. and 
+grab the values found in those fields and combine them into a string called `combined_aspace_id`. Then we again remove
+all non-alphanumeric characters. If the user input and combined ArchivesSpace identifier match, get the URI for the 
+resource, split it on "/"'s and take the last number as the value of `resource_uri` and the 3rd part [2] index as the 
+`resource_repo`
+9. Any results that fail this are put in the `non_match_results` dictionary.
+10. Check if there are any results in `non_match_results` and not in `match_results` and return a value in self.error.
+11. Check if ther are any results in `non_match_results` and `match_results` and return the non_matched results in 
+self.results
 #### export_ead()
 ##### Parameters
-1. input_id - accepts 1 resource identifier at a time (str)
-2. resource_repo - resource repository number (int)
-3. resource_uri - resource URI (int). Really this is the identifier ArchivesSpace uses
-4. as_username - (str)
-5. as_password - (str)
-6. as_api - (str)
-7. include_unpublished=False - Optional parameter - need to integrate
-8. include_daos=True - Optional parameter - need to integrate
-9. numbered_cs=True - Optional parameter - need to integrate
-10. print_pdf=False - Optional parameter - need to integrate
-11. ead3=False - Optional parameter - need to integrate
+1. include_unpublished=False - (bool) Optional parameter
+2. include_daos=True - (bool) Optional parameter
+3. numbered_cs=True - (bool) Optional parameter
+4. ead3=False - (bool) Optional parameter
 
 This function handles exporting EAD.xml files from ArchivesSpace. The steps for this 
 function are as follows:
-1. Try, Except to initiate an ASnake client. ArchivesSnake is a package to help work with
-the ArchivesSpace API. Assign the client as variable `client`.
-2. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
+
+
+1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
 export an EAD.xml file of a specific resource record.
     1. In the ArchivesSpace API, we use the endpoint 
-    repositories/{}/resource_descriptions/{}.xml? as documented here:
+    'repositories/{}/resource_descriptions/{}.xml' as documented here:
      https://archivesspace.github.io/archivesspace/api/#get-an-ead-representation-of-a-resource
     2. Parameters:
         1. `'include_unpublished': False` - doesn't include unpublished portions of the resource
@@ -588,11 +596,76 @@ export an EAD.xml file of a specific resource record.
         3. `'numbered_cs': True` - include numbered container levels
         4. `'print_pdf': False` - do not export resource as pdf 
         5. `'ead3': False` - do not use EAD3 schema, instead defaults to EAD2002
-3. `if request_ead.status_code == 200:` - check if request was successful
-    1. `if "/" in input_id:` - some resource identifiers contain backslashes. This messes
-    with assigning a filepath, so we swap / with _
-4. `with open(filepath, "wb") as local_file:` - write the file's content to the 
-source_eads folder and return the filepath and result string (" Done")
+2. `if request_ead.status_code == 200:` - check if request was successful
+    1. Assign .xml to the end of self.filepath
+3. `with open(filepath, "wb") as local_file:` - write the file's content to the 
+source_eads folder and return the filepath and result
+
+
+#### export_marcxml()
+##### Parameters
+1. include_unpublished=False - (bool) Optional parameter
+
+This function handles exporting MARCXML files from ArchivesSpace. The steps for this 
+function are as follows:
+
+
+1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
+export a MARC .xml file of a specific resource record.
+    1. In the ArchivesSpace API, we use the endpoint 
+    '/repositories/{}/resources/marc21/{}.xml' as documented here:
+     https://archivesspace.github.io/archivesspace/api/#get-a-marc-21-representation-of-a-resource
+    2. Parameters:
+        1. `'include_unpublished': False` - doesn't include unpublished portions of the resource
+2. `if request_ead.status_code == 200:` - check if request was successful
+    1. Assign .xml to the end of self.filepath
+3. `with open(filepath, "wb") as local_file:` - write the file's content to the 
+source_marcs folder and return the filepath and result
+
+
+#### export_pdf()
+##### Parameters
+1. include_unpublished=False - (bool) Optional parameter
+2. include_daos=True - (bool) Optional parameter
+3. numbered_cs=True - (bool) Optional parameter
+4. ead3=False - (bool) Optional parameter
+
+This function handles exporting PDF files from ArchivesSpace. NOTE: This will work in ArchivesSpace 2.8.0. Any earlier
+versions will not properly export! The steps for this function are as follows:
+
+
+1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
+export a .pdf file of a specific resource record.
+    1. In the ArchivesSpace API, we use the endpoint 
+    'repositories/{}/resource_descriptions/{}.pdf' as documented here:
+     https://archivesspace.github.io/archivesspace/api/#get-an-ead-representation-of-a-resource
+    2. Parameters:
+        1. `'include_unpublished': False` - doesn't include unpublished portions of the resource
+        2. `'include_daos': True` - include digital objects
+        3. `'numbered_cs': True` - include numbered container levels
+        4. `'print_pdf': False` - do not export resource as pdf 
+        5. `'ead3': False` - do not use EAD3 schema, instead defaults to EAD2002
+2. `if request_ead.status_code == 200:` - check if request was successful
+    1. Assign .pdf to the end of self.filepath
+3. `with open(filepath, "wb") as local_file:` - write the file's content to the 
+source_pdfs folder and return the filepath and result
+
+
+#### export_labels()
+This function handles exporting container label files from ArchivesSpace. The steps for this function are as follows:
+
+
+1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
+export a .tsv file of a specific resource record.
+    1. In the ArchivesSpace API, we use the endpoint 
+    'repositories/{}/resource_labels/{}.tsv' as documented here:
+     https://archivesspace.github.io/archivesspace/api/#get-a-tsv-list-of-printable-labels-for-a-resource
+2. `if request_ead.status_code == 200:` - check if request was successful
+    1. Assign .tsv to the end of self.filepath
+3. `with open(filepath, "wb") as local_file:` - write the file's content to the 
+source_labels folder and return the filepath and result
+
+
 ### cleanup.py
 This script runs a series of xml and string cleanup operations on an EAD.xml file. The
 function `cleanup_eads` iterates through all the files in the folder source_eads
@@ -603,6 +676,16 @@ clean_eads.
 The code begins with a for loop checking if the folders source_eads and clean_eads
 exist. If either do not exist, they are created there.
 #### Class EADRecord
+##### Parameters
+1. file_root - (lxml.Element object) an lxml.element root to be edited by different methods in the class
+
+##### Instance Variables
+1. self.root - (lxml.Element object) an lxml.element root to be edited by different methods in the class
+2. self.results - (str) a string that is filled with result information when methods are performed
+3. self.eadid - (str) a string that contains the EADID for a record
+4. self.daos - (bool) a boolean that determines whether there are digital objects in a record
+
+
 This class hosts 12 different methods, each designed to modify an EAD.xml file according
 to guidelines set by the Hargrett and Russell library for display on their XTF finding
 aid websites, as well as other measures to match some of Harvard's EAD schematron
@@ -627,10 +710,10 @@ a label attribute. It takes an appended barcode to the label and makes it the va
 of the physloc tag.
 8. `remote_at_leftovers()` - Finds any unitid element with a type that includes an 
 Archivists Toolkit unique identifier. Deletes that element.
-9. `count_xlinks()` - Counts every attribute that occurs in a `<dao>` element.
+9. `count_xlinks()` - Counts every attribute that occurs in a `<dao>` element. Removes `xlink:` prefixes in all 
+attributes.
 10. `clean_unused_ns()` - Removes any unused namespaces in the EAD.xml file.
-11. `clean_do_dec()` - Removes `xlink:` prefixes in all attributes. Replaces other
-namespaces not removed by `clean_unused_ns()` in the `<ead>` element with an empty
+11. `clean_do_dec()` - Replaces other namespaces not removed by `clean_unused_ns()` in the `<ead>` element with an empty
 `<ead>` element.
 12. `clean_suite()` - Runs the above methods according to what the user specified
 in the custom_clean parameter. Will also add a doctype to the EAD.xml file and encode
