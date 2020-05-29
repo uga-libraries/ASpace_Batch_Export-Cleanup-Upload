@@ -133,7 +133,9 @@ PySimpleGUI and its dependencies. There are _14_ functions in the program.
 There's a lot to this function, so get ready for a wild and long ride.... This function 
 handles the GUI operation as outlined by PySimpleGUI's guidelines. There are 2 components
 to it, the setup code and the _while_ loop.
-##### Setup Code
+
+##### Steps
+###### Setup Code
 `sg.ChangeLookAndFeel()` changes the theme of the GUI (colors, button styles, etc.).
 `as_username`, `as_password`, `as_api`, `close_program_as`, `client`, `version`, `repositories`
 `cleanup_default` and `cleanup_options` store the options if a user wants to specify what 
@@ -146,7 +148,8 @@ multiline input for resource identifiers, the second defining the above export l
 `layout_simple` sets the layout for the GUI.
 `window_simple` sets the window for the main screen. Any variable with _window follows the
 same logic.
-##### while loop
+
+###### while loop
 The way the loop works is that the program "reads" the Window we made above in the setup code
 and returns events and values (`event_simple` and `values_simple`). If a user clicks a button
 with a specific key as outlined in the layout, that is acted upon under the following
@@ -210,6 +213,8 @@ an indexing of the most recent files to be uploaded
 This will NOT do a clean index, but only indexing the any changed or new files added to the XTF remote path
 28. `if event_simple == "_XTF_OPTIONS_":` This button opens a popup letting the user modify XTF upload and indexing
 options
+
+
 #### get_aspace_log()
 ##### Parameters
 1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
@@ -223,12 +228,13 @@ options
 6. version (str)
 7. repositories (dict)
 
-
+##### Steps
 This function gets a user's ArchiveSpace credentials. There are 3 components
 to it, the setup code, correct_creds while loop, and the window_asplog_active while loop. It uses ASnake.client
 to authenticate and stay connected to ArchivesSpace. Documentation for ASnake can be found here: 
 https://archivesspace-labs.github.io/ArchivesSnake/html/index.html
-##### Setup Code
+
+###### Setup Code
     as_username = None # ArchivesSpace credentials to to be set later in the function
     as_password = None # ArchivesSpace credentials to to be set later in the function
     as_api = None
@@ -238,13 +244,15 @@ https://archivesspace-labs.github.io/ArchivesSnake/html/index.html
     correct_creds = False # To help break out of the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the 
     # run_gui() function which closes the program entirely.
-##### while correct_creds is False
+
+###### while correct_creds is False
 Yes, I know it's weird. This while loop keeps the ArchivesSpace
 login window open until a user fills in the correct credentials and sets `correct_creds`
 to True.
 
 It sets the columns for the layout, the layout, and the window.
-##### while window_asplog_active is True
+
+###### while window_asplog_active is True
 Again, I know I could leave off the "is True" part. Just trying to be explicit. The way 
 the loop works is that the program "reads" the Window we made above in the setup code and 
 returns events and values (event_log and values_log). The window takes the inputs 
@@ -254,6 +262,8 @@ The try, except statement tries to authorize the user using the ArchivesSpace AS
 client, which is a package for handling API requests to ArchivesSpace. If it fails to 
 authenticate, a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
+
+
 #### get_xtf_log()
 ##### Parameters
 1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
@@ -266,10 +276,10 @@ until the credentials are correct, or the user exits out of the login window.
 5. xtf_indexer_path (str)
 6. close_program (bool)
 
-
+##### Steps
 This function gets a user's XTF credentials. There are 3 components to it, the setup code,
 correct_creds while loop, and window_xtflog_active while loop.
-##### Setup Code
+###### Setup Code
     xtf_username = None # XTF credentials to to be set later in the function
     xtf_password = None # XTF credentials to to be set later in the function
     xtf_host = None
@@ -279,12 +289,14 @@ correct_creds while loop, and window_xtflog_active while loop.
     correct_creds = False # To help break from the login verification while loop
     close_program = False # If a user hits the X button, it passes that on to the run_gui() function which closes the
     program entirely.
-##### while correct_creds is False
+
+###### while correct_creds is False
 This while loop keeps the ArchivesSpace login window open until a user fills in the correct
  credentials and sets `correct_creds` to True.
 
 It sets the columns for the layout, the layout, and the window.
-##### while window_asplog_active is True
+
+###### while window_asplog_active is True
 The way the loop works is that the program "reads" the Window we made above in the setup 
 code and returns events and values (`event_xlog` and `values_xlog`). The window takes the 
 inputs provided by the user using `xtf_username = values_xlog["_XTF_UNAME_"]` for instance.
@@ -294,23 +306,26 @@ The try, except statement tries to authorize the user by checking the class vari
 in the function `connect_remote(self)` in xtf_upload.py. If it fails to authenticate, 
 a popup is generated saying the credentials are incorrect. The cycle continues
 until the credentials are correct, or the user exits out of the login window.
+
+
 #### get_eads()
 ##### Parameters
 1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 3. cleanup_options - (list) a list of options a user wants to run against an EAD.xml file after export to clean the file
 4. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
 5. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
 6. values_simple - (list) a list of values as entered with the `run_gui()` function
 
-
+##### Steps
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_ead()`.
 
 It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
 called `resources`.
 
-##### for input_id in resources:
+###### for input_id in resources:
 The for loop begins by iterating through each user input as created in the resources list above. 
 It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
 function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
@@ -324,9 +339,11 @@ if-else statement will determine if `self.error` is not none and print the error
 is detected, it will ask whether or not the user selected to run cleanup.py on the exported records and if the user
 wants to keep the raw ASpace EAD exports.
 
+
 #### get_ead_options()
 ##### Parameters
-1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -342,10 +359,12 @@ The function will write the options selected to the defaults.json file. Addition
 ASpace Exports and Clean EAD records on export are set to false - the result of which will mean no 
 file will be kept on export.
 
+
 #### get_cleanup_defaults()
 ##### Parameters
 1. cleanup_defaults - (list) a list of all the default values a user can select for cleaning an EAD.xml file
-2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 
 This function opens a window in the GUI that allows a user to choose what operations they want to run in order to
 clean any exported EAD.xml files. These options include:
@@ -373,21 +392,24 @@ clean any exported EAD.xml files. These options include:
 
 The function will write the options selected to the defaults.json file.
 
+
 #### get_marcxml()
 ##### Parameters
 1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
 4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
 5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
+##### Steps
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_marcxml()`.
 
 It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
 called `resources`.
 
-##### for input_id in resources:
+###### for input_id in resources:
 The for loop begins by iterating through each user input as created in the resources list above. 
 It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
 function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
@@ -399,9 +421,11 @@ are added to `self.result` and printed.
 For the singular result that matched, it is run against the class method `export_marcxml()`. If any errors are caught,
 the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
 
+
 #### get_marc_options()
 ##### Parameters
-1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -410,21 +434,24 @@ This function opens a window in the GUI that allows a user to choose specific ex
    
 The function will write the options selected to the defaults.json file.
 
+
 #### get_pdfs()
 ##### Parameters
 1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
 4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
 5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
+##### Steps
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_pdf()`.
 
 It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
 called `resources`.
 
-##### for input_id in resources:
+###### for input_id in resources:
 The for loop begins by iterating through each user input as created in the resources list above. 
 It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
 function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
@@ -436,9 +463,11 @@ are added to `self.result` and printed.
 For the singular result that matched, it is run against the class method `export_pdf()`. If any errors are caught,
 the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
 
+
 #### get_pdf_options()
 ##### Parameters
-1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 
 This function opens a window in the GUI that allows a user to choose specific export options. These options include:
    1. Include unpublished components (default is false)
@@ -450,21 +479,24 @@ This function opens a window in the GUI that allows a user to choose specific ex
    
 The function will write the options selected to the defaults.json file.
 
+
 #### get_contlabels()
 ##### Parameters
 1. input_ids - (list) a list of user inputs as gathered from the Resource Identifiers input box
-2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+2. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 3. repositories - (dict) a dictionary of repositories as listed in the ArchivesSpace instance
 4. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
 5. values_simple - (list) a list of values as entered with the `run_gui()` function
 
+##### Steps
 This function iterates through the user input in the Resource Identifier text box on the left side of the screen and
 sends them to as_export.py to `fetch_results()` and `export_labels()`.
 
 It first checks for commas or newlines in the Resource Identifier box and splits the input and adds it to a list
 called `resources`.
 
-##### for input_id in resources:
+###### for input_id in resources:
 The for loop begins by iterating through each user input as created in the resources list above. 
 It then initializes a class instance of ASExport from as_export.py and runs the `fetch_results()`
 function on each input. If an error occurs when fetching results, the class instance `self.error` will not be none
@@ -476,9 +508,11 @@ are added to `self.result` and printed.
 For the singular result that matched, it is run against the class method `export_labels()`. If any errors are caught,
 the if-else statement will determine if `self.error` is not none and print the error to the Output terminal.
 
+
 #### get_xtf_options()
 ##### Parameters
-1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as default
+1. defaults - (dict) a dictionary containing the data from defaults.json file, all data the user has specified as 
+default
 
 This function allows a user to select what options they want when uploading and re-indexing records in XTF. These
 options include:
@@ -488,12 +522,14 @@ options include:
 
 The function will write the options selected to the defaults.json file.
 
+
 #### open_file()
 ##### Parameters
 1. filepath - (str) a filepath as input
 
 This function takes a filepath and opens the folder according to whichever Operating system the user is using including
 Windows, Mac, and Linux.
+
 
 #### fetch_local_files()
 ##### Parameters
@@ -502,6 +538,8 @@ Windows, Mac, and Linux.
 
 This function creates a list of the files to be uploaded to XTF, as written by Todd Birchard in his article
 'SSH & SCP in Python with Paramiko', https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
+
+
 #### if __name__ == "__main__"
 main checks for directories in the current directory the GUI or .exe is located. If one of the folders is not found,
 it runs the setup.py file. It also tries to open the defaults.json file and load it. If it does not work, it will
@@ -520,7 +558,6 @@ EAD.xml, MARCXML, Container Labels (.tsv), and PDF files of the resource if foun
 3. client - (ASnake.client object) a client object from ASnake.client to allow to connect to the ASpace API
 4. output_dir - (str) a string of a filepath containing the folder a user wants files to be exported to
 
-
 ##### Instance Variables
 1. self.input_id - (str) a string value the user generated
 2. self.filename - (str) the name assigned to the exported file, takes input_id and removes any "/"s
@@ -537,14 +574,13 @@ the error
 is then populated with a string detailing the result(s)
 9. self.filepath - (str) a string that is the filepath where records will be exported to
 
-
 #### fetch_results()
 This method searches ArchivesSpace for a resource that matches the self.input_id. If it matches with a resource,
 it then extracts the resource identifier and the resource repository number from the URI and assigns them to 
 self.resource_id and self.resource_repo. If an error occurs, self.error will be populated with a string containing
 information about the error.
 
-The steps for the this function are as follows:
+##### Steps
 1. Remove all non-alphanumeric characters using `id_combined_regex.sub()`
 2. Check if self.repo_id is None, if not, search using that specific repository with this API endpoint:
 '/repositories/{}/search'. If None, search across repositories with this API endpoint: '/search'. This was made because 
@@ -574,6 +610,8 @@ resource, split it on "/"'s and take the last number as the value of `resource_u
 10. Check if there are any results in `non_match_results` and not in `match_results` and return a value in self.error.
 11. Check if ther are any results in `non_match_results` and `match_results` and return the non_matched results in 
 self.results
+
+
 #### export_ead()
 ##### Parameters
 1. include_unpublished=False - (bool) Optional parameter
@@ -584,7 +622,7 @@ self.results
 This function handles exporting EAD.xml files from ArchivesSpace. The steps for this 
 function are as follows:
 
-
+##### Steps
 1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
 export an EAD.xml file of a specific resource record.
     1. In the ArchivesSpace API, we use the endpoint 
@@ -609,7 +647,7 @@ source_eads folder and return the filepath and result
 This function handles exporting MARCXML files from ArchivesSpace. The steps for this 
 function are as follows:
 
-
+##### Steps
 1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
 export a MARC .xml file of a specific resource record.
     1. In the ArchivesSpace API, we use the endpoint 
@@ -633,7 +671,7 @@ source_marcs folder and return the filepath and result
 This function handles exporting PDF files from ArchivesSpace. NOTE: This will work in ArchivesSpace 2.8.0. Any earlier
 versions will not properly export! The steps for this function are as follows:
 
-
+##### Steps
 1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
 export a .pdf file of a specific resource record.
     1. In the ArchivesSpace API, we use the endpoint 
@@ -654,7 +692,7 @@ source_pdfs folder and return the filepath and result
 #### export_labels()
 This function handles exporting container label files from ArchivesSpace. The steps for this function are as follows:
 
-
+##### Steps
 1. Run a client.get (similar to request.get) to make a call to the ArchivesSpace API to
 export a .tsv file of a specific resource record.
     1. In the ArchivesSpace API, we use the endpoint 
@@ -675,6 +713,7 @@ clean_eads.
 
 The code begins with a for loop checking if the folders source_eads and clean_eads
 exist. If either do not exist, they are created there.
+
 #### Class EADRecord
 ##### Parameters
 1. file_root - (lxml.Element object) an lxml.element root to be edited by different methods in the class
@@ -684,7 +723,6 @@ exist. If either do not exist, they are created there.
 2. self.results - (str) a string that is filled with result information when methods are performed
 3. self.eadid - (str) a string that contains the EADID for a record
 4. self.daos - (bool) a boolean that determines whether there are digital objects in a record
-
 
 This class hosts 12 different methods, each designed to modify an EAD.xml file according
 to guidelines set by the Hargrett and Russell library for display on their XTF finding
@@ -718,17 +756,129 @@ attributes.
 12. `clean_suite()` - Runs the above methods according to what the user specified
 in the custom_clean parameter. Will also add a doctype to the EAD.xml file and encode
 it in UTF-8.
+
+
 #### cleanup_eads()
 This function iterates through all the files located in source_eads, uses the lxml
 package to parse the file into an lxml element, passes the lxml elemnent through the
 EADRecord class, runs the clean suite against the lxml element, then writes it
 to a file in our clean_eads folder.
+
+To learn more about the lxml package, see the documentation:
+https://lxml.de/
+
 ##### Parameters
-1. custom_clean (list)- A list of strings as passed from as_xtf_GUI.py that determines
+1. filepath - (str) a string of the filepath of the EAD record to be cleaned
+2. custom_clean - (list) a list of strings as passed from as_xtf_GUI.py that determines
 what methods will be run against the lxml element when running the `clean_suite()`
 method. The user can specify what they want cleaned in as_xtf_GUI.py, so this
 is how those specifications are passed.
-2. keep_raw_exports=False - Optional Parameter - if a user in as_xtf_GUI.py specifies
+3. output_dir [Optional] - (str) a string of the filepath of where the EAD record should be sent after cleaning, as 
+specified by the user ("clean_eads" is default)
+4. keep_raw_exports [Optional] - (bool) if a user in as_xtf_GUI.py specifies
 to keep the exports that come from as_export.py, this parameter will prevent the
-function from deleting those files in source_eads. NOT SURE is this is how I want it
-to be designed.
+function from deleting those files in source_eads.
+
+##### Returns
+1. results - (str) a string that contains the results from the export process
+
+##### Steps:
+1. `filename` (str) set the value as the filename for the record
+2. `fileparent` (str) set the value as the parent folder's path for the record
+3. Create an XML parser using lxml to remove redundant namespaces
+4. Generate an lxml compatible tree for the record using `etree.parse`, passing our filepath and custom parser as made
+above.
+5. Get the root of the tree using `tree.getroot()`, an lxml function
+6. Create an EADRecord instance, passing the root to the class EADRecord
+7. Run the method `clean_suite()`, passing the parameters for our EADRecord instance and `custom_clean`, our list of
+methods we want to use to clean the EAD record
+8. `clean_ead_file_root` is the path we want the cleaned EAD record to be delivered, passing our output directory and 
+filepath as `file`
+9. Open and write our EAD record to the `clean_ead_file_root`. This is writing a bytes object, what 'wb' stands for. 
+This is because lxml roots return bytes objects.
+10. Check if the user in the GUI indicated they want to keep the raw ArchivesSpace EAD export record. If not, delete
+all the records in the user specified source folder (source_eads by default)
+
+
+### setup.py
+This script creates the default folders for exporting records as well as defaults.json file. The folders generated
+by this script include: clean_eads, source_eads, source_labels, source_marcs, and source_pdfs. These folders are 
+created at the same level as the script that creates them, as well as defaults.json.
+
+The script contains _3_ functions:
+
+#### set_default_file()
+This function checks the defaults.json file to make sure it contains all the appropriate keys and if there is an error,
+creates a new defaults.json file and returns the data.
+##### Returns
+1. `json_data` - (dict) a dictionary containing all the data for default behavior for the GUI
+
+##### Steps:
+1. Run `create_default_folders()` function, which creates folders at the same level of the script
+2. establish filepaths for the folders generated by `create_default_folders()`
+3. `standard_defaults` - (list) a list containing all the keys that should be contained within defaults.json
+4. Under try:
+   1. Open defaults.json and load the data into `json_data`
+   2. Iterate through the keys and values and append all the keys to the list `defaults_keys`
+   3. If the value of the key is a dictionary, iterate through that dictionary and append the keys to `defaults_keys`. 
+   This is done because there are only 2 levels of dictionaries in defaults.json.
+   4. Iterate through the keys in `standard_defaults` and check to make sure the same keys exist in `defaults_keys`
+5. Under except:
+   1. Print an error message
+   2. Overwrite defaults.json and write the new data to the file.
+6. Open defaults.json again and load the the data into `json_data`
+
+
+#### set_default_file_xtf()
+This function checks the defaults.json file to make sure it contains all the appropriate keys and if there is an error,
+creates a new defaults.json file and returns the data. This includes information needed for XTF upload.
+##### Returns
+1. `json_data` - (dict) a dictionary containing all the data for default behavior for the GUI
+
+##### Steps:
+1. Run `create_default_folders()` function, which creates folders at the same level of the script
+2. establish filepaths for the folders generated by `create_default_folders()`
+3. `xtf_default` - (list) a list containing all the keys that should be contained within defaults.json for XTF version
+4. Under try:
+   1. Open defaults.json and load the data into `json_data`
+   2. Iterate through the keys and values and append all the keys to the list `defaults_keys`
+   3. If the value of the key is a dictionary, iterate through that dictionary and append the keys to `defaults_keys`. 
+   This is done because there are only 2 levels of dictionaries in defaults.json.
+   4. Iterate through the keys in `xtf_default` and check to make sure the same keys exist in `defaults_keys`
+5. Under except:
+   1. Print an error message
+   2. Overwrite defaults.json and write the new data to the file.
+6. Open defaults.json again and load the the data into `json_data`
+
+
+#### create_default_folders()
+This script checks for the existance of the folders clean_eads, source_eads, source_labels, source_marcs, and 
+source_pdfs within the current working directory. It loops and checks each folder individually and if not found 
+will create a new folder.
+
+
+### xtf_upload.py
+This script is derived mostly from Todd Birchard in his article 'SSH & SCP in Python with Paramiko', 
+https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
+
+There have only been a few modifications to his program, including setting the output for the function 
+`execute_commands()` to return an output string to print in as_XTF_GUI.py.
+
+
+### defaults.json
+This file sets the default behavior for the GUI. This includes:
+1. Setting the default folders for export and cleanup
+2. Setting the default options for users upon initial startup
+
+The GUI was designed to allow a user to save their preferred default behavior. These changes will be saved to 
+defaults.json and will be present when the user closes and re-opens the program.
+
+#### Resetting to Default
+Currently, if you want to reset your defaults, you must delete the file defaults.json and run as_XTF_GUI.py. This will
+initiate the setup.py script to run. Or, after deleting defaults.json, you can run setup.py seperately.
+
+Resetting to default from the GUI is an expected functionality to be included in future updates.
+
+## License Information
+This program is licensed under a Creative Commons Attribution Share Alike 4.0 International. Please see LICENSE.txt 
+for more information.
