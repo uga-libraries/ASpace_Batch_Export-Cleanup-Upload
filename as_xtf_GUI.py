@@ -16,16 +16,31 @@ import setup as setup
 
 
 def run_gui(defaults):
+    """
+    Handles the GUI operation as outlined by PySimpleGUI's guidelines.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#run_gui
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
     sg.ChangeLookAndFeel('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, version, repositories = get_aspace_log(defaults)
+    as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
+        get_aspace_log(defaults, xtf_checkbox=True)
     if close_program_as is True:
         sys.exit()
-    # # For XTF Users Only
-    xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-        get_xtf_log(defaults)
-    if close_program_xtf is True:
-        sys.exit()
-
+    # For XTF Users Only
+    rid_box_len = 36
+    if xtf_version is True:
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+            get_xtf_log(defaults)
+        if close_program_xtf is True:
+            sys.exit()
+        rid_box_len = 44
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
                         "_DEL_ALLNS_"]
@@ -37,18 +52,6 @@ def run_gui(defaults):
                   'Clear Raw ASpace Export Folder',
                   'Clear Cleaned EAD Folder',
                   '---',
-                  'Settings',
-                  ['Change ASpace Login Credentials',
-                   '---',
-                   'Change XTF Login Credentials',
-                   'Change XTF Options',
-                   '---',
-                   'Change EAD Cleanup Defaults',
-                   'Change EAD Export Options',
-                   '---',
-                   'Change MARCXML Export Options',
-                   '---',
-                   'Change PDF Export Options'],
                   'Exit', ]
                  ],
                 ['Edit',
@@ -65,9 +68,20 @@ def run_gui(defaults):
                   'Change PDF Export Options']
                  ],
                 ['Help',
-                 ['About']
+                 ['User Manual',
+                  'About']
                  ]
                 ]
+    if xtf_version is False:
+        for menu_option in menu_def:
+            if isinstance(menu_option, list):
+                for file_option in menu_option:
+                    if isinstance(file_option, list):
+                        print(file_option)
+                        if file_option[0] != "Open Cleaned EAD Folder" and file_option[0] != "User Manual":
+                            file_option.remove("---")
+                            file_option.remove("Change XTF Login Credentials")
+                            file_option.remove("Change XTF Options")
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_"),
                    sg.Text("* The program may become unresponsive")],
                   [sg.Text("Options", font=("Roboto", 13)),
@@ -95,7 +109,7 @@ def run_gui(defaults):
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_"),
                          sg.Text("* The program may become unresponsive")],
-                        [sg.Text(" Options ", font=("Roboto", 12))],
+                        [sg.Text("Options", font=("Roboto", 13))],
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_")],
                         [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
                                          initial_folder=defaults["labels_export_default"]),
@@ -105,16 +119,16 @@ def run_gui(defaults):
                         ]
     pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red"),
                    sg.Text("Compatible with ArchivesSpace version 2.8.0 and above\n"
-                           "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 12))],
+                           "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 13))],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_"),
                    sg.Text("* The program may become unresponsive")],
-                  [sg.Text("Options", font=("Roboto", 12)),
+                  [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 125)],
                   [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_"),
                    sg.Button(button_text=" Open Output ", key="_OPEN_PDF_DEST_")]
                   ]
     simple_layout_col1 = [[sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12))],
-                          [sg.Multiline(key="resource_id_input", size=(35, 44), focus=True)]
+                          [sg.Multiline(key="resource_id_input", size=(35, rid_box_len), focus=True)]
                           ]
     simple_layout_col2 = [[sg.Text("Choose your export option:", font=("Roboto", 12))],
                           [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
@@ -134,7 +148,7 @@ def run_gui(defaults):
                                     visible=False),
                            sg.Frame("Export PDF", pdf_layout, font=("Roboto", 15), key="_PDF_LAYOUT_", visible=False)],
                           [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 15), key="_XTF_LAYOUT_",
-                                    visible=True)],
+                                    visible=xtf_version)],
                           [sg.Text("Output Terminal:", font=("Roboto", 12))],
                           [sg.Output(size=(80, 18), key="_output_")]
                           ]
@@ -150,7 +164,7 @@ def run_gui(defaults):
         # ------------- CHANGE LAYOUTS SECTION -------------
         if event_simple == "_EXPORT_EAD_RAD_":
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=True)
-            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=True)
+            window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=xtf_version)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
@@ -277,7 +291,8 @@ def run_gui(defaults):
                 open_file(filepath_labels)
         # ------------- MENU OPTIONS SECTION -------------
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, version, repositories = get_aspace_log(defaults)
+            as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
+                get_aspace_log(defaults, xtf_checkbox=False)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
                 get_xtf_log(defaults)
@@ -287,7 +302,7 @@ def run_gui(defaults):
                 file_count = 0
                 for file in path:
                     file_count += 1
-                    full_path = str(Path.cwd().joinpath("clean_eads", file))
+                    full_path = str(Path.joinpath(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in clean_eads".format(str(file_count)))
             except Exception as e:
@@ -298,13 +313,13 @@ def run_gui(defaults):
                 file_count = 0
                 for file in path:
                     file_count += 1
-                    full_path = str(Path.cwd().joinpath("source_eads", file))
+                    full_path = str(Path.joinpath(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_eads".format(str(file_count)))
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
-            cleanup_defaults, cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
+            cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "About":
             window_about_active = True
             layout_about = [
@@ -324,6 +339,9 @@ def run_gui(defaults):
                 if event_about == "_ABOUT_OK_":
                     window_about.close()
                     window_about_active = False
+        if event_simple == "User Manual":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
+                            new=2)
         # ------------- UPLOAD TO XTF SECTION -------------
         if event_simple == "_UPLOAD_":
             window_upl_active = True
@@ -388,26 +406,55 @@ def run_gui(defaults):
     window_simple.close()
 
 
-def get_aspace_log(defaults):
+def get_aspace_log(defaults, xtf_checkbox=True):
+    """
+    Gets a user's ArchiveSpace credentials.
+
+    There are 3 components to it, the setup code, correct_creds while loop, and the window_asplog_active while loop. It
+    uses ASnake.client to authenticate and stay connected to ArchivesSpace. Documentation for ASnake can be found here:
+    https://archivesspace-labs.github.io/ArchivesSnake/html/index.html
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_aspace_log
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_checkbox (bool, optional): user input that is used to display XTF-related features in the GUI
+
+    Returns:
+        as_username (str): user's ArchivesSpace username
+        as_password (str): user's ArchivesSpace password
+        as_api (str): the ArchivesSpace API URL
+        close_program (bool): if a user exits the popup, this will return true and end run_gui()
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        version (str): the current version of ArchivesSpace
+        repositories (dict): contains info on all the repositories for an ArchivesSpace instance, including name as the
+        key and id # as it's value
+        xtf_version (bool): user indicated value whether they want to display xtf features in the GUI
+    """
     as_username = None
     as_password = None
     as_api = None
     client = None
+    asp_version = None
     repositories = {"Search Across Repositories (Sys Admin Only)": None}
+    xtf_version = True
     window_asplog_active = True
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        asplog_col1 = [[sg.Text("Enter your ArchivesSpace username:", font=("Roboto", 10))],
-                       [sg.Text("Enter your ArchivesSpace password:", font=("Roboto", 10))],
-                       [sg.Text("Enter your ArchivesSpace API URL:", font=("Roboto", 10))]]
+        asplog_col1 = [[sg.Text("Enter your ArchivesSpace username:", font=("Roboto", 12))],
+                       [sg.Text("Enter your ArchivesSpace password:", font=("Roboto", 12))],
+                       [sg.Text("Enter your ArchivesSpace API URL:", font=("Roboto", 12))]]
         asplog_col2 = [[sg.InputText(focus=True, key="_ASPACE_UNAME_")],
                        [sg.InputText(password_char='*', key="_ASPACE_PWORD_")],
                        [sg.InputText(defaults["as_api"], key="_ASPACE_API_")]]
         layout_asplog = [
             [sg.Column(asplog_col1, key="_ASPLOG_COL1_", visible=True),
              sg.Column(asplog_col2, key="_ASPLOG_COL2_", visible=True)],
-            [sg.Button("Save and Close", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
+            [sg.Checkbox("Use XTF Version", font=("Roboto", 12), key="_USE_XTF_",
+                         default=defaults["xtf_default"]["xtf_version"], visible=xtf_checkbox)],
+            [sg.Button(" Save and Close ", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
         ]
         window_login = sg.Window("ArchivesSpace Login Credentials", layout_asplog)
         while window_asplog_active is True:
@@ -416,6 +463,7 @@ def get_aspace_log(defaults):
                 as_username = values_log["_ASPACE_UNAME_"]
                 as_password = values_log["_ASPACE_PWORD_"]
                 as_api = values_log["_ASPACE_API_"]
+                xtf_version = values_log["_USE_XTF_"]
                 try:
                     client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
                     client.authorize()
@@ -423,6 +471,17 @@ def get_aspace_log(defaults):
                     correct_creds = True
                 except Exception as e:
                     sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" + str(e))
+                asp_version = client.get("/version").content.decode().split(" ")[1]
+                with open("defaults.json",
+                          "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
+                    defaults["as_api"] = as_api
+                    defaults["xtf_default"]["xtf_version"] = xtf_version
+                    json.dump(defaults, defaults_asp)
+                    defaults_asp.close()
+                repo_results = client.get('/repositories')
+                repo_results_dec = json.loads(repo_results.content.decode())
+                for result in repo_results_dec:
+                    repositories[result["name"]] = result["uri"][-1]
             if event_log is None or event_log == 'Cancel':
                 window_login.close()
                 window_asplog_active = False
@@ -430,20 +489,27 @@ def get_aspace_log(defaults):
                 close_program = True
                 break
         window_login.close()
-    version = client.get("/version").content.decode().split(" ")[1]
-    with open("defaults.json",
-              "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
-        defaults["as_api"] = as_api
-        json.dump(defaults, defaults_asp)
-        defaults_asp.close()
-    repo_results = client.get('/repositories')
-    repo_results_dec = json.loads(repo_results.content.decode())
-    for result in repo_results_dec:
-        repositories[result["name"]] = result["uri"][-1]
-    return as_username, as_password, as_api, close_program, client, version, repositories
+    return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
 
 
 def get_xtf_log(defaults):
+    """
+    Gets a user's XTF credentials.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_xtf_log
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_host (str): the host URL for the XTF instance.
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_indexer_path (str): the path (file) where the website indexer is located
+        close_program (bool): if a user exits the popup, this will return true and end run_gui()
+    """
     xtf_username = None
     xtf_password = None
     xtf_host = None
@@ -453,11 +519,11 @@ def get_xtf_log(defaults):
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 10))],
-                       [sg.Text("Enter your XTF password:", font=("Roboto", 10))],
-                       [sg.Text("Enter XTF Hostname:", font=("Roboto", 10))],
-                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 10))],
-                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 10))]]
+        xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 12))],
+                       [sg.Text("Enter your XTF password:", font=("Roboto", 12))],
+                       [sg.Text("Enter XTF Hostname:", font=("Roboto", 12))],
+                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 12))],
+                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 12))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
@@ -506,6 +572,27 @@ def get_xtf_log(defaults):
 
 
 def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple):
+    """
+    Iterates through the user input and sends them to as_export.py to fetch_results() and export_ead().
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_eads
+
+    Args:
+        input_ids (str): user inputs as gathered from the Resource Identifiers input box
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        These include the following:
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_",
+            "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+
+    Returns:
+        None
+    """
+
     if "," in input_ids:
         resources = [user_input.strip() for user_input in input_ids.split(",")]
     else:
@@ -587,6 +674,29 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
 
 
 def get_ead_options(defaults):
+    """
+    Write the options selected to the defaults.json file.
+
+    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+
+        1. Include unpublished components (default is false)
+        2. Include digital objects (default is true)
+        3. Use numbered container levels (default is true)
+        4. Convert to EAD3 (default is false)
+        5. Keep raw ASpace Exports (default is false)
+        6. Set raw ASpace output folder
+        7. Clean EAD records on export (default is true)
+        8. Set clean ASpace output folder
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_ead_options
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
     correct_opts = False
     while correct_opts is False:
         window_eadopt_active = True
@@ -621,7 +731,7 @@ def get_ead_options(defaults):
                 eadopt_window.close()
             if event_eadopt == "_SAVE_SETTINGS_EAD_":
                 if values_eadopt["_KEEP_RAW_"] is False and values_eadopt["_CLEAN_EADS_"] is False:
-                    sg.Popup("WARNING!\nOne of the checkboxes from the following need to be true:"
+                    sg.Popup("WARNING!\nOne of the checkboxes from the following need to be checked:"
                              "\n\nKeep raw ASpace Exports\nClean EAD records on export")
                 else:
                     with open("defaults.json", "w") as DEFAULT:
@@ -641,6 +751,46 @@ def get_ead_options(defaults):
 
 
 def get_cleanup_defaults(cleanup_defaults, defaults):
+    """
+    Write the options selected to the defaults.json file.
+
+    This function opens a window in the GUI that allows a user to choose what operations they want to run in order to
+    clean any exported EAD.xml files. These options include:
+
+        1. Add Resource ID as EADID - Takes the resource identifier as listed in ArchivesSpace and copies it to the
+        element in the EAD.xml file.
+        2. Delete Empty Notes - Searches for every <p> element in the EAD.xml file and checks if there is content in the
+        element. If not, it is deleted.
+        3. Remove Non-Alphanumerics and Empty Extents - Does 2 things. It deletes any empty <extent> elements and
+        removes non-alphanumeric characters from the beginning of extent elements. An example would be:
+        <extent>(13.5x2.5")</extent>. This would change to <extent>13.5x2.5"</extent>.
+        4. Add Certainty Attribute - Adds the attribute certainty="approximate" to all dates that include words such as
+        circa, ca. approximately, etc.
+        5. Add label='Mixed Materials - Adds the attribute label="Mixed Materials" to any container element that does
+        not already have a label attribute.
+        6. Delete Empty Containers - Searches an EAD.xml file for all container elements and deletes any that are empty.
+        7. Add Barcode as physloc Tag - This adds a physloc element to an element when a container has a label
+        attribute. It takes an appended barcode to the label and makes it the value of the physloc tag.
+        8. Remove Archivists' Toolkit IDs - Finds any unitid element with a type that includes an Archivists Toolkit
+        unique identifier. Deletes that element.
+        9. Remove xlink Prefixes from Digital Objects - Counts every attribute that occurs in a <dao> element.
+        10. Remove Unused Namespaces - Removes any unused namespaces in the EAD.xml file.
+        11. Remove All Namespaces - Replaces other namespaces not removed by clean_unused_ns() in the <ead> element
+        with an empty <ead> element.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_cleanup_defaults
+
+    Args:
+        cleanup_defaults (list): key strings listing all available cleanup options
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        These include the following:
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_",
+            "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+    """
     cleanup_options = []
     window_adv_active = True
     winadv_col1 = [[sg.Checkbox("Add Resource ID as EADID", key="_ADD_EADID_",
@@ -694,16 +844,32 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                 defaults_cleanup.close()
             # window_adv_active = False
             window_adv.close()
-            return cleanup_defaults, cleanup_options
+            return cleanup_options
         if event_adv is None:
             # window_adv_active = False
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
                                bool_val is True]
             window_adv.close()
-            return cleanup_defaults, cleanup_options
+            return cleanup_options
 
 
 def get_marcxml(input_ids, defaults, repositories, client, values_simple):
+    """
+    Iterates through user input and sends them to as_export.py to fetch_results() and export_marcxml().
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_marcxml
+
+    Args:
+        input_ids (str): user inputs as gathered from the Resource Identifiers input box
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+
+    Returns:
+        None
+    """
     if "," in input_ids:
         resources = [user_input.strip() for user_input in input_ids.split(",")]
     else:
@@ -725,6 +891,26 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple):
 
 
 def get_marc_options(defaults):
+    """
+    Write the options selected to the defaults.json file.
+
+    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+
+        1. Include unpublished components (default is false)
+        2. Open output folder on export (default is false)
+        3. Set output folder
+
+    The function will write the options selected to the defaults.json file.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_marc_options
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
     window_marc_active = True
     marc_layout = [[sg.Text("Choose MARCXML Export Options", font=("Roboto", 12))],
                    [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
@@ -754,6 +940,22 @@ def get_marc_options(defaults):
 
 
 def get_pdfs(input_ids, defaults, repositories, client, values_simple):
+    """
+    Iterates through the user input and sends them to as_export.py to fetch_results() and export_pdf().
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_pdfs
+
+    Args:
+        input_ids (str): user inputs as gathered from the Resource Identifiers input box
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+
+    Returns:
+        None
+    """
     if "," in input_ids:
         resources = [user_input.strip() for user_input in input_ids.split(",")]
     else:
@@ -777,6 +979,27 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple):
 
 
 def get_pdf_options(defaults):
+    """
+    Write the options selected to the defaults.json file.
+
+    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+
+        1. Include unpublished components (default is false)
+        2. Include digital objects (default is true)
+        3. Use numbered container levels (default is true)
+        4. Convert to EAD3 (default is false)
+        5. Open ASpace Exports on Export (default is false)
+        6. Set output folder
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_pdf_options
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
     window_pdf_active = True
     pdf_layout = [[sg.Text("PDF Export Options", font=("Roboto", 12))],
                   [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
@@ -815,6 +1038,22 @@ def get_pdf_options(defaults):
 
 
 def get_contlabels(input_ids, defaults, repositories, client, values_simple):
+    """
+    Iterates through the user input and sends them to as_export.py to fetch_results() and export_labels().
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_contlabels
+
+    Args:
+        input_ids (str): user inputs as gathered from the Resource Identifiers input box
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+
+    Returns:
+        None
+    """
     if "," in input_ids:
         resources = [user_input.strip() for user_input in input_ids.split(",")]
     else:
@@ -835,6 +1074,18 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
 
 
 def get_xtf_options(defaults):
+    """
+    Set options for uploading and re-indexing records to XTF.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_xtf_options
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
     xtf_option_active = True
     xtf_option_layout = [[sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
@@ -884,6 +1135,15 @@ def get_xtf_options(defaults):
 
 
 def open_file(filepath):
+    """
+    Takes a filepath and opens the folder according to Windows, Mac, or Linux.
+
+    Args:
+        filepath (str): the filepath of the folder/directory a user wants to open
+
+    Returns:
+        None
+    """
     if platform.system() == "Windows":
         os.startfile(filepath)
     elif platform.system() == "Darwin":
@@ -893,16 +1153,25 @@ def open_file(filepath):
 
 
 def fetch_local_files(local_file_dir, select_files):
-    """Upload local files to remote host.
+    """
+    Upload local files to remote host.
+
     SOURCE: Todd Birchard, 'SSH & SCP in Python with Paramiko',
-    https://hackersandslackers.com/automate-ssh-scp-python-paramiko/"""
+    https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
+
+    Args:
+        local_file_dir (str): the local file directory path used to determine what file to use for uploading to XTF
+        select_files (list): files to be uploaded to XTF
+
+    Returns:
+        None
+    """
     local_files = os.walk(local_file_dir)
     for root, dirs, files in local_files:
         return [str(Path(root, file)) for file in files if file in select_files]
 
 
-# sg.preview_all_look_and_feel_themes()
-if __name__ == "__main__":
+def setup_files():
     current_directory = os.getcwd()
     for root, directories, files in os.walk(current_directory):
         if "clean_eads" in directories:
@@ -923,9 +1192,11 @@ if __name__ == "__main__":
             DEFAULTS.close()
     except Exception as defaults_error:
         print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...")
-        # For non-XTF users, use this code:
-        # json_data = setup.set_default_file()
-        # For XTF users, use this code:
-        json_data = setup.set_default_file_xtf()
+        json_data = setup.set_defaults_file()
         print("Done")
-    run_gui(json_data)
+    return json_data
+
+
+# sg.preview_all_look_and_feel_themes()
+if __name__ == "__main__":
+    run_gui(setup_files())
