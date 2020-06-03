@@ -118,7 +118,7 @@ def run_gui(defaults):
                         [sg.Text(" " * 140)]
                         ]
     pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red"),
-                   sg.Text("Compatible with ArchivesSpace version 2.8.0 and above\n"
+                   sg.Text("Not compatible with ArchivesSpace versions 2.6 - 2.7.1\n"
                            "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 13))],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_"),
                    sg.Text("* The program may become unresponsive")],
