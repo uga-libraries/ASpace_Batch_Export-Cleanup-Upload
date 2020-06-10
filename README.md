@@ -2,7 +2,7 @@
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
 Additionally, it can run exported EAD records through a series of cleanup processes. Lastly, a user can
-download the XTF version to upload .xml or .pdf files to their instance of XTF.
+enable the XTF version to upload .xml or .pdf files to their instance of XTF.
 
 ![homepage-ead-003](https://user-images.githubusercontent.com/62658840/83671684-1cd20680-a5a3-11ea-96c5-6847d47547ab.gif)
 
