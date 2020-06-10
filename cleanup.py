@@ -358,16 +358,22 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         custom_clean (list): strings as passed from as_xtf_GUI.py that determines what methods will be run against the
         lxml element when running the clean_suite() method. The user can specify what they want cleaned in
         as_xtf_GUI.py, so this is how those specifications are passed.
-        output_dir (str, optional): filepath of where the EAD record should be sent after cleaning, as specified by the user ("clean_eads" is default)
-        keep_raw_exports (bool, optional): if a user in as_xtf_GUI.py specifies to keep the exports that come from
+        output_dir (str): filepath of where the EAD record should be sent after cleaning, as specified by the user ("clean_eads" is default)
+        keep_raw_exports (bool): if a user in as_xtf_GUI.py specifies to keep the exports that come from
         as_export.py, this parameter will prevent the function from deleting those files in source_eads.
 
     Returns:
         results (str): filled with result information when methods are performed
     """
     filename = Path(filepath).name  # get file name + extension
+    valid_err = ""
     parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
-    tree = etree.parse(filepath, parser=parser)
+    try:
+        tree = etree.parse(filepath, parser=parser)
+    except:
+        valid_err += "There was an error with the xml data. The file is saved in {}\n\n".format(Path(filepath).parent)
+        valid_err += "-" * 135
+        return False, valid_err
     ead_root = tree.getroot()
     ead = EADRecord(ead_root)
     clean_ead, results = ead.clean_suite(ead, custom_clean)
@@ -383,7 +389,7 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         os.remove(filepath)
     if keep_raw_exports is False:  # prevents program from rerunning cleanup on cleaned files
         os.remove(filepath)
-        return results
+        return True, results
     else:
         results += "\nKeeping raw ASpace exports in {}\n".format(output_dir)
-        return results
+        return True, results

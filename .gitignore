@@ -17,3 +17,5 @@ build
 setup_script-001.iss
 setup_script-002.iss
 Output
+invalid_eads
+harvard-schematron.xml

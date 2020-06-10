@@ -443,9 +443,9 @@ def get_aspace_log(defaults, xtf_checkbox=True):
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        asplog_col1 = [[sg.Text("Enter your ArchivesSpace username:", font=("Roboto", 12))],
-                       [sg.Text("Enter your ArchivesSpace password:", font=("Roboto", 12))],
-                       [sg.Text("Enter your ArchivesSpace API URL:", font=("Roboto", 12))]]
+        asplog_col1 = [[sg.Text("Enter your ArchivesSpace username:", font=("Roboto", 11))],
+                       [sg.Text("Enter your ArchivesSpace password:", font=("Roboto", 11))],
+                       [sg.Text("Enter your ArchivesSpace API URL:", font=("Roboto", 11))]]
         asplog_col2 = [[sg.InputText(focus=True, key="_ASPACE_UNAME_")],
                        [sg.InputText(password_char='*', key="_ASPACE_PWORD_")],
                        [sg.InputText(defaults["as_api"], key="_ASPACE_API_")]]
@@ -519,11 +519,11 @@ def get_xtf_log(defaults):
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 12))],
-                       [sg.Text("Enter your XTF password:", font=("Roboto", 12))],
-                       [sg.Text("Enter XTF Hostname:", font=("Roboto", 12))],
-                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 12))],
-                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 12))]]
+        xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 11))],
+                       [sg.Text("Enter your XTF password:", font=("Roboto", 11))],
+                       [sg.Text("Enter XTF Hostname:", font=("Roboto", 11))],
+                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 11))],
+                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 11))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
@@ -614,16 +614,23 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
                         print("Cleaning up EAD record...", end='', flush=True)
-                        results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
-                                                     defaults["ead_export_default"]["_OUTPUT_DIR_"],
-                                                     keep_raw_exports=True)
-                        print("Done")
+                        valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
+                                                            defaults["ead_export_default"]["_OUTPUT_DIR_"],
+                                                            keep_raw_exports=True)
+                        if valid:
+                            print("Done")
+                            print(results)
+                        else:
+                            print("XML validation error\n" + results)
                     else:
                         print("Cleaning up EAD record...", end='', flush=True)
-                        results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
-                                                     defaults["ead_export_default"]["_OUTPUT_DIR_"])
-                        print("Done")
-                    print(results)
+                        valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
+                                                            defaults["ead_export_default"]["_OUTPUT_DIR_"])
+                        if valid:
+                            print("Done")
+                            print(results)
+                        else:
+                            print("XML validation error\n" + results)
             else:
                 print(resource_export.error + "\n")
         else:
