@@ -66,8 +66,7 @@ ArchivesSpace API
 * [Inno](https://jrsoftware.org/isinfo.php) - Generated Windows installer
 
 ## Contributing
-See the CONTRIBUTING.md for more information. You can also visit the 
-[Contributing Wiki page](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Contributing).
+See the CONTRIBUTING.md for more information.
 
 ## Versioning
 Trying our best to adhere to [SemVer](https://semver.org/).
