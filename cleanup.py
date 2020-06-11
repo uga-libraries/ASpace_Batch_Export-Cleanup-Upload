@@ -363,6 +363,7 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         as_export.py, this parameter will prevent the function from deleting those files in source_eads.
 
     Returns:
+        (bool): if True, the XML was valid. If False, the XML was not valid.
         results (str): filled with result information when methods are performed
     """
     filename = Path(filepath).name  # get file name + extension
