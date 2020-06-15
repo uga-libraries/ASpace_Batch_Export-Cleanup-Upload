@@ -2,7 +2,7 @@
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
 Additionally, it can run exported EAD records through a series of cleanup processes. Lastly, a user can
-enable the XTF version to upload .xml or .pdf files to their instance of XTF.
+enable the XTF version to upload .xml or .pdf files to their instance of XTF, a finding aid website hosting platform.
 
 ![homepage-ead-003](https://user-images.githubusercontent.com/62658840/83671684-1cd20680-a5a3-11ea-96c5-6847d47547ab.gif)
 
@@ -12,6 +12,8 @@ enable the XTF version to upload .xml or .pdf files to their instance of XTF.
 1. Go to [Releases](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases) and download the 
 appropriate installer for your operating system.
 2. Follow the on-screen instructions.
+3. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
+through the program and its features can be found on the Wiki page.
 
 ### For Developers
 

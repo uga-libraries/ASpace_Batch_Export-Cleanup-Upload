@@ -367,12 +367,14 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         results (str): filled with result information when methods are performed
     """
     filename = Path(filepath).name  # get file name + extension
+    fileparent = Path(filepath).parent
     valid_err = ""
     parser = etree.XMLParser(remove_blank_text=True, ns_clean=True)  # clean up redundant namespace declarations
     try:
         tree = etree.parse(filepath, parser=parser)
-    except:
-        valid_err += "There was an error with the xml data. The file is saved in {}\n\n".format(Path(filepath).parent)
+    except Exception as e:
+        valid_err += "Error: {}\n\n" \
+                     "File saved in: {}\n".format(e, Path(filepath).parent)
         valid_err += "-" * 135
         return False, valid_err
     ead_root = tree.getroot()
@@ -383,14 +385,26 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
     with open(clean_ead_file_root, "wb") as CLEANED_EAD:
         CLEANED_EAD.write(clean_ead)
         CLEANED_EAD.close()
-    file_time = os.path.getmtime(filepath)
-    current_time = time.time()
-    delete_time = current_time - 5356800  # This is for 2 months.
-    if file_time <= delete_time:  # If a file is more than 2 months old, delete
-        os.remove(filepath)
+    for file in os.listdir(fileparent):
+        source_filepath = str(Path(fileparent, file))
+        file_time = os.path.getmtime(source_filepath)
+        current_time = time.time()
+        delete_time = current_time - 5356800  # This is for 2 months.
+        if file_time <= delete_time:  # If a file is more than 2 months old, delete
+            os.remove(filepath)
     if keep_raw_exports is False:  # prevents program from rerunning cleanup on cleaned files
         os.remove(filepath)
         return True, results
     else:
-        results += "\nKeeping raw ASpace exports in {}\n".format(output_dir)
+        results += "\nKeeping raw ASpace exports in {}\n".format(fileparent)
         return True, results
+    # filestem = Path(filepath).stem
+    # try:
+    #     xslt = etree.parse(str(Path(os.getcwd(), "to_csv.xsl")))
+    #     transform = etree.XSLT(xslt)
+    #     newdom = transform(tree)
+    #     csv_path = str(Path(os.getcwd(), '{}.tsv'.format(filestem)))
+    #     newdom.write_output(csv_path)
+    # except Exception as e:
+    #     error = e
+    #     print(e)

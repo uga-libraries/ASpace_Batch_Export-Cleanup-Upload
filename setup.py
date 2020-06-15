@@ -156,3 +156,9 @@ def create_default_folders():
         source_path = os.path.join(current_directory, folder)
         os.mkdir(source_path)
         print("{} folder created\n".format(folder))
+
+
+def reset_defaults():
+    if os.path.isfile(Path(os.getcwd(), "defaults.json")) is True:
+        os.remove(Path(os.getcwd(), "defaults.json"))
+    set_defaults_file()

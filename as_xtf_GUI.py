@@ -37,7 +37,7 @@ def run_gui(defaults):
     rid_box_len = 36
     if xtf_version is True:
         xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-            get_xtf_log(defaults)
+            get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
             sys.exit()
         rid_box_len = 44
@@ -46,13 +46,12 @@ def run_gui(defaults):
                         "_DEL_ALLNS_"]
     cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if bool_val is True]
     menu_def = [['File',
-                 ['Open Cleaned EAD Folder',
-                  'Open Raw ASpace Exports',
-                  '---',
-                  'Clear Raw ASpace Export Folder',
+                 ['Clear Raw ASpace Export Folder',
                   'Clear Cleaned EAD Folder',
                   '---',
-                  'Exit', ]
+                  'Reset Defaults',
+                  '---',
+                  'Exit']
                  ],
                 ['Edit',
                  ['Change ASpace Login Credentials',
@@ -77,8 +76,7 @@ def run_gui(defaults):
             if isinstance(menu_option, list):
                 for file_option in menu_option:
                     if isinstance(file_option, list):
-                        print(file_option)
-                        if file_option[0] != "Open Cleaned EAD Folder" and file_option[0] != "User Manual":
+                        if file_option[0] != "Clear Raw ASpace Export Folder" and file_option[0] != "User Manual":
                             file_option.remove("---")
                             file_option.remove("Change XTF Login Credentials")
                             file_option.remove("Change XTF Options")
@@ -109,7 +107,9 @@ def run_gui(defaults):
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_"),
                          sg.Text("* The program may become unresponsive")],
-                        [sg.Text("Options", font=("Roboto", 13))],
+                        [sg.Text("Options", font=("Roboto", 13)),
+                         sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                                 key="_CONTOPT_HELP_")],
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_")],
                         [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
                                          initial_folder=defaults["labels_export_default"]),
@@ -118,7 +118,7 @@ def run_gui(defaults):
                         [sg.Text(" " * 140)]
                         ]
     pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red"),
-                   sg.Text("Not compatible with ArchivesSpace versions 2.6 - 2.7.1\n"
+                   sg.Text("Not compatible with ArchivesSpace versions 2.6.0 - 2.7.1\n"
                            "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 13))],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_"),
                    sg.Text("* The program may become unresponsive")],
@@ -207,6 +207,8 @@ def run_gui(defaults):
                     get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple)
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
+        if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
+            cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_" or event_simple == 'Open Cleaned EAD Folder':
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("clean_eads"))
@@ -278,10 +280,13 @@ def run_gui(defaults):
                 else:
                     get_contlabels(input_ids, defaults, repositories, client, values_simple)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
-            with open("defaults.json", "w") as defaults_labels:
-                defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
-                json.dump(defaults, defaults_labels)
-                defaults_labels.close()
+            if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
+                sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+            else:
+                with open("defaults.json", "w") as defaults_labels:
+                    defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
+                    json.dump(defaults, defaults_labels)
+                    defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
             if not defaults["labels_export_default"]:
                 filepath_labels = str(Path.cwd().joinpath("source_labels"))
@@ -289,13 +294,11 @@ def run_gui(defaults):
             else:
                 filepath_labels = str(Path(defaults["labels_export_default"]))
                 open_file(filepath_labels)
+        if event_simple == "_CONTOPT_HELP_":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#container-labels-screen",
+                            new=2)
         # ------------- MENU OPTIONS SECTION -------------
-        if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
-                get_aspace_log(defaults, xtf_checkbox=False)
-        if event_simple == 'Change XTF Login Credentials':
-            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-                get_xtf_log(defaults)
+        # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Folder":
             path = os.listdir("clean_eads/")
             try:
@@ -318,13 +321,25 @@ def run_gui(defaults):
                 print("Deleted {} files in source_eads".format(str(file_count)))
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
-        if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
-            cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
+        if event_simple == "Reset Defaults":
+            reset_defaults = sg.PopupYesNo("You are about to reset your configurations.\n"
+                                           "Are you sure?")
+            if reset_defaults == "Yes":
+                setup.reset_defaults()
+        # ------------------- EDIT -------------------
+        if event_simple == "Change ASpace Login Credentials":
+            as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
+                get_aspace_log(defaults, xtf_checkbox=False)
+        if event_simple == 'Change XTF Login Credentials':
+            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+                get_xtf_log(defaults, login=False)
+        # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
+            # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 0.4a1\n\n"
+                         "Version: 0.6.2\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button("Check Github", key="_CHECK_GITHUB_")]
             ]
@@ -398,10 +413,10 @@ def run_gui(defaults):
             remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
             cmds_output = remote.execute_commands(
                 ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-            print("-" * 135)
             print(cmds_output)
+            print("-" * 135)
             remote.disconnect()
-        if event_simple == "_XTF_OPTIONS_":
+        if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
             get_xtf_options(defaults)
     window_simple.close()
 
@@ -439,22 +454,26 @@ def get_aspace_log(defaults, xtf_checkbox=True):
     asp_version = None
     repositories = {"Search Across Repositories (Sys Admin Only)": None}
     xtf_version = True
+    if xtf_checkbox is True:
+        save_button_asp = " Save and Continue "
+    else:
+        save_button_asp = " Save and Close "
     window_asplog_active = True
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        asplog_col1 = [[sg.Text("Enter your ArchivesSpace username:", font=("Roboto", 11))],
-                       [sg.Text("Enter your ArchivesSpace password:", font=("Roboto", 11))],
-                       [sg.Text("Enter your ArchivesSpace API URL:", font=("Roboto", 11))]]
+        asplog_col1 = [[sg.Text("ArchivesSpace username:", font=("Roboto", 11))],
+                       [sg.Text("ArchivesSpace password:", font=("Roboto", 11))],
+                       [sg.Text("ArchivesSpace API URL:", font=("Roboto", 11))]]
         asplog_col2 = [[sg.InputText(focus=True, key="_ASPACE_UNAME_")],
                        [sg.InputText(password_char='*', key="_ASPACE_PWORD_")],
                        [sg.InputText(defaults["as_api"], key="_ASPACE_API_")]]
         layout_asplog = [
             [sg.Column(asplog_col1, key="_ASPLOG_COL1_", visible=True),
              sg.Column(asplog_col2, key="_ASPLOG_COL2_", visible=True)],
-            [sg.Checkbox("Use XTF Version", font=("Roboto", 12), key="_USE_XTF_",
+            [sg.Checkbox("Use XTF features of this tool", font=("Roboto", 12), key="_USE_XTF_",
                          default=defaults["xtf_default"]["xtf_version"], visible=xtf_checkbox)],
-            [sg.Button(" Save and Close ", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
+            [sg.Button(save_button_asp, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
         ]
         window_login = sg.Window("ArchivesSpace Login Credentials", layout_asplog)
         while window_asplog_active is True:
@@ -470,7 +489,15 @@ def get_aspace_log(defaults, xtf_checkbox=True):
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
-                    sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" + str(e))
+                    error_message = ""
+                    if ":" in str(e):
+                        error_divided = str(e).split(":")
+                        for line in error_divided:
+                            error_message += line + "\n"
+                    else:
+                        error_message = str(e)
+                    sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
+                             error_message)
                 asp_version = client.get("/version").content.decode().split(" ")[1]
                 with open("defaults.json",
                           "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
@@ -492,7 +519,7 @@ def get_aspace_log(defaults, xtf_checkbox=True):
     return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
 
 
-def get_xtf_log(defaults):
+def get_xtf_log(defaults, login=True):
     """
     Gets a user's XTF credentials.
 
@@ -515,15 +542,19 @@ def get_xtf_log(defaults):
     xtf_host = None
     xtf_remote_path = None
     xtf_indexer_path = None
+    if login is True:
+        save_button_xtf = " Save and Continue "
+    else:
+        save_button_xtf = " Save and Close "
     window_xtflog_active = True
     correct_creds = False
     close_program = False
     while correct_creds is False:
-        xtflog_col1 = [[sg.Text("Enter your XTF username:", font=("Roboto", 11))],
-                       [sg.Text("Enter your XTF password:", font=("Roboto", 11))],
-                       [sg.Text("Enter XTF Hostname:", font=("Roboto", 11))],
-                       [sg.Text("Enter XTF Remote Path:", font=("Roboto", 11))],
-                       [sg.Text("Enter XTF Indexer Path:", font=("Roboto", 11))]]
+        xtflog_col1 = [[sg.Text("XTF username:", font=("Roboto", 11))],
+                       [sg.Text("XTF password:", font=("Roboto", 11))],
+                       [sg.Text("XTF Hostname:", font=("Roboto", 11))],
+                       [sg.Text("XTF Remote Path:", font=("Roboto", 11))],
+                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
@@ -531,10 +562,10 @@ def get_xtf_log(defaults):
                        [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")]]
         layout_xtflog = [
             [sg.Column(xtflog_col1), sg.Column(xtflog_col2)],
-            [sg.Button("Save and Close", bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
+            [sg.Button(save_button_xtf, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
         ]
         window_xtfcred = sg.Window("XTF Login Credentials", layout_xtflog)
-        while window_xtflog_active is True:  # while window_xtflog_active
+        while window_xtflog_active is True:
             event_xlog, values_xlog = window_xtfcred.Read()
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
                 xtf_username = values_xlog["_XTF_UNAME_"]
@@ -635,6 +666,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error + "\n")
+    print("\n---------Finished {} exports---------\n".format(str(len(resources))))
     # asx_id = input_id
     # try:
     #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -684,17 +716,6 @@ def get_ead_options(defaults):
     """
     Write the options selected to the defaults.json file.
 
-    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
-
-        1. Include unpublished components (default is false)
-        2. Include digital objects (default is true)
-        3. Use numbered container levels (default is true)
-        4. Convert to EAD3 (default is false)
-        5. Keep raw ASpace Exports (default is false)
-        6. Set raw ASpace output folder
-        7. Clean EAD records on export (default is true)
-        8. Set clean ASpace output folder
-
     For an in-depth review on how this code is structured, see the wiki:
     https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_ead_options
 
@@ -707,7 +728,9 @@ def get_ead_options(defaults):
     correct_opts = False
     while correct_opts is False:
         window_eadopt_active = True
-        eadopt_layout = [[sg.Text("Choose EAD Export Options", font=("Roboto", 12))],
+        eadopt_layout = [[sg.Text("Choose EAD Export Options", font=("Roboto", 14)),
+                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                                  key="_EADOPT_HELP_")],
                          [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
                                       default=defaults["ead_export_default"]["_INCLUDE_UNPUB_"])],
                          [sg.Checkbox("Include digital objects", key="_INCLUDE_DAOS_",
@@ -721,7 +744,7 @@ def get_ead_options(defaults):
                          [sg.FolderBrowse("Set raw ASpace output folder:",
                                           initial_folder=defaults["ead_export_default"]["_SOURCE_DIR_"]),
                           sg.InputText(default_text=defaults["ead_export_default"]["_SOURCE_DIR_"],
-                                       key="_SOURCE_DIR_",)],
+                                       key="_SOURCE_DIR_")],
                          [sg.Checkbox("Clean EAD records on export", key="_CLEAN_EADS_",
                                       default=defaults["ead_export_default"]["_CLEAN_EADS_"])],
                          [sg.FolderBrowse("Set clean ASpace output folder:",
@@ -736,54 +759,39 @@ def get_ead_options(defaults):
                 window_eadopt_active = False
                 correct_opts = True
                 eadopt_window.close()
+            if event_eadopt == "_EADOPT_HELP_":
+                webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#ead-export-options",
+                                new=2)
             if event_eadopt == "_SAVE_SETTINGS_EAD_":
                 if values_eadopt["_KEEP_RAW_"] is False and values_eadopt["_CLEAN_EADS_"] is False:
                     sg.Popup("WARNING!\nOne of the checkboxes from the following need to be checked:"
                              "\n\nKeep raw ASpace Exports\nClean EAD records on export")
                 else:
-                    with open("defaults.json", "w") as DEFAULT:
-                        defaults["ead_export_default"]["_INCLUDE_UNPUB_"] = values_eadopt["_INCLUDE_UNPUB_"]
-                        defaults["ead_export_default"]["_INCLUDE_DAOS_"] = values_eadopt["_INCLUDE_DAOS_"]
-                        defaults["ead_export_default"]["_NUMBERED_CS_"] = values_eadopt["_NUMBERED_CS_"]
-                        defaults["ead_export_default"]["_USE_EAD3_"] = values_eadopt["_USE_EAD3_"]
-                        defaults["ead_export_default"]["_KEEP_RAW_"] = values_eadopt["_KEEP_RAW_"]
-                        defaults["ead_export_default"]["_CLEAN_EADS_"] = values_eadopt["_CLEAN_EADS_"]
-                        defaults["ead_export_default"]["_SOURCE_DIR_"] = str(Path(values_eadopt["_SOURCE_DIR_"]))
-                        defaults["ead_export_default"]["_OUTPUT_DIR_"] = str(Path(values_eadopt["_OUTPUT_DIR_"]))
-                        json.dump(defaults, DEFAULT)
-                        DEFAULT.close()
-                    window_eadopt_active = False
-                    correct_opts = True
+                    if os.path.isdir(values_eadopt["_SOURCE_DIR_"]) is False:
+                        sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+                    elif os.path.isdir(values_eadopt["_OUTPUT_DIR_"]) is False:
+                        sg.popup("WARNING!\nYour input for the cleanup output is invalid."
+                                 "\nPlease try another directory")
+                    else:
+                        with open("defaults.json", "w") as DEFAULT:
+                            defaults["ead_export_default"]["_INCLUDE_UNPUB_"] = values_eadopt["_INCLUDE_UNPUB_"]
+                            defaults["ead_export_default"]["_INCLUDE_DAOS_"] = values_eadopt["_INCLUDE_DAOS_"]
+                            defaults["ead_export_default"]["_NUMBERED_CS_"] = values_eadopt["_NUMBERED_CS_"]
+                            defaults["ead_export_default"]["_USE_EAD3_"] = values_eadopt["_USE_EAD3_"]
+                            defaults["ead_export_default"]["_KEEP_RAW_"] = values_eadopt["_KEEP_RAW_"]
+                            defaults["ead_export_default"]["_CLEAN_EADS_"] = values_eadopt["_CLEAN_EADS_"]
+                            defaults["ead_export_default"]["_SOURCE_DIR_"] = str(Path(values_eadopt["_SOURCE_DIR_"]))
+                            defaults["ead_export_default"]["_OUTPUT_DIR_"] = str(Path(values_eadopt["_OUTPUT_DIR_"]))
+                            json.dump(defaults, DEFAULT)
+                            DEFAULT.close()
+                        window_eadopt_active = False
+                        correct_opts = True
         eadopt_window.close()
 
 
 def get_cleanup_defaults(cleanup_defaults, defaults):
     """
     Write the options selected to the defaults.json file.
-
-    This function opens a window in the GUI that allows a user to choose what operations they want to run in order to
-    clean any exported EAD.xml files. These options include:
-
-        1. Add Resource ID as EADID - Takes the resource identifier as listed in ArchivesSpace and copies it to the
-        element in the EAD.xml file.
-        2. Delete Empty Notes - Searches for every <p> element in the EAD.xml file and checks if there is content in the
-        element. If not, it is deleted.
-        3. Remove Non-Alphanumerics and Empty Extents - Does 2 things. It deletes any empty <extent> elements and
-        removes non-alphanumeric characters from the beginning of extent elements. An example would be:
-        <extent>(13.5x2.5")</extent>. This would change to <extent>13.5x2.5"</extent>.
-        4. Add Certainty Attribute - Adds the attribute certainty="approximate" to all dates that include words such as
-        circa, ca. approximately, etc.
-        5. Add label='Mixed Materials - Adds the attribute label="Mixed Materials" to any container element that does
-        not already have a label attribute.
-        6. Delete Empty Containers - Searches an EAD.xml file for all container elements and deletes any that are empty.
-        7. Add Barcode as physloc Tag - This adds a physloc element to an element when a container has a label
-        attribute. It takes an appended barcode to the label and makes it the value of the physloc tag.
-        8. Remove Archivists' Toolkit IDs - Finds any unitid element with a type that includes an Archivists Toolkit
-        unique identifier. Deletes that element.
-        9. Remove xlink Prefixes from Digital Objects - Counts every attribute that occurs in a <dao> element.
-        10. Remove Unused Namespaces - Removes any unused namespaces in the EAD.xml file.
-        11. Remove All Namespaces - Replaces other namespaces not removed by clean_unused_ns() in the <ead> element
-        with an empty <ead> element.
 
     For an in-depth review on how this code is structured, see the wiki:
     https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_cleanup_defaults
@@ -823,7 +831,8 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                    [sg.Checkbox("Remove All Namespaces", key="_DEL_ALLNS_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_ALLNS_"])]]
     layout_adv = [
-        [sg.Text("Advanced Options for Cleaning EAD Records", font=("Roboto", 12))],
+        [sg.Text("Advanced Options for Cleaning EAD Records", font=("Roboto", 14)),
+         sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_CLEANUP_HELP_")],
         [sg.Column(winadv_col1), sg.Column(winadv_col2), sg.Column(winadv_col3)],
         [sg.Button("Save Settings", key="_SAVE_CLEAN_DEF_", bind_return_key=True)]
     ]
@@ -852,6 +861,9 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             # window_adv_active = False
             window_adv.close()
             return cleanup_options
+        if event_adv == "_CLEANUP_HELP_":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#cleanup-options",
+                            new=2)
         if event_adv is None:
             # window_adv_active = False
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
@@ -919,7 +931,8 @@ def get_marc_options(defaults):
         None
     """
     window_marc_active = True
-    marc_layout = [[sg.Text("Choose MARCXML Export Options", font=("Roboto", 12))],
+    marc_layout = [[sg.Text("Choose MARCXML Export Options", font=("Roboto", 14)),
+                    sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_MARCOPT_HELP_")],
                    [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
                                 default=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])],
                    [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
@@ -935,14 +948,20 @@ def get_marc_options(defaults):
         if event_marc is None or event_marc == 'Cancel':
             window_marc_active = False
             window_marc.close()
+        if event_marc == "_MARCOPT_HELP_":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcxml-screen",
+                            new=2)
         if event_marc == "_SAVE_SETTINGS_MARC_":
-            with open("defaults.json", "w") as defaults_marc:
-                defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
-                defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
-                defaults["marc_export_default"]["_OUTPUT_DIR_"] = str(Path(values_marc["_MARC_OUT_DIR_"]))
-                json.dump(defaults, defaults_marc)
-                defaults_marc.close()
-            window_marc_active = False
+            if os.path.isdir(values_marc["_MARC_OUT_DIR_"]) is False:
+                sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+            else:
+                with open("defaults.json", "w") as defaults_marc:
+                    defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
+                    defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
+                    defaults["marc_export_default"]["_OUTPUT_DIR_"] = str(Path(values_marc["_MARC_OUT_DIR_"]))
+                    json.dump(defaults, defaults_marc)
+                    defaults_marc.close()
+                window_marc_active = False
         window_marc.close()
 
 
@@ -1008,7 +1027,8 @@ def get_pdf_options(defaults):
         None
     """
     window_pdf_active = True
-    pdf_layout = [[sg.Text("PDF Export Options", font=("Roboto", 12))],
+    pdf_layout = [[sg.Text("Choose PDF Export Options", font=("Roboto", 14)),
+                   sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_PDFOPT_HELP_")],
                   [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
                                default=defaults["pdf_export_default"]["_INCLUDE_UNPUB_"])],
                   [sg.Checkbox("Include digital objects", key="_INCLUDE_DAOS_",
@@ -1030,17 +1050,23 @@ def get_pdf_options(defaults):
         if event_pdf is None or event_pdf == 'Cancel':
             window_pdf_active = False
             window_pdf.close()
+        if event_pdf == "_PDFOPT_HELP_":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#pdf-export-options",
+                            new=2)
         if event_pdf == "_SAVE_SETTINGS_PDF_":
-            with open("defaults.json", "w") as defaults_pdf:
-                defaults["pdf_export_default"]["_INCLUDE_UNPUB_"] = values_pdf["_INCLUDE_UNPUB_"]
-                defaults["pdf_export_default"]["_INCLUDE_DAOS_"] = values_pdf["_INCLUDE_DAOS_"]
-                defaults["pdf_export_default"]["_NUMBERED_CS_"] = values_pdf["_NUMBERED_CS_"]
-                defaults["pdf_export_default"]["_USE_EAD3_"] = values_pdf["_USE_EAD3_"]
-                defaults["pdf_export_default"]["_KEEP_RAW_"] = values_pdf["_KEEP_RAW_"]
-                defaults["pdf_export_default"]["_OUTPUT_DIR_"] = str(Path(values_pdf["_OUTPUT_DIR_"]))
-                json.dump(defaults, defaults_pdf)
-                defaults_pdf.close()
-            window_pdf_active = False
+            if os.path.isdir(values_pdf["_OUTPUT_DIR_"]) is False:
+                sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+            else:
+                with open("defaults.json", "w") as defaults_pdf:
+                    defaults["pdf_export_default"]["_INCLUDE_UNPUB_"] = values_pdf["_INCLUDE_UNPUB_"]
+                    defaults["pdf_export_default"]["_INCLUDE_DAOS_"] = values_pdf["_INCLUDE_DAOS_"]
+                    defaults["pdf_export_default"]["_NUMBERED_CS_"] = values_pdf["_NUMBERED_CS_"]
+                    defaults["pdf_export_default"]["_USE_EAD3_"] = values_pdf["_USE_EAD3_"]
+                    defaults["pdf_export_default"]["_KEEP_RAW_"] = values_pdf["_KEEP_RAW_"]
+                    defaults["pdf_export_default"]["_OUTPUT_DIR_"] = str(Path(values_pdf["_OUTPUT_DIR_"]))
+                    json.dump(defaults, defaults_pdf)
+                    defaults_pdf.close()
+                window_pdf_active = False
         window_pdf.close()
 
 
@@ -1094,7 +1120,10 @@ def get_xtf_options(defaults):
         None
     """
     xtf_option_active = True
-    xtf_option_layout = [[sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
+    xtf_option_layout = [[sg.Text("Choose XTF Options", font=("Roboto", 14)),
+                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                                  key="_XTFOPT_HELP_")],
+                         [sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
                          [sg.FolderBrowse(button_text="Select source folder:",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
@@ -1108,16 +1137,22 @@ def get_xtf_options(defaults):
         if event_xtfopt is None or event_xtfopt == 'Cancel':
             xtf_option_active = False
             window_xtf_option.close()
+        if event_xtfopt == "_XTFOPT_HELP_":
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-frame",
+                            new=2)
         if event_xtfopt == "_XTFOPT_CREDS_":
             get_xtf_log(defaults)
         if event_xtfopt == "_SAVE_SETTINGS_XTF_":
-            with open("defaults.json", "w") as defaults_xtf:
-                defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
-                defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
-                json.dump(defaults, defaults_xtf)
-                defaults_xtf.close()
-            xtf_option_active = False
-            window_xtf_option.close()
+            if os.path.isdir(values_xtfopt["_XTF_SOURCE_"]) is False:
+                sg.popup("WARNING!\nYour input for the upload folder is invalid.\nPlease try another directory")
+            else:
+                with open("defaults.json", "w") as defaults_xtf:
+                    defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
+                    defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
+                    json.dump(defaults, defaults_xtf)
+                    defaults_xtf.close()
+                xtf_option_active = False
+                window_xtf_option.close()
 
 
 # Add threading to allow loading screen
