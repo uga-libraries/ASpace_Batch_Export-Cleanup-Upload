@@ -528,6 +528,7 @@ def get_xtf_log(defaults, login=True):
 
     Args:
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        login (bool): determines whether window is on initial popup or within program, changes lang. of save button
 
     Returns:
         xtf_username (str): user's XTF username
@@ -1206,7 +1207,7 @@ def fetch_local_files(local_file_dir, select_files):
         select_files (list): files to be uploaded to XTF
 
     Returns:
-        None
+        (list): contains filepaths for files to be uploaded to XTF
     """
     local_files = os.walk(local_file_dir)
     for root, dirs, files in local_files:
@@ -1214,6 +1215,12 @@ def fetch_local_files(local_file_dir, select_files):
 
 
 def setup_files():
+    """
+    Checks for directories in the current directory the GUI or .exe is located and tries to open defaults.json
+
+    Returns:
+        json_data (dict): contains data from defaults.json for user's default settings
+    """
     current_directory = os.getcwd()
     for root, directories, files in os.walk(current_directory):
         if "clean_eads" in directories:

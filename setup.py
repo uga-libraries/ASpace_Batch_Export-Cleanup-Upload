@@ -159,6 +159,11 @@ def create_default_folders():
 
 
 def reset_defaults():
+    """
+    Deletes and recreates defaults.json file.
+    Returns:
+        None
+    """
     if os.path.isfile(Path(os.getcwd(), "defaults.json")) is True:
         os.remove(Path(os.getcwd(), "defaults.json"))
     set_defaults_file()

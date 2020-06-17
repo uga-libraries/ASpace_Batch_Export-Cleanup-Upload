@@ -1,4 +1,4 @@
-loguru==0.5.0
+loguru==0.5.1
 lxml==4.5.1
 paramiko==2.7.1
 PySimpleGUI==4.20.0
