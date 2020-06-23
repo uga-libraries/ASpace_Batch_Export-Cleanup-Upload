@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from lxml import etree
 
-extent_regex = re.compile(r"(\D)")
+extent_regex = re.compile(r"(^\W)")
 barcode_regex = re.compile(r"\[(.*?)\]")
 atid_regex = re.compile(r"Archivists Toolkit Database")
 dao_regex = re.compile(r"(\bdao\b)")
@@ -16,6 +16,7 @@ class EADRecord:
     Modify an EAD.xml file for web display and EAD2002 compatibility.
     """
     cert_attrib = ["circa", "ca.", "c", "approximately", "probably", "c.", "between", "after"]
+    extent_chars = ["(", ")", "[", "]", "{", "}"]
 
     def __init__(self, file_root):
         """
@@ -54,6 +55,7 @@ class EADRecord:
     def delete_empty_notes(self):
         """
         Searches for every <p> element and checks if there is content in the element. If not, it is deleted.
+
         Returns:
             None
         """
@@ -71,9 +73,7 @@ class EADRecord:
 
     def edit_extents(self):
         """
-        Deletes any empty <extent> elements and removes non-alphanumeric characters from the beginning of elements.
-
-        An example would be: <extent>(13.5x2.5")</extent>. This would change to <extent>13.5x2.5"</extent>.
+        Deletes empty <extent> elements and removes brackets, braces, and parentheses if they begin with them.
 
         Returns:
             None
@@ -85,13 +85,12 @@ class EADRecord:
             if "extent" in child.tag:
                 count_ext1 += 1
                 if child.text is not None:  # got "NoneType" object for RBRL/044/CFH
-                    child.text.strip()
-                    # TODO replace with '[\W_]+' to really remove all non-alphanumeric characters
+                    extent_content = child.text.strip()
                     match = extent_regex.match(child.text)
                     if match:  # Converts this: "(8x10") NEGATIVE [negative missing] b/w"  to this: "8x10" NEGATIVE ...
-                        cleaned_extent1 = child.text.replace("(", "", 1)
-                        cleaned_extent2 = cleaned_extent1.replace(")", "", 1)
-                        child.text = cleaned_extent2
+                        for character in extent_content:
+                            if character in EADRecord.extent_chars:
+                                extent_content.replace(character, "")
                         count_ext3 += 1
                 elif child.text is None:
                     parent = child.getparent()
@@ -102,9 +101,7 @@ class EADRecord:
                     count_ext2 += 1
         self.results += "We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
             count_ext2) + " empty extents and corrected " + str(
-            count_ext3) + " extent descriptions starting with non-numeric character\n"
-        # delete empty extents
-        # remove non-alphanumeric starter characters (ex. (49.5 linear feet, 5.8 gigabytes, 39 audiovisual items))
+            count_ext3) + " extent descriptions starting with `(), [], or {}`\n"
 
     def add_certainty_attr(self):
         """
@@ -293,8 +290,6 @@ class EADRecord:
     def clean_suite(self, ead, custom_clean):
         """
         Runs the above methods according to what the user specified in the custom_clean parameter.
-
-        Will also add a doctype to the EAD.xml file and encode it in UTF-8.
 
         Args:
             ead (EADRecord instance): instance of the class EADRecord

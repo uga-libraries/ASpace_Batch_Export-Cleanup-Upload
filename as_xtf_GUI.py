@@ -81,7 +81,7 @@ def run_gui(defaults):
                             file_option.remove("Change XTF Login Credentials")
                             file_option.remove("Change XTF Options")
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_"),
-                   sg.Text("* The program may become unresponsive")],
+                   sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_", ),
@@ -93,7 +93,7 @@ def run_gui(defaults):
     xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_"),
                    sg.Text(" " * 2),
                    sg.Button(button_text=" Index Changed Records ", key="_INDEX_"),
-                   sg.Text("* The program may become unresponsive")],
+                   sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_")]
@@ -106,7 +106,7 @@ def run_gui(defaults):
                    [sg.Text(" " * 140)]
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_"),
-                         sg.Text("* The program may become unresponsive")],
+                         sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
@@ -341,7 +341,7 @@ def run_gui(defaults):
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
                          "Version: 0.6.2\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
-                [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button("Check Github", key="_CHECK_GITHUB_")]
+                [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
             window_about = sg.Window("About this program", layout_about)
             while window_about_active is True:
@@ -362,10 +362,10 @@ def run_gui(defaults):
             window_upl_active = True
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                           if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
-            upload_options_layout = [[sg.Button("Upload to XTF", key="_UPLOAD_TO_XTF_"),
+            upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_"),
                                       sg.Text("* The program may be unresponsive, please wait.")],
                                      [sg.Text("Options", font=("Roboto", 12))],
-                                     [sg.Button("XTF Options", key="_XTF_OPTIONS_2_")]
+                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
                                      ]
             xtf_upload_layout = [[sg.Text("Files to Upload:", font=("Roboto", 14))],
                                  [sg.Listbox(files_list, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
@@ -752,7 +752,7 @@ def get_ead_options(defaults):
                                           initial_folder=defaults["ead_export_default"]["_OUTPUT_DIR_"]),
                           sg.InputText(default_text=defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                        key="_OUTPUT_DIR_")],
-                         [sg.Button("Save Settings", key="_SAVE_SETTINGS_EAD_", bind_return_key=True)]]
+                         [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_EAD_", bind_return_key=True)]]
         eadopt_window = sg.Window("EAD Options", eadopt_layout)
         while window_eadopt_active is True:
             event_eadopt, values_eadopt = eadopt_window.Read()
@@ -813,7 +813,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                                 default=defaults["ead_cleanup_defaults"]["_ADD_EADID_"])],
                    [sg.Checkbox("Delete Empty Notes", key="_DEL_NOTES_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_NOTES_"])],
-                   [sg.Checkbox("Remove Non-Alphanumerics and Empty Extents", key="_CLN_EXTENTS_",
+                   [sg.Checkbox("Remove '(), [], {}' from and Empty Extents", key="_CLN_EXTENTS_",
                                 default=defaults["ead_cleanup_defaults"]["_CLN_EXTENTS_"])],
                    [sg.Checkbox("Add Certainty Attribute", key="_ADD_CERTAIN_",
                                 default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])]]
@@ -835,7 +835,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
         [sg.Text("Advanced Options for Cleaning EAD Records", font=("Roboto", 14)),
          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_CLEANUP_HELP_")],
         [sg.Column(winadv_col1), sg.Column(winadv_col2), sg.Column(winadv_col3)],
-        [sg.Button("Save Settings", key="_SAVE_CLEAN_DEF_", bind_return_key=True)]
+        [sg.Button(" Save Settings ", key="_SAVE_CLEAN_DEF_", bind_return_key=True)]
     ]
     window_adv = sg.Window("Change Cleanup Defaults", layout_adv)
     while window_adv_active is True:
@@ -941,7 +941,7 @@ def get_marc_options(defaults):
                    [sg.FolderBrowse("Set output folder:",
                                     initial_folder=defaults["marc_export_default"]["_OUTPUT_DIR_"]),
                     sg.InputText(default_text=defaults["marc_export_default"]["_OUTPUT_DIR_"], key="_MARC_OUT_DIR_")],
-                   [sg.Button("Save Settings", key="_SAVE_SETTINGS_MARC_", bind_return_key=True)]
+                   [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_MARC_", bind_return_key=True)]
                    ]
     window_marc = sg.Window("MARCXML Export Options", marc_layout)
     while window_marc_active is True:
@@ -1043,7 +1043,7 @@ def get_pdf_options(defaults):
                   [sg.FolderBrowse("Set output folder:",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
                    sg.InputText(default_text=defaults["pdf_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_")],
-                  [sg.Button("Save Settings", key="_SAVE_SETTINGS_PDF_", bind_return_key=True)]
+                  [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_PDF_", bind_return_key=True)]
                   ]
     window_pdf = sg.Window("PDF Export Options", pdf_layout)
     while window_pdf_active is True:
@@ -1129,8 +1129,8 @@ def get_xtf_options(defaults):
                          [sg.FolderBrowse(button_text="Select source folder:",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
                           sg.InputText(default_text=defaults["xtf_default"]["xtf_local_path"], key="_XTF_SOURCE_")],
-                         [sg.Button("Change XTF Login Credentials", key="_XTFOPT_CREDS_")],
-                         [sg.Button("Save Settings", key="_SAVE_SETTINGS_XTF_", bind_return_key=True)]
+                         [sg.Button(" Change XTF Login Credentials ", key="_XTFOPT_CREDS_")],
+                         [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_XTF_", bind_return_key=True)]
                          ]
     window_xtf_option = sg.Window("XTF Options", xtf_option_layout)
     while xtf_option_active is True:
