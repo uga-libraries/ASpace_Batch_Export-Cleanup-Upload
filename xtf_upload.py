@@ -1,5 +1,6 @@
 import sys
 from os import system
+from pathlib import Path
 
 from loguru import logger
 from paramiko import SSHClient, AutoAddPolicy, RSAKey
@@ -12,7 +13,7 @@ logger.add(sys.stderr,
            format="{time} {level} {message}",
            filter="client",
            level="INFO")
-logger.add('logs/log_{time:YYYY-MM-DD}.log',
+logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
            format="{time} {level} {message}",
            filter="client",
            level="ERROR")

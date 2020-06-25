@@ -300,23 +300,23 @@ def run_gui(defaults):
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Folder":
-            path = os.listdir("clean_eads/")
+            clean_files = os.listdir("clean_eads")
             try:
                 file_count = 0
-                for file in path:
+                for file in clean_files:
                     file_count += 1
-                    full_path = str(Path.joinpath(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
+                    full_path = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in clean_eads".format(str(file_count)))
             except Exception as e:
                 print("No files in clean_eads folder\n" + str(e))
         if event_simple == "Clear Raw ASpace Export Folder":
-            path = os.listdir("source_eads/")
+            raw_files = os.listdir("source_eads")
             try:
                 file_count = 0
-                for file in path:
+                for file in raw_files:
                     file_count += 1
-                    full_path = str(Path.joinpath(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
+                    full_path = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_eads".format(str(file_count)))
             except Exception as e:
@@ -350,7 +350,8 @@ def run_gui(defaults):
                     window_about.close()
                     window_about_active = False
                 if event_about == "_CHECK_GITHUB_":
-                    webbrowser.open("https://github.com/uga-libraries/AS_XTF-DEV/releases", new=2)
+                    webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
+                                    new=2)
                 if event_about == "_ABOUT_OK_":
                     window_about.close()
                     window_about_active = False
