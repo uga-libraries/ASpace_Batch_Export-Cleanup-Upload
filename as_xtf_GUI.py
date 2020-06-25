@@ -487,6 +487,17 @@ def get_aspace_log(defaults, xtf_checkbox=True):
                 try:
                     client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
                     client.authorize()
+                    asp_version = client.get("/version").content.decode().split(" ")[1]
+                    with open("defaults.json",
+                              "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
+                        defaults["as_api"] = as_api
+                        defaults["xtf_default"]["xtf_version"] = xtf_version
+                        json.dump(defaults, defaults_asp)
+                        defaults_asp.close()
+                    repo_results = client.get('/repositories')
+                    repo_results_dec = json.loads(repo_results.content.decode())
+                    for result in repo_results_dec:
+                        repositories[result["name"]] = result["uri"][-1]
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
@@ -499,17 +510,6 @@ def get_aspace_log(defaults, xtf_checkbox=True):
                         error_message = str(e)
                     sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
                              error_message)
-                asp_version = client.get("/version").content.decode().split(" ")[1]
-                with open("defaults.json",
-                          "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
-                    defaults["as_api"] = as_api
-                    defaults["xtf_default"]["xtf_version"] = xtf_version
-                    json.dump(defaults, defaults_asp)
-                    defaults_asp.close()
-                repo_results = client.get('/repositories')
-                repo_results_dec = json.loads(repo_results.content.decode())
-                for result in repo_results_dec:
-                    repositories[result["name"]] = result["uri"][-1]
             if event_log is None or event_log == 'Cancel':
                 window_login.close()
                 window_asplog_active = False

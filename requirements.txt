@@ -3,3 +3,4 @@ lxml==4.5.1
 paramiko==2.7.1
 PySimpleGUI==4.20.0
 scp==0.13.2
+ArchivesSnake==0.8.5
