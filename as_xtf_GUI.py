@@ -12,7 +12,7 @@ from asnake.client import ASnakeClient
 import as_export as asx
 import cleanup as clean
 import xtf_upload as xup
-import setup as setup
+import defaults_setup as dsetup
 
 
 def run_gui(defaults):
@@ -325,7 +325,7 @@ def run_gui(defaults):
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations.\n"
                                            "Are you sure?")
             if reset_defaults == "Yes":
-                setup.reset_defaults()
+                dsetup.reset_defaults()
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
             as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
@@ -1235,14 +1235,14 @@ def setup_files():
         elif "source_labels" in directories:
             continue
         else:
-            setup.create_default_folders()
+            dsetup.create_default_folders()
     try:
         with open("defaults.json", "r") as DEFAULTS:
             json_data = json.load(DEFAULTS)
             DEFAULTS.close()
     except Exception as defaults_error:
         print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...")
-        json_data = setup.set_defaults_file()
+        json_data = dsetup.set_defaults_file()
         print("Done")
     return json_data
 
