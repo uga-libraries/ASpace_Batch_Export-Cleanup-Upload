@@ -28,11 +28,15 @@ def run_gui(defaults):
     Returns:
         None
     """
-    sg.ChangeLookAndFeel('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
+    sg.theme('LightBlue2')
+    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
         get_aspace_log(defaults, xtf_checkbox=True)
     if close_program_as is True:
         sys.exit()
+    pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
+    asp_pdf_api = True
+    if asp_version in pdf_broken:
+        asp_pdf_api = False
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
@@ -40,7 +44,12 @@ def run_gui(defaults):
             get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
             sys.exit()
+        xtf_login_menu_button = 'Change XTF Login Credentials'
+        xtf_opt_button = 'Change XTF Options'
         rid_box_len = 44
+    else:
+        xtf_login_menu_button = '!Change XTF Login Credentials'
+        xtf_opt_button = '!Change XTF Options'
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
                         "_DEL_ALLNS_"]
@@ -56,79 +65,90 @@ def run_gui(defaults):
                 ['Edit',
                  ['Change ASpace Login Credentials',
                   '---',
-                  'Change XTF Login Credentials',
-                  'Change XTF Options',
-                  '---',
                   'Change EAD Cleanup Defaults',
                   'Change EAD Export Options',
                   '---',
                   'Change MARCXML Export Options',
                   '---',
-                  'Change PDF Export Options']
+                  'Change PDF Export Options',
+                  '---',
+                  xtf_login_menu_button,
+                  xtf_opt_button,
+                  ]
                  ],
                 ['Help',
                  ['User Manual',
                   'About']
                  ]
                 ]
-    if xtf_version is False:
-        for menu_option in menu_def:
-            if isinstance(menu_option, list):
-                for file_option in menu_option:
-                    if isinstance(file_option, list):
-                        if file_option[0] != "Clear Raw ASpace Export Folder" and file_option[0] != "User Manual":
-                            file_option.remove("---")
-                            file_option.remove("Change XTF Login Credentials")
-                            file_option.remove("Change XTF Options")
-    ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_"),
+    ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_",
+                             tooltip=' Export EAD.xml resources '),
                    sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
-                  [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_", ),
-                   sg.Button(" Cleanup Options ", key="Change Cleanup Defaults")],
+                  [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_",
+                             tooltip=' Choose how you would like to export resources '),
+                   sg.Button(" Cleanup Options ", key="Change Cleanup Defaults",
+                             tooltip=' Select what operations you want to perform on exported EAD.xml files ')],
                   [sg.Text("Output", font=("Roboto", 12))],
-                  [sg.Button(button_text=" Open Cleaned EAD Folder ", key="_OPEN_CLEAN_B_"),
-                   sg.Button(button_text=" Open Raw ASpace Exports ", key="_OPEN_RAW_EXPORTS_")]
+                  [sg.Button(button_text=" Open Cleaned EAD Folder ", key="_OPEN_CLEAN_B_",
+                             tooltip=' Open folder where cleaned EAD.xml files are stored '),
+                   sg.Button(button_text=" Open Raw ASpace Exports ", key="_OPEN_RAW_EXPORTS_",
+                             tooltip=' Open folder where raw ASpace EAD.xml files are stored ')]
                   ]
-    xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_"),
+    xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_",
+                             tooltip=' Upload select files to XTF '),
                    sg.Text(" " * 2),
-                   sg.Button(button_text=" Index Changed Records ", key="_INDEX_"),
+                   sg.Button(button_text=" Index Changed Records ", key="_INDEX_",
+                             tooltip=' Run an indexing of new/updated files in XTF '),
                    sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
-                  [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_")]
+                  [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_",
+                             tooltip=' Select options for XTF upload ')]
                   ]
-    marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_"),
+    marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_",
+                              tooltip=' Export MARC.xml resources '),
                     sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                    [sg.Text("Options", font=("Roboto", 13))],
-                   [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_")],
-                   [sg.Button(button_text=" Open Output ", key="_OPEN_MARC_DEST_")],
+                   [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_",
+                              tooltip=' Choose how you would like to export resources ')],
+                   [sg.Button(button_text=" Open Output ", key="_OPEN_MARC_DEST_",
+                              tooltip=' Open folder where MARC.xml files are stored ')],
                    [sg.Text(" " * 140)]
                    ]
-    contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_"),
+    contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_",
+                                   tooltip=' Export container labels for resources '),
                          sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
-                        [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_")],
+                        [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_",
+                                   tooltip=' Open folder where container label files are stored ')],
                         [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
                                          initial_folder=defaults["labels_export_default"]),
                          sg.InputText(defaults["labels_export_default"], key="_OUTPUT_DIR_LABEL_INPUT_",
                                       enable_events=True)],
                         [sg.Text(" " * 140)]
                         ]
-    pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red"),
+    pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red", visible=asp_pdf_api),
                    sg.Text("Not compatible with ArchivesSpace versions 2.6.0 - 2.7.1\n"
-                           "Your ArchivesSpace version is: {}".format(version), font=("Roboto", 13))],
-                  [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_"),
+                           "Your ArchivesSpace version is: {}".format(asp_version), font=("Roboto", 13),
+                           visible=asp_pdf_api)],
+                  [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_",
+                             tooltip=' Export PDF(s) for resources '),
                    sg.Text("* The program may become unresponsive")],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 125)],
-                  [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_"),
-                   sg.Button(button_text=" Open Output ", key="_OPEN_PDF_DEST_")]
+                  [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_",
+                             tooltip=' Choose how you would like to export resources '),
+                   sg.Button(button_text=" Open Output ", key="_OPEN_PDF_DEST_",
+                             tooltip=' Open folder where PDF(s) are stored ')]
                   ]
     simple_layout_col1 = [[sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12))],
-                          [sg.Multiline(key="resource_id_input", size=(35, rid_box_len), focus=True)]
+                          [sg.Multiline(key="resource_id_input", size=(35, rid_box_len), focus=True,
+                                        tooltip=' Enter resource identifiers here and seperate either by comma or '
+                                                'newline (enter) ')]
                           ]
     simple_layout_col2 = [[sg.Text("Choose your export option:", font=("Roboto", 12))],
                           [sg.Radio("EAD", "RADIO1", key="_EXPORT_EAD_RAD_", default=True, enable_events=True),
@@ -138,8 +158,10 @@ def run_gui(defaults):
                           [sg.Text("Choose your repository:", font=("Roboto", 12))],
                           [sg.DropDown([repo for repo in repositories.keys()], readonly=True,
                                        default_value=defaults["repo_default"]["_REPO_NAME_"], key="_REPO_SELECT_",
-                                       font=("Roboto", 11)),
-                           sg.Button(" SAVE ", key="_REPO_DEFAULT_")],
+                                       font=("Roboto", 11),
+                                       tooltip=' Select a specific repository to export from '),
+                           sg.Button(" SAVE ", key="_REPO_DEFAULT_",
+                                     tooltip=' Save repository as default ')],
                           [sg.Frame("Export EAD", ead_layout, font=("Roboto", 15), key="_EAD_LAYOUT_", visible=True),
                            sg.Frame("Export MARCXML", marc_layout, font=("Roboto", 15), key="_MARC_LAYOUT_",
                                     visible=False),
@@ -149,7 +171,8 @@ def run_gui(defaults):
                            sg.Frame("Export PDF", pdf_layout, font=("Roboto", 15), key="_PDF_LAYOUT_", visible=False)],
                           [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 15), key="_XTF_LAYOUT_",
                                     visible=xtf_version)],
-                          [sg.Text("Output Terminal:", font=("Roboto", 12))],
+                          [sg.Text("Output Terminal:", font=("Roboto", 12),
+                                   tooltip=' Program messages are output here. To clear, select all and delete. ')],
                           [sg.Output(size=(80, 18), key="_output_")]
                           ]
     layout_simple = [[sg.Menu(menu_def)],
@@ -295,12 +318,13 @@ def run_gui(defaults):
                 filepath_labels = str(Path(defaults["labels_export_default"]))
                 open_file(filepath_labels)
         if event_simple == "_CONTOPT_HELP_":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#container-labels-screen",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
+                            "iner-labels-screen",
                             new=2)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Folder":
-            clean_files = os.listdir("clean_eads")
+            clean_files = os.listdir(defaults["ead_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
                 for file in clean_files:
@@ -311,7 +335,7 @@ def run_gui(defaults):
             except Exception as e:
                 print("No files in clean_eads folder\n" + str(e))
         if event_simple == "Clear Raw ASpace Export Folder":
-            raw_files = os.listdir("source_eads")
+            raw_files = os.listdir(defaults["ead_export_default"]["_SOURCE_DIR_"])
             try:
                 file_count = 0
                 for file in raw_files:
@@ -328,7 +352,7 @@ def run_gui(defaults):
                 dsetup.reset_defaults()
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, version, repositories, xtf_version = \
+            as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
                 get_aspace_log(defaults, xtf_checkbox=False)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
@@ -626,8 +650,14 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         None
     """
 
+    resources = []
+    export_counter = 0
     if "," in input_ids:
-        resources = [user_input.strip() for user_input in input_ids.split(",")]
+        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+        for resource in csep_resources:
+            linebreak_resources = resource.splitlines()
+            for lb_resource in linebreak_resources:
+                resources.append(lb_resource)
     else:
         resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
@@ -653,6 +683,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                         if valid:
                             print("Done")
                             print(results)
+                            export_counter += 1
                         else:
                             print("XML validation error\n" + results)
                     else:
@@ -662,13 +693,14 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                         if valid:
                             print("Done")
                             print(results)
+                            export_counter += 1
                         else:
                             print("XML validation error\n" + results)
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error + "\n")
-    print("\n---------Finished {} exports---------\n".format(str(len(resources))))
+    print("\n" + "-"*56 + "Finished {} exports".format(str(export_counter)) + "-"*56 + "\n")
     # asx_id = input_id
     # try:
     #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
@@ -743,13 +775,13 @@ def get_ead_options(defaults):
                                       default=defaults["ead_export_default"]["_USE_EAD3_"])],
                          [sg.Checkbox("Keep raw ASpace Exports", key="_KEEP_RAW_",
                                       default=defaults["ead_export_default"]["_KEEP_RAW_"])],
-                         [sg.FolderBrowse("Set raw ASpace output folder:",
+                         [sg.FolderBrowse(" Set raw ASpace output folder: ",
                                           initial_folder=defaults["ead_export_default"]["_SOURCE_DIR_"]),
                           sg.InputText(default_text=defaults["ead_export_default"]["_SOURCE_DIR_"],
                                        key="_SOURCE_DIR_")],
                          [sg.Checkbox("Clean EAD records on export", key="_CLEAN_EADS_",
                                       default=defaults["ead_export_default"]["_CLEAN_EADS_"])],
-                         [sg.FolderBrowse("Set clean ASpace output folder:",
+                         [sg.FolderBrowse(" Set clean ASpace output folder: ",
                                           initial_folder=defaults["ead_export_default"]["_OUTPUT_DIR_"]),
                           sg.InputText(default_text=defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                        key="_OUTPUT_DIR_")],
@@ -762,7 +794,8 @@ def get_ead_options(defaults):
                 correct_opts = True
                 eadopt_window.close()
             if event_eadopt == "_EADOPT_HELP_":
-                webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#ead-export-options",
+                webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#e"
+                                "ad-export-options",
                                 new=2)
             if event_eadopt == "_SAVE_SETTINGS_EAD_":
                 if values_eadopt["_KEEP_RAW_"] is False and values_eadopt["_CLEAN_EADS_"] is False:
@@ -864,7 +897,8 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             window_adv.close()
             return cleanup_options
         if event_adv == "_CLEANUP_HELP_":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#cleanup-options",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#clean"
+                            "up-options",
                             new=2)
         if event_adv is None:
             # window_adv_active = False
@@ -891,8 +925,14 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple):
     Returns:
         None
     """
+    resources = []
+    export_counter = 0
     if "," in input_ids:
-        resources = [user_input.strip() for user_input in input_ids.split(",")]
+        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+        for resource in csep_resources:
+            linebreak_resources = resource.splitlines()
+            for lb_resource in linebreak_resources:
+                resources.append(lb_resource)
     else:
         resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
@@ -905,10 +945,12 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple):
                 include_unpublished=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])
             if resource_export.error is None:
                 print(resource_export.result + "\n")
+                export_counter += 1
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
+    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
 
 
 def get_marc_options(defaults):
@@ -939,7 +981,7 @@ def get_marc_options(defaults):
                                 default=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])],
                    [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
                                 default=defaults["marc_export_default"]["_KEEP_RAW_"])],
-                   [sg.FolderBrowse("Set output folder:",
+                   [sg.FolderBrowse(" Set output folder: ",
                                     initial_folder=defaults["marc_export_default"]["_OUTPUT_DIR_"]),
                     sg.InputText(default_text=defaults["marc_export_default"]["_OUTPUT_DIR_"], key="_MARC_OUT_DIR_")],
                    [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_MARC_", bind_return_key=True)]
@@ -951,7 +993,8 @@ def get_marc_options(defaults):
             window_marc_active = False
             window_marc.close()
         if event_marc == "_MARCOPT_HELP_":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcxml-screen",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcx"
+                            "ml-screen",
                             new=2)
         if event_marc == "_SAVE_SETTINGS_MARC_":
             if os.path.isdir(values_marc["_MARC_OUT_DIR_"]) is False:
@@ -984,8 +1027,14 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple):
     Returns:
         None
     """
+    resources = []
+    export_counter = 0
     if "," in input_ids:
-        resources = [user_input.strip() for user_input in input_ids.split(",")]
+        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+        for resource in csep_resources:
+            linebreak_resources = resource.splitlines()
+            for lb_resource in linebreak_resources:
+                resources.append(lb_resource)
     else:
         resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
@@ -1000,10 +1049,12 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple):
                                        ead3=defaults["pdf_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
                 print(resource_export.result + "\n")
+                export_counter += 1
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
+    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
 
 
 def get_pdf_options(defaults):
@@ -1041,7 +1092,7 @@ def get_pdf_options(defaults):
                                default=defaults["pdf_export_default"]["_USE_EAD3_"])],
                   [sg.Checkbox("Open ASpace Exports on Export", key="_KEEP_RAW_",
                                default=defaults["pdf_export_default"]["_KEEP_RAW_"])],
-                  [sg.FolderBrowse("Set output folder:",
+                  [sg.FolderBrowse(" Set output folder: ",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
                    sg.InputText(default_text=defaults["pdf_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_")],
                   [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_PDF_", bind_return_key=True)]
@@ -1053,7 +1104,8 @@ def get_pdf_options(defaults):
             window_pdf_active = False
             window_pdf.close()
         if event_pdf == "_PDFOPT_HELP_":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#pdf-export-options",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#pdf-e"
+                            "xport-options",
                             new=2)
         if event_pdf == "_SAVE_SETTINGS_PDF_":
             if os.path.isdir(values_pdf["_OUTPUT_DIR_"]) is False:
@@ -1089,8 +1141,14 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
     Returns:
         None
     """
+    resources = []
+    export_counter = 0
     if "," in input_ids:
-        resources = [user_input.strip() for user_input in input_ids.split(",")]
+        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+        for resource in csep_resources:
+            linebreak_resources = resource.splitlines()
+            for lb_resource in linebreak_resources:
+                resources.append(lb_resource)
     else:
         resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
@@ -1102,10 +1160,12 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
             resource_export.export_labels()
             if resource_export.error is None:
                 print(resource_export.result + "\n")
+                export_counter += 1
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
+    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
 
 
 def get_xtf_options(defaults):
@@ -1127,7 +1187,7 @@ def get_xtf_options(defaults):
                                   key="_XTFOPT_HELP_")],
                          [sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
-                         [sg.FolderBrowse(button_text="Select source folder:",
+                         [sg.FolderBrowse(button_text=" Select source folder: ",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
                           sg.InputText(default_text=defaults["xtf_default"]["xtf_local_path"], key="_XTF_SOURCE_")],
                          [sg.Button(" Change XTF Login Credentials ", key="_XTFOPT_CREDS_")],
@@ -1140,7 +1200,8 @@ def get_xtf_options(defaults):
             xtf_option_active = False
             window_xtf_option.close()
         if event_xtfopt == "_XTFOPT_HELP_":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-frame",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-f"
+                            "rame",
                             new=2)
         if event_xtfopt == "_XTFOPT_CREDS_":
             get_xtf_log(defaults)
@@ -1247,6 +1308,6 @@ def setup_files():
     return json_data
 
 
-# sg.preview_all_look_and_feel_themes()
+# sg.theme_previewer()
 if __name__ == "__main__":
     run_gui(setup_files())

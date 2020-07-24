@@ -8,17 +8,26 @@ enable the XTF version to upload .xml or .pdf files to their instance of XTF, a 
 
 ## Getting Started
 
-### For Users
+### For Windows Users
 1. Go to [Releases](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases) and download the 
 appropriate installer for your operating system.
 2. Follow the on-screen instructions.
 3. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
 through the program and its features can be found on the Wiki page.
 
+### For Mac Users
+1. Install Python 3 on your computer. You can install python using the following link:
+https://www.python.org/downloads/mac-osx/
+2. Download the Github repo using the Code button on the top right corner of the repo, then unzip the downloaded file.
+3. Open your terminal and go to the unzipped folder. Run the command: `pip3 install -r requirements.txt`.
+4. After installing requirements, run the command: `python3 as_xtf_GUI.py`. This will start the program.
+5. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
+through the program and its features can be found on the Wiki page.
+
 ### For Developers
 
 #### Prerequisites
-1. Python 3 installed on your computer. You can install python using the following link:
+1. Install Python 3 on your computer. You can install python using the following link:
 https://www.python.org/downloads/
 2. Packages as specified in requirements.txt
 3. Your ArchivesSpace Instance's API URL (8089), your username and password
@@ -29,7 +38,8 @@ files.
 1. Clone/Download or Fork the Master branch
 2. Set up your virtual environment using the packages as specified in requirements.txt
 3. Run as_xtf_GUI.py. This will automatically create folders and a defaults.json file at the same directory
-4. If you need to reset the defaults or rerun setup, delete the folders and defaults.json file and rerun as_xtf_GUI.py.
+4. If you need to reset the defaults or rerun setup, delete the folders within the repository and defaults.json file 
+and rerun as_xtf_GUI.py.
 
 ## Testing
 There are currently no unittests associated with this project.

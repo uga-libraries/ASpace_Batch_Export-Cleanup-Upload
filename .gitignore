@@ -23,3 +23,6 @@ harvard-schematron.xml
 to_tsv.xsl
 Windows_Installer
 Mac Installer
+ASpace_Batch_Exporter.spec
+ead_import_log.txt
+as_functions.py
