@@ -353,17 +353,18 @@ def run_gui(defaults):
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
             as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
-                get_aspace_log(defaults, xtf_checkbox=False)
+                get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-                get_xtf_log(defaults, login=False)
+                get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password, xtf_ht=xtf_hostname,
+                            xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.0.0\n\n"
+                         "Version: 1.0.1\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -446,7 +447,7 @@ def run_gui(defaults):
     window_simple.close()
 
 
-def get_aspace_log(defaults, xtf_checkbox=True):
+def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
     """
     Gets a user's ArchiveSpace credentials.
 
@@ -460,6 +461,9 @@ def get_aspace_log(defaults, xtf_checkbox=True):
     Args:
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         xtf_checkbox (bool, optional): user input that is used to display XTF-related features in the GUI
+        as_un (object, optional): user's ArchivesSpace username
+        as_pw (object, optional): user's ArchivesSpace password
+        as_ap (object, optional): the ArchivesSpace API URL
 
     Returns:
         as_username (str): user's ArchivesSpace username
@@ -467,14 +471,14 @@ def get_aspace_log(defaults, xtf_checkbox=True):
         as_api (str): the ArchivesSpace API URL
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        version (str): the current version of ArchivesSpace
+        asp_version (str): the current version of ArchivesSpace
         repositories (dict): contains info on all the repositories for an ArchivesSpace instance, including name as the
         key and id # as it's value
         xtf_version (bool): user indicated value whether they want to display xtf features in the GUI
     """
-    as_username = None
-    as_password = None
-    as_api = None
+    as_username = as_un
+    as_password = as_pw
+    as_api = as_ap
     client = None
     asp_version = None
     repositories = {"Search Across Repositories (Sys Admin Only)": None}
@@ -504,13 +508,14 @@ def get_aspace_log(defaults, xtf_checkbox=True):
         while window_asplog_active is True:
             event_log, values_log = window_login.Read()
             if event_log == "_SAVE_CLOSE_LOGIN_":
-                as_username = values_log["_ASPACE_UNAME_"]
-                as_password = values_log["_ASPACE_PWORD_"]
-                as_api = values_log["_ASPACE_API_"]
-                xtf_version = values_log["_USE_XTF_"]
                 try:
-                    client = ASnakeClient(baseurl=as_api, username=as_username, password=as_password)
+                    client = ASnakeClient(baseurl=values_log["_ASPACE_API_"], username=values_log["_ASPACE_UNAME_"],
+                                          password=values_log["_ASPACE_PWORD_"])
                     client.authorize()
+                    as_username = values_log["_ASPACE_UNAME_"]
+                    as_password = values_log["_ASPACE_PWORD_"]
+                    as_api = values_log["_ASPACE_API_"]
+                    xtf_version = values_log["_USE_XTF_"]
                     asp_version = client.get("/version").content.decode().split(" ")[1]
                     with open("defaults.json",
                               "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
@@ -544,7 +549,7 @@ def get_aspace_log(defaults, xtf_checkbox=True):
     return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
 
 
-def get_xtf_log(defaults, login=True):
+def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None):
     """
     Gets a user's XTF credentials.
 
@@ -554,20 +559,25 @@ def get_xtf_log(defaults, login=True):
     Args:
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         login (bool): determines whether window is on initial popup or within program, changes lang. of save button
+        xtf_un (object, optional): user's XTF username
+        xtf_pw (object, optional): user's XTF password
+        xtf_ht (object, optional): the host URL for the XTF instance
+        xtf_rp (object, optional): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_ip (object, optional): the path (file) where the website indexer is located
 
     Returns:
         xtf_username (str): user's XTF username
         xtf_password (str): user's XTF password
-        xtf_host (str): the host URL for the XTF instance.
+        xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
-    xtf_username = None
-    xtf_password = None
-    xtf_host = None
-    xtf_remote_path = None
-    xtf_indexer_path = None
+    xtf_username = xtf_un
+    xtf_password = xtf_pw
+    xtf_host = xtf_ht
+    xtf_remote_path = xtf_rp
+    xtf_indexer_path = xtf_ip
     if login is True:
         save_button_xtf = " Save and Continue "
     else:
@@ -594,17 +604,20 @@ def get_xtf_log(defaults, login=True):
         while window_xtflog_active is True:
             event_xlog, values_xlog = window_xtfcred.Read()
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
-                xtf_username = values_xlog["_XTF_UNAME_"]
-                xtf_password = values_xlog["_XTF_PWORD_"]
-                xtf_host = values_xlog["_XTF_HOSTNAME_"]
-                xtf_remote_path = values_xlog["_XTF_REMPATH_"]
-                xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
                 try:
-                    remote = xup.RemoteClient(xtf_host, xtf_username, xtf_password, xtf_remote_path)
+                    remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
+                                              values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"])
                     remote.client = remote.connect_remote()
                     if remote.scp is None:
                         raise Exception
+                    elif values_xlog["_XTF_REMPATH_"] == "" or values_xlog["_XTF_INDPATH_"] == "":
+                        raise Exception
                     else:
+                        xtf_username = values_xlog["_XTF_UNAME_"]
+                        xtf_password = values_xlog["_XTF_PWORD_"]
+                        xtf_host = values_xlog["_XTF_HOSTNAME_"]
+                        xtf_remote_path = values_xlog["_XTF_REMPATH_"]
+                        xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
@@ -616,7 +629,8 @@ def get_xtf_log(defaults, login=True):
                         correct_creds = True
                         break
                 except Exception as e:
-                    sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" + str(e))
+                    sg.Popup("Your username, password, or info were entered incorrectly. Please try again.\n\n" +
+                             str(e))
                     window_xtflog_active = True
             if event_xlog is None or event_xlog == 'Cancel':
                 window_xtfcred.close()
@@ -696,6 +710,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             export_counter += 1
                         else:
                             print("XML validation error\n" + results)
+                else:
+                    export_counter += 1
             else:
                 print(resource_export.error + "\n")
         else:

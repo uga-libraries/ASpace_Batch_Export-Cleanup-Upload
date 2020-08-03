@@ -59,7 +59,7 @@ class RemoteClient:
                                 password= self.password,
                                 # key_filename=self.ssh_key_filepath,
                                 # look_for_keys=True,
-                                timeout=5000)
+                                timeout=10)
             self.scp = SCPClient(self.client.get_transport())
         except AuthenticationException as error:
             logger.info('Authentication failed: did you enter the correct username and password?')

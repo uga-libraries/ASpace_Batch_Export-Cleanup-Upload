@@ -136,21 +136,28 @@ class ASExport:
             self.error (str): value is None unless an error occurs and is then populated with a string detailing the
             error
         """
-        request_ead = self.client.get('repositories/{}/resource_descriptions/{}.xml'.format(self.resource_repo,
-                                                                                            self.resource_id),
-                                      params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
-                                              'numbered_cs': numbered_cs, 'print_pdf': False, 'ead3': ead3})
-        if request_ead.status_code == 200:
-            self.filepath += ".xml"
-            with open(self.filepath, "wb") as local_file:
-                local_file.write(request_ead.content)
-                local_file.close()
-                self.result = "Done"
-                return self.filepath, self.result
-        else:
-            self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
-                                                                                                 request_ead,
-                                                                                                 request_ead.text)
+        try:
+            request_ead = self.client.get('repositories/{}/resource_descriptions/{}.xml'.format(self.resource_repo,
+                                                                                                self.resource_id),
+                                          params={'include_unpublished': include_unpublished,
+                                                  'include_daos': include_daos, 'numbered_cs': numbered_cs,
+                                                  'print_pdf': False, 'ead3': ead3})
+            if request_ead.status_code == 200:
+                self.filepath += ".xml"
+                with open(self.filepath, "wb") as local_file:
+                    local_file.write(request_ead.content)
+                    local_file.close()
+                    self.result = "Done"
+                    return self.filepath, self.result
+            else:
+                self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
+                                                                                                     request_ead,
+                                                                                                     request_ead.text)
+                self.error += "-" * 135
+                return None, self.error
+        except Exception as e:
+            self.error = "\nThe following errors were found when exporting {}:\n{}\n".format(self.input_id, e)
+
             self.error += "-" * 135
             return None, self.error
 
@@ -171,20 +178,25 @@ class ASExport:
             self.error (str): value is None unless an error occurs and is then populated with a string detailing the
             error
         """
-        request_marcxml = self.client.get('/repositories/{}/resources/marc21/{}.xml'.format(self.resource_repo,
-                                                                                            self.resource_id),
-                                          params={'include_unpublished_marc': include_unpublished})
-        if request_marcxml.status_code == 200:
-            self.filepath += ".xml"
-            with open(self.filepath, "wb") as local_file:
-                local_file.write(request_marcxml.content)
-                local_file.close()
-                self.result = "Done"
-                return self.filepath, self.result
-        else:
-            self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
-                                                                                                 request_marcxml,
-                                                                                                 request_marcxml.text)
+        try:
+            request_marcxml = self.client.get('/repositories/{}/resources/marc21/{}.xml'.format(self.resource_repo,
+                                                                                                self.resource_id),
+                                              params={'include_unpublished_marc': include_unpublished})
+            if request_marcxml.status_code == 200:
+                self.filepath += ".xml"
+                with open(self.filepath, "wb") as local_file:
+                    local_file.write(request_marcxml.content)
+                    local_file.close()
+                    self.result = "Done"
+                    return self.filepath, self.result
+            else:
+                self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
+                                                                                                     request_marcxml,
+                                                                                                     request_marcxml.text)
+                self.error += "-" * 135
+                return None, self.error
+        except Exception as e:
+            self.error = "\nThe following errors were found when exporting {}:\n{}\n".format(self.input_id, e)
             self.error += "-" * 135
             return None, self.error
 
@@ -208,21 +220,27 @@ class ASExport:
             self.error (str): value is None unless an error occurs and is then populated with a string detailing the
             error
         """
-        request_pdf = self.client.get('repositories/{}/resource_descriptions/{}.pdf'.format(self.resource_repo,
-                                                                                            self.resource_id),
-                                      params={'include_unpublished': include_unpublished, 'include_daos': include_daos,
-                                              'numbered_cs': numbered_cs, 'print_pdf': True, 'ead3': ead3})
-        if request_pdf.status_code == 200:
-            self.filepath += ".pdf"
-            with open(self.filepath, "wb") as local_file:
-                local_file.write(request_pdf.content)
-                local_file.close()
-                self.result = "Done"
-                return self.filepath, self.result
-        else:
-            self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
-                                                                                                 request_pdf,
-                                                                                                 request_pdf.text)
+        try:
+            request_pdf = self.client.get('repositories/{}/resource_descriptions/{}.pdf'.format(self.resource_repo,
+                                                                                                self.resource_id),
+                                          params={'include_unpublished': include_unpublished,
+                                                  'include_daos': include_daos, 'numbered_cs': numbered_cs,
+                                                  'print_pdf': True, 'ead3': ead3})
+            if request_pdf.status_code == 200:
+                self.filepath += ".pdf"
+                with open(self.filepath, "wb") as local_file:
+                    local_file.write(request_pdf.content)
+                    local_file.close()
+                    self.result = "Done"
+                    return self.filepath, self.result
+            else:
+                self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
+                                                                                                     request_pdf,
+                                                                                                     request_pdf.text)
+                self.error += "-" * 135
+                return None, self.error
+        except Exception as e:
+            self.error = "\nThe following errors were found when exporting {}:\n{}\n".format(self.input_id, e)
             self.error += "-" * 135
             return None, self.error
 
@@ -240,18 +258,23 @@ class ASExport:
             self.error (str): value is None unless an error occurs and is then populated with a string detailing the
             error
         """
-        request_labels = self.client.get('repositories/{}/resource_labels/{}.tsv'.format(self.resource_repo,
-                                                                                         self.resource_id))
-        if request_labels.status_code == 200:
-            self.filepath += ".tsv"
-            with open(self.filepath, "wb") as local_file:
-                local_file.write(request_labels.content)
-                local_file.close()
-                self.result = "Done"
-                return self.filepath, self.result
-        else:
-            self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
-                                                                                                 request_labels,
-                                                                                                 request_labels.text)
+        try:
+            request_labels = self.client.get('repositories/{}/resource_labels/{}.tsv'.format(self.resource_repo,
+                                                                                             self.resource_id))
+            if request_labels.status_code == 200:
+                self.filepath += ".tsv"
+                with open(self.filepath, "wb") as local_file:
+                    local_file.write(request_labels.content)
+                    local_file.close()
+                    self.result = "Done"
+                    return self.filepath, self.result
+            else:
+                self.error = "\nThe following errors were found when exporting {}:\n{}: {}\n".format(self.input_id,
+                                                                                                     request_labels,
+                                                                                                     request_labels.text)
+                self.error += "-" * 135
+                return None, self.error
+        except Exception as e:
+            self.error = "\nThe following errors were found when exporting {}:\n{}\n".format(self.input_id, e)
             self.error += "-" * 135
             return None, self.error

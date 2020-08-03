@@ -50,7 +50,7 @@ class EADRecord:
                     else:
                         self.eadid = child.text
                         self.root[0][0].text = self.eadid
-        self.results += "Added " + str(self.eadid) + " as eadid\n"
+            self.results += "Added " + str(self.eadid) + " as eadid\n"
 
     def delete_empty_notes(self):
         """
