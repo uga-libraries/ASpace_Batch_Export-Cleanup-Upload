@@ -57,7 +57,7 @@ class ASExport:
         """
         combined_user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
         if self.repo_id is not None:
-            search_resources = self.client.get_paged('/repositories/{}/search'.format(self.repo_id),
+            search_resources = self.client.get_paged('/repositories/{}/search'.format(str(self.repo_id)),
                                                      params={"q": 'four_part_id:' + self.input_id,
                                                              "type": ['resource']})
         else:

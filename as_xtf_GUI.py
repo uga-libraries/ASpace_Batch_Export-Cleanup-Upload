@@ -353,7 +353,8 @@ def run_gui(defaults):
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
             as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
-                get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api)
+                get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api,
+                               as_client=client, as_repos=repositories, xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
                 get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password, xtf_ht=xtf_hostname,
@@ -447,7 +448,8 @@ def run_gui(defaults):
     window_simple.close()
 
 
-def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
+def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, as_client=None, as_repos=None,
+                   xtf_ver=None):
     """
     Gets a user's ArchiveSpace credentials.
 
@@ -461,9 +463,12 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
     Args:
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         xtf_checkbox (bool, optional): user input that is used to display XTF-related features in the GUI
-        as_un (object, optional): user's ArchivesSpace username
-        as_pw (object, optional): user's ArchivesSpace password
-        as_ap (object, optional): the ArchivesSpace API URL
+        as_un (str, optional): user's ArchivesSpace username
+        as_pw (str, optional): user's ArchivesSpace password
+        as_ap (str, optional): the ArchivesSpace API URL
+        as_client (ASnake.client object, optional): the ArchivesSpace ASnake client for accessing and connecting to the API
+        as_repos (dict, optional): contains info on all the repositories for an ArchivesSpace instance, including name as the key and id # as it's value
+        xtf_ver (bool, optional): user indicated value whether they want to display xtf features in the GUI
 
     Returns:
         as_username (str): user's ArchivesSpace username
@@ -479,10 +484,13 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
     as_username = as_un
     as_password = as_pw
     as_api = as_ap
-    client = None
+    client = as_client
     asp_version = None
-    repositories = {"Search Across Repositories (Sys Admin Only)": None}
-    xtf_version = True
+    if as_repos is None:
+        repositories = {"Search Across Repositories (Sys Admin Only)": None}
+    else:
+        repositories = as_repos
+    xtf_version = xtf_ver
     if xtf_checkbox is True:
         save_button_asp = " Save and Continue "
     else:
@@ -509,9 +517,11 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
             event_log, values_log = window_login.Read()
             if event_log == "_SAVE_CLOSE_LOGIN_":
                 try:
-                    client = ASnakeClient(baseurl=values_log["_ASPACE_API_"], username=values_log["_ASPACE_UNAME_"],
-                                          password=values_log["_ASPACE_PWORD_"])
-                    client.authorize()
+                    connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
+                                                  username=values_log["_ASPACE_UNAME_"],
+                                                  password=values_log["_ASPACE_PWORD_"])
+                    connect_client.authorize()
+                    client = connect_client
                     as_username = values_log["_ASPACE_UNAME_"]
                     as_password = values_log["_ASPACE_PWORD_"]
                     as_api = values_log["_ASPACE_API_"]
@@ -526,7 +536,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None):
                     repo_results = client.get('/repositories')
                     repo_results_dec = json.loads(repo_results.content.decode())
                     for result in repo_results_dec:
-                        repositories[result["name"]] = result["uri"][-1]
+                        uri_components = result["uri"].split("/")
+                        repositories[result["name"]] = int(uri_components[-1])
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
