@@ -14,6 +14,9 @@ import cleanup as clean
 import xtf_upload as xup
 import defaults_setup as dsetup
 
+import threading
+import gc
+
 
 def run_gui(defaults):
     """
@@ -28,6 +31,7 @@ def run_gui(defaults):
     Returns:
         None
     """
+    gc.disable()
     sg.theme('LightBlue2')
     as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
         get_aspace_log(defaults, xtf_checkbox=True)
@@ -180,6 +184,7 @@ def run_gui(defaults):
                      ]
     window_simple = sg.Window("ArchivesSpace Batch Export-Cleanup-Upload Program", layout_simple)
     while True:
+        gc.collect()
         event_simple, values_simple = window_simple.Read()
         if event_simple == 'Cancel' or event_simple is None or event_simple == "Exit":
             window_simple.close()
@@ -225,9 +230,11 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple)
+                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple,))
+                        ead_thread.start()
                 else:
-                    get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple)
+                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple,))
+                    ead_thread.start()
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
