@@ -1,6 +1,6 @@
-loguru==0.5.1
-lxml==4.5.1
-paramiko==2.7.1
-PySimpleGUI==4.20.0
-scp==0.13.2
-ArchivesSnake==0.8.5
+loguru==0.5.3
+lxml==4.6.1
+paramiko==2.7.2
+PySimpleGUI==4.32.1
+scp==0.13.3
+ArchivesSnake==0.9.0

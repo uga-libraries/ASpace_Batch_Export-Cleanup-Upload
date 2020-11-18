@@ -94,6 +94,7 @@ more information.
 ### Special Thanks to:
 * Adriane Hanson - Head of Digital Stewardship at the University of Georgia Libraries
 * Shawn Kiewel - Application Analyst Specialist at the University of Georgia Libraries
+* Kevin Cottrell - GALILEO/Library Infrastructure Systems Architect at the University of Georgia Libraries
 * ArchivesSpace community
 * PySimpleGUI
 * Tyler Brockmeyer

@@ -17,6 +17,10 @@ import defaults_setup as dsetup
 import threading
 import gc
 
+EAD_EXPORT_THREAD = '-EAD_THREAD-'
+XTF_UPLOAD_THREAD = '-XTFUP_THREAD-'
+XTF_INDEX_THREAD = '-XTFIND_THREAD-'
+
 
 def run_gui(defaults):
     """
@@ -54,6 +58,7 @@ def run_gui(defaults):
     else:
         xtf_login_menu_button = '!Change XTF Login Credentials'
         xtf_opt_button = '!Change XTF Options'
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path = "", "", "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
                         "_DEL_ALLNS_"]
@@ -86,8 +91,7 @@ def run_gui(defaults):
                  ]
                 ]
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_",
-                             tooltip=' Export EAD.xml resources '),
-                   sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
+                             tooltip=' Export EAD.xml resources ', disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_",
@@ -101,19 +105,18 @@ def run_gui(defaults):
                              tooltip=' Open folder where raw ASpace EAD.xml files are stored ')]
                   ]
     xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_",
-                             tooltip=' Upload select files to XTF '),
+                             tooltip=' Upload select files to XTF ', disabled=False),
                    sg.Text(" " * 2),
                    sg.Button(button_text=" Index Changed Records ", key="_INDEX_",
-                             tooltip=' Run an indexing of new/updated files in XTF '),
-                   sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
+                             tooltip=' Run an indexing of new/updated files in XTF ', disabled=False),
+                   sg.Text("The program may become unresponsive", font=("Roboto", 10))],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_",
                              tooltip=' Select options for XTF upload ')]
                   ]
     marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_",
-                              tooltip=' Export MARC.xml resources '),
-                    sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
+                              tooltip=' Export MARC.xml resources ', disabled=False)],
                    [sg.Text("Options", font=("Roboto", 13))],
                    [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_",
                               tooltip=' Choose how you would like to export resources ')],
@@ -122,8 +125,7 @@ def run_gui(defaults):
                    [sg.Text(" " * 140)]
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_",
-                                   tooltip=' Export container labels for resources '),
-                         sg.Text("* The program may become unresponsive", font=("Roboto", 11))],
+                                   tooltip=' Export container labels for resources ', disabled=False)],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
@@ -140,8 +142,7 @@ def run_gui(defaults):
                            "Your ArchivesSpace version is: {}".format(asp_version), font=("Roboto", 13),
                            visible=asp_pdf_api)],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_",
-                             tooltip=' Export PDF(s) for resources '),
-                   sg.Text("* The program may become unresponsive")],
+                             tooltip=' Export PDF(s) for resources ', disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 125)],
                   [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_",
@@ -230,11 +231,24 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple,))
+                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,))
                         ead_thread.start()
+                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
                 else:
-                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple,))
+                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,))
                     ead_thread.start()
+                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+        if event_simple == EAD_EXPORT_THREAD:
+            window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
@@ -372,7 +386,7 @@ def run_gui(defaults):
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.0.1\n\n"
+                         "Version: 1.1\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -396,7 +410,7 @@ def run_gui(defaults):
             window_upl_active = True
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                           if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
-            upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_"),
+            upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
                                       sg.Text("* The program may be unresponsive, please wait.")],
                                      [sg.Text("Options", font=("Roboto", 12))],
                                      [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
@@ -414,42 +428,26 @@ def run_gui(defaults):
                 if event_upl == "_XTF_OPTIONS_2_":
                     get_xtf_options(defaults)
                 if event_upl == "_UPLOAD_TO_XTF_":
-                    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
-                    xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"],
-                                                  values_upl["_SELECT_FILES_"])
-                    upload_output = remote.bulk_upload(xtf_files)
-                    print(upload_output)
-                    if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-                        cmds_output = remote.execute_commands(
-                            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-                        print("-" * 135)
-                        print(cmds_output)
-                    else:
-                        print("-" * 135)
-                    remote.disconnect()
-                    # xtfup_id = files
-                    # thread_id = threading.Thread(target=xtf_upload_wrapper,
-                    #                              args=(xtfup_id, gui_queue, remote, files,
-                    #                                    xtf_hostname),
-                    #                              daemon=True)
-                    # thread_id.start()
-                    # try:
-                    #     message = gui_queue.get_nowait()
-                    # except queue.Empty:
-                    #     message = None
-                    # if message:
-                    #     print(" Done")
-                    #     print(message)
+                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
+                    xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
+                                                                                   xtf_password, xtf_remote_path,
+                                                                                   values_upl, window_simple,))
+                    xtfup_thread.start()
                     window_upl.close()
                     window_upl_active = False
+        if event_simple == XTF_UPLOAD_THREAD:
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+            window_simple[f'{"_INDEX_"}'].update(disabled=False)
         if event_simple == "_INDEX_":
-            print("Beginning Re-Index, this may take awhile...\nThe program might become unresponsive.")
-            remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
-            cmds_output = remote.execute_commands(
-                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-            print(cmds_output)
-            print("-" * 135)
-            remote.disconnect()
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+            window_simple[f'{"_INDEX_"}'].update(disabled=True)
+            xtfind_thread = threading.Thread(target=index_xtf(defaults, xtf_hostname, xtf_username, xtf_password,
+                                                              xtf_remote_path, window_simple,))
+            xtfind_thread.start()
+        if event_simple == XTF_INDEX_THREAD:
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+            window_simple[f'{"_INDEX_"}'].update(disabled=False)
         if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
             get_xtf_options(defaults)
     window_simple.close()
@@ -660,7 +658,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
 
 
-def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple):
+def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_ead().
 
@@ -677,6 +675,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
 
     Returns:
         None
@@ -735,49 +734,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         else:
             print(resource_export.error + "\n")
     print("\n" + "-"*56 + "Finished {} exports".format(str(export_counter)) + "-"*56 + "\n")
-    # asx_id = input_id
-    # try:
-    #     thread_export = threading.Thread(target=as_export_wrapper, args=(input_id, resource_repo,
-    #                                                                      resource_uri, as_username,
-    #                                                                      as_password, as_api,
-    #                                                                      defaults["ead_export_default"][
-    #                                                                          "_INCLUDE_UNPUB_"],
-    #                                                                      defaults["ead_export_default"][
-    #                                                                          "_INCLUDE_DAOS_"],
-    #                                                                      defaults["ead_export_default"][
-    #                                                                          "_NUMBERED_CS_"],
-    #                                                                      defaults["ead_export_default"][
-    #                                                                          "_USE_EAD3_"]))
-    #     thread_export.start()
-    #     # if thread_export[0] is not None:
-    #     #     print(thread_export[1])
-    #     # else:
-    #     #     print(thread_export[1])
-    # except:
-    #     print("Exception occurred blah blah")
-    #     # progress_bar.UpdateBar(i + 1)
-    # if thread_export:
-    #     sg.popup_animated(sg.DEFAULT_BASE64_LOADING_GIF, time_between_frames=1)
-    #     if not thread_export.is_alive():  # the thread finished
-    #         sg.popup_animated(None)
-    #         thread_export = None
-    #         if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
-    #             if values_simple["_KEEP_RAW_"] is True:
-    #                 if cleanup_options:  # if cleanup_options is not empty
-    #                     path = clean.cleanup_eads(custom_clean=cleanup_defaults, keep_raw_exports=True)
-    #                     cwd = os.getcwd()
-    #                     raw_path = cwd + path
-    #                     subprocess.Popen('explorer "{}"'.format(raw_path))
-    #                 else:  # if cleanup_options is empty
-    #                     path = clean.cleanup_eads(custom_clean=cleanup_defaults, keep_raw_exports=True)
-    #                     cwd = os.getcwd()
-    #                     raw_path = cwd + path
-    #                     subprocess.Popen('explorer "{}"'.format(raw_path))
-    #             else:
-    #                 if cleanup_options:  # if cleanup_options is not empty
-    #                     clean.cleanup_eads(custom_clean=cleanup_options)
-    #                 else:  # if cleanup_options is empty
-    #                     clean.cleanup_eads(custom_clean=cleanup_defaults)
+    gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
 def get_ead_options(defaults):
@@ -1202,6 +1159,38 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
     print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
 
 
+def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, values_upl, gui_window):
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+    print("Uploading files...")
+    xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"],
+                                  values_upl["_SELECT_FILES_"])
+    # xtf_thread = threading.Thread(target=remote.bulk_upload, args=(xtf_files,))
+    # xtf_thread.start()
+    upload_output = remote.bulk_upload(xtf_files)
+    print(upload_output)
+    if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
+        print("Indexing files...")
+        cmds_output = remote.execute_commands(
+            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+        print("-" * 135)
+        print(cmds_output)  # previously print cmds_output
+    else:
+        print("-" * 135)
+    remote.disconnect()
+    gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
+
+
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window):
+    print("Beginning Re-Index, this may take awhile...")
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+    cmds_output = remote.execute_commands(
+        ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+    print(cmds_output)
+    print("-" * 135)
+    remote.disconnect()
+    gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
+
+
 def get_xtf_options(defaults):
     """
     Set options for uploading and re-indexing records to XTF.
@@ -1250,27 +1239,6 @@ def get_xtf_options(defaults):
                     defaults_xtf.close()
                 xtf_option_active = False
                 window_xtf_option.close()
-
-
-# Add threading to allow loading screen
-# def as_export_wrapper(resource_instance, include_unpublished, include_daos, numbered_cs, ead3):
-#     # LOCATION 1
-#     # this is our "long running function call"
-#     resource_instance.export_ead(include_unpublished, include_daos, numbered_cs, ead3)
-#     # at the end of the work, before exiting, send a message back to the GUI indicating end
-#     # at this point, the thread exits
-#     if resource_instance.error is None:
-#         return resource_instance.results
-#     else:
-#         return resource_instance.error
-#
-#
-# def xtf_upload_wrapper(xtfup_id, gui_queue, remote, files, xtf_host):
-#     remote.bulk_upload(files)
-#     remote.execute_commands(['/dlg/app/apache-tomcat-6.0.14-maint/webapps/hmfa/bin/textIndexer -index default'])
-#     remote.disconnect()
-#     gui_queue.put('{} ::: done'.format(xtfup_id))
-#     return
 
 
 def open_file(filepath):

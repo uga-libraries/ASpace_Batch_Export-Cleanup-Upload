@@ -70,8 +70,6 @@ class ASExport:
             self.error = "No results were found. Have you entered the correct repository and/or resource ID?\n" \
                          "Results: " + str(search_results) + \
                          "\nUser Input: {}\n".format(self.input_id) + "-" * 135
-            # self.error = "There was an issue connecting to ArchivesSpace\n Error: "\
-            #              + str(search_resources.status_code) + "\nContent: " + str(search_resources.content)
         else:
             # after searching for them, get their URI
             result_count = len(search_results)
@@ -93,13 +91,13 @@ class ASExport:
                         resource_full_uri = result["uri"].split("/")
                         self.resource_id = resource_full_uri[-1]
                         self.resource_repo = resource_full_uri[2]
-                        match_results[combined_aspace_id[:-1]] = json_info["title"]
+                        match_results[aspace_id] = json_info["title"]
+                        print(match_results)
                         user_id_index += 1
                     else:
                         raise Exception
                 except Exception:
-                    # strip extra - at end
-                    non_match_results[combined_aspace_id[:-1]] = json_info["title"]  # had to insert [:-1] in else to
+                    non_match_results[combined_aspace_id[:-1]] = json_info["title"]
                     user_id_index += 1
             if non_match_results and not match_results:  # if non_match_results contains non-matches, return error
                 self.error = "{} results were found, but the resource identifier did not match. " \

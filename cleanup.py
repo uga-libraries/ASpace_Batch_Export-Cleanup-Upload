@@ -386,7 +386,7 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         current_time = time.time()
         delete_time = current_time - 5356800  # This is for 2 months.
         if file_time <= delete_time:  # If a file is more than 2 months old, delete
-            os.remove(filepath)
+            os.remove(source_filepath)
     if keep_raw_exports is False:  # prevents program from rerunning cleanup on cleaned files
         os.remove(filepath)
         return True, results

@@ -2,7 +2,6 @@
 __pycache__/
 secrets.py
 venv/
-SSH/
 logs/
 clean_eads
 defaults.json
@@ -10,19 +9,11 @@ source_marcs
 source_pdfs
 source_labels
 source_eads
-ASpace.spec
 ASpace_Batching.spec
 dist
 build
 setup_script-001.iss
-setup_script-002.iss
 Output
-invalid_eads
-harvard-schematron.xml
-/creds.txt
-to_tsv.xsl
 Windows_Installer
 Mac Installer
 ASpace_Batch_Exporter.spec
-ead_import_log.txt
-as_functions.py
