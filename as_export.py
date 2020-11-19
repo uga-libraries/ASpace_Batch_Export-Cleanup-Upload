@@ -92,7 +92,6 @@ class ASExport:
                         self.resource_id = resource_full_uri[-1]
                         self.resource_repo = resource_full_uri[2]
                         match_results[aspace_id] = json_info["title"]
-                        print(match_results)
                         user_id_index += 1
                     else:
                         raise Exception

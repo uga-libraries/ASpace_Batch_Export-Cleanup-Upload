@@ -42,9 +42,9 @@ def run_gui(defaults):
     if close_program_as is True:
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
-    asp_pdf_api = True
+    asp_pdf_api = False
     if asp_version in pdf_broken:
-        asp_pdf_api = False
+        asp_pdf_api = True
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
@@ -108,8 +108,7 @@ def run_gui(defaults):
                              tooltip=' Upload select files to XTF ', disabled=False),
                    sg.Text(" " * 2),
                    sg.Button(button_text=" Index Changed Records ", key="_INDEX_",
-                             tooltip=' Run an indexing of new/updated files in XTF ', disabled=False),
-                   sg.Text("The program may become unresponsive", font=("Roboto", 10))],
+                             tooltip=' Run an indexing of new/updated files in XTF ', disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_",
@@ -231,14 +230,18 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,))
+                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
+                                                                             repositories, client, values_simple,
+                                                                             window_simple,))
                         ead_thread.start()
                         window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
                         window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
                         window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
                         window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
                 else:
-                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,))
+                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
+                                                                         repositories, client, values_simple,
+                                                                         window_simple,))
                     ead_thread.start()
                     window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
                     window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
@@ -892,7 +895,6 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                             "up-options",
                             new=2)
         if event_adv is None:
-            # window_adv_active = False
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
                                bool_val is True]
             window_adv.close()
@@ -1160,20 +1162,33 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
 
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, values_upl, gui_window):
+    """
+    Uploads files to XTF.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_hostname (str): the host URL for the XTF instance
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        values_upl (dict?): the GUI values a user chose when selecting files to upload to XTF
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        None
+    """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"],
                                   values_upl["_SELECT_FILES_"])
-    # xtf_thread = threading.Thread(target=remote.bulk_upload, args=(xtf_files,))
-    # xtf_thread.start()
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
         print("Indexing files...")
         cmds_output = remote.execute_commands(
             ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+        print(cmds_output)
         print("-" * 135)
-        print(cmds_output)  # previously print cmds_output
     else:
         print("-" * 135)
     remote.disconnect()
@@ -1181,6 +1196,20 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
 
 
 def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window):
+    """
+    Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_hostname (str): the host URL for the XTF instance
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        None
+    """
     print("Beginning Re-Index, this may take awhile...")
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
     cmds_output = remote.execute_commands(
