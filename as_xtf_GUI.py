@@ -18,6 +18,9 @@ import threading
 import gc
 
 EAD_EXPORT_THREAD = '-EAD_THREAD-'
+MARCXML_EXPORT_THREAD = '-MARCXML_THREAD-'
+PDF_EXPORT_THREAD = '-PDF_THREAD-'
+CONTLABEL_EXPORT_THREAD = '-CONTLABEL_THREAD-'
 XTF_UPLOAD_THREAD = '-XTFUP_THREAD-'
 XTF_INDEX_THREAD = '-XTFIND_THREAD-'
 
@@ -37,8 +40,8 @@ def run_gui(defaults):
     """
     gc.disable()
     sg.theme('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
-        get_aspace_log(defaults, xtf_checkbox=True)
+    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = get_aspace_log(
+        defaults, xtf_checkbox=True)
     if close_program_as is True:
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
@@ -48,8 +51,8 @@ def run_gui(defaults):
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-            get_xtf_log(defaults, login=True)
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazyindex_path,\
+         close_program_xtf = get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
             sys.exit()
         xtf_login_menu_button = 'Change XTF Login Credentials'
@@ -58,7 +61,8 @@ def run_gui(defaults):
     else:
         xtf_login_menu_button = '!Change XTF Login Credentials'
         xtf_opt_button = '!Change XTF Options'
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path = "", "", "", "", ""
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazyindex_path = "", "", "", \
+                                                                                                          "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
                         "_DEL_ALLNS_"]
@@ -247,11 +251,6 @@ def run_gui(defaults):
                     window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
                     window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
                     window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
-        if event_simple == EAD_EXPORT_THREAD:
-            window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
-            window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
-            window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
-            window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
@@ -279,9 +278,23 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        get_marcxml(input_ids, defaults, repositories, client, values_simple)
+                        marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
+                                                                                    client, values_simple,
+                                                                                    window_simple,))
+                        marcxml_thread.start()
+                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
                 else:
-                    get_marcxml(input_ids, defaults, repositories, client, values_simple)
+                    marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
+                                                                                client, values_simple,
+                                                                                window_simple,))
+                    marcxml_thread.start()
+                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
@@ -302,9 +315,21 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        get_pdfs(input_ids, defaults, repositories, client, values_simple)
+                        pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
+                                                                             values_simple, window_simple,))
+                        pdf_thread.start()
+                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
                 else:
-                    get_pdfs(input_ids, defaults, repositories, client, values_simple)
+                    pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
+                                                                         values_simple, window_simple,))
+                    pdf_thread.start()
+                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
         if event_simple == "_OPEN_PDF_DEST_":
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
@@ -323,9 +348,23 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        get_contlabels(input_ids, defaults, repositories, client, values_simple)
+                        contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
+                                                                                         repositories, client,
+                                                                                         values_simple, window_simple,))
+                        contlabel_thread.start()
+                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
                 else:
-                    get_contlabels(input_ids, defaults, repositories, client, values_simple)
+                    contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
+                                                                                     repositories, client,
+                                                                                     values_simple, window_simple,))
+                    contlabel_thread.start()
+                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
@@ -345,6 +384,13 @@ def run_gui(defaults):
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
                             "iner-labels-screen",
                             new=2)
+        # ------------- EXPORT THREADS -------------
+        if event_simple == EAD_EXPORT_THREAD or event_simple == MARCXML_EXPORT_THREAD or event_simple == \
+                PDF_EXPORT_THREAD or event_simple == CONTLABEL_EXPORT_THREAD:
+            window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Folder":
@@ -380,9 +426,10 @@ def run_gui(defaults):
                 get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api,
                                as_client=client, as_repos=repositories, xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
-            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-                get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password, xtf_ht=xtf_hostname,
-                            xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path)
+            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazyindex_path, \
+             close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
+                                             xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
+                                             xtf_lp=xtf_lazyindex_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
@@ -431,28 +478,28 @@ def run_gui(defaults):
                 if event_upl == "_XTF_OPTIONS_2_":
                     get_xtf_options(defaults)
                 if event_upl == "_UPLOAD_TO_XTF_":
-                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
-                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   values_upl, window_simple,))
+                                                                                   xtf_lazyindex_path, values_upl,
+                                                                                   window_simple,))
                     xtfup_thread.start()
+                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
                     window_upl.close()
                     window_upl_active = False
-        if event_simple == XTF_UPLOAD_THREAD:
-            window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
-            window_simple[f'{"_INDEX_"}'].update(disabled=False)
         if event_simple == "_INDEX_":
+            xtfind_thread = threading.Thread(target=index_xtf(defaults, xtf_hostname, xtf_username, xtf_password,
+                                                              xtf_remote_path, xtf_lazyindex_path, window_simple,
+                                                              xtf_files=None,))
+            xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
-            xtfind_thread = threading.Thread(target=index_xtf(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                              xtf_remote_path, window_simple,))
-            xtfind_thread.start()
-        if event_simple == XTF_INDEX_THREAD:
-            window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
-            window_simple[f'{"_INDEX_"}'].update(disabled=False)
         if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
             get_xtf_options(defaults)
+        # ---------------- XTF THREADS ----------------
+        if event_simple == XTF_INDEX_THREAD or event_simple == XTF_UPLOAD_THREAD:
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+            window_simple[f'{"_INDEX_"}'].update(disabled=False)
     window_simple.close()
 
 
@@ -568,7 +615,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
     return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
 
 
-def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None):
+def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None, xtf_lp=None):
     """
     Gets a user's XTF credentials.
 
@@ -583,6 +630,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_ht (object, optional): the host URL for the XTF instance
         xtf_rp (object, optional): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_ip (object, optional): the path (file) where the website indexer is located
+        xtf_lp (object, optional): the path (folder) where xml.lazy files are stored - for permissions updates
 
     Returns:
         xtf_username (str): user's XTF username
@@ -590,6 +638,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
+        xtf_lazyindex_path (str): the path (folder) where lazy index files are generated. Use for permissions settings
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
     xtf_username = xtf_un
@@ -597,6 +646,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     xtf_host = xtf_ht
     xtf_remote_path = xtf_rp
     xtf_indexer_path = xtf_ip
+    xtf_lazyindex_path = xtf_lp
     if login is True:
         save_button_xtf = " Save and Continue "
     else:
@@ -609,12 +659,14 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                        [sg.Text("XTF password:", font=("Roboto", 11))],
                        [sg.Text("XTF Hostname:", font=("Roboto", 11))],
                        [sg.Text("XTF Remote Path:", font=("Roboto", 11))],
-                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))]]
+                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))],
+                       [sg.Text("XTF Lazy Index Path:", font=("Roboto", 11))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_remote_path"], key="_XTF_REMPATH_")],
-                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")]]
+                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")],
+                       [sg.InputText(defaults["xtf_default"]["xtf_lazyindex_path"], key="_XTF_LAZYPATH_")]]
         layout_xtflog = [
             [sg.Column(xtflog_col1), sg.Column(xtflog_col2)],
             [sg.Button(save_button_xtf, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
@@ -625,11 +677,13 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
-                                              values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"])
+                                              values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"],
+                                              values_xlog["_XTF_LAZYPATH_"])
                     remote.client = remote.connect_remote()
                     if remote.scp is None:
                         raise Exception
-                    elif values_xlog["_XTF_REMPATH_"] == "" or values_xlog["_XTF_INDPATH_"] == "":
+                    elif values_xlog["_XTF_REMPATH_"] == "" or values_xlog["_XTF_INDPATH_"] == "" or \
+                            values_xlog["_XTF_LAZYPATH_"] == "":
                         raise Exception
                     else:
                         xtf_username = values_xlog["_XTF_UNAME_"]
@@ -637,11 +691,13 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_host = values_xlog["_XTF_HOSTNAME_"]
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
+                        xtf_lazyindex_path = values_xlog["_XTF_LAZYPATH_"]
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
                             defaults["xtf_default"]["xtf_remote_path"] = values_xlog["_XTF_REMPATH_"]
                             defaults["xtf_default"]["xtf_indexer_path"] = values_xlog["_XTF_INDPATH_"]
+                            defaults["xtf_default"]["xtf_lazyindex_path"] = values_xlog["_XTF_LAZYPATH_"]
                             json.dump(defaults, defaults_xtf)
                             defaults_xtf.close()
                         window_xtflog_active = False
@@ -658,7 +714,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 close_program = True
                 break
         window_xtfcred.close()
-    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
+    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, xtf_lazyindex_path, close_program
 
 
 def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window):
@@ -901,7 +957,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             return cleanup_options
 
 
-def get_marcxml(input_ids, defaults, repositories, client, values_simple):
+def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_window):
     """
     Iterates through user input and sends them to as_export.py to fetch_results() and export_marcxml().
 
@@ -914,6 +970,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple):
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
 
     Returns:
         None
@@ -944,6 +1001,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple):
         else:
             print(resource_export.error)
     print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
 
 def get_marc_options(defaults):
@@ -1003,7 +1061,7 @@ def get_marc_options(defaults):
         window_marc.close()
 
 
-def get_pdfs(input_ids, defaults, repositories, client, values_simple):
+def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_window):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_pdf().
 
@@ -1016,6 +1074,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple):
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
 
     Returns:
         None
@@ -1048,6 +1107,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple):
         else:
             print(resource_export.error)
     print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
 
 def get_pdf_options(defaults):
@@ -1117,7 +1177,7 @@ def get_pdf_options(defaults):
         window_pdf.close()
 
 
-def get_contlabels(input_ids, defaults, repositories, client, values_simple):
+def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui_window):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_labels().
 
@@ -1130,6 +1190,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
 
     Returns:
         None
@@ -1159,9 +1220,11 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple):
         else:
             print(resource_export.error)
     print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    gui_window.write_event_value('-CONTLABELS_THREAD-', (threading.current_thread().name,))
 
 
-def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, values_upl, gui_window):
+def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path,
+                     values_upl, gui_window):
     """
     Uploads files to XTF.
 
@@ -1171,31 +1234,30 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_username (str): user's XTF username
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
-        values_upl (dict?): the GUI values a user chose when selecting files to upload to XTF
+        xtf_lazyindex_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
+        values_upl (list): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path)
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"],
                                   values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-        print("Indexing files...")
-        cmds_output = remote.execute_commands(
-            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-        print(cmds_output)
-        print("-" * 135)
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path, gui_window,
+                  xtf_files)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window):
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path, gui_window,
+              xtf_files=None):
     """
     Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
 
@@ -1205,17 +1267,32 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         xtf_username (str): user's XTF username
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_lazyindex_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+        xtf_files (None, optional): None, unless list of local files to set permissions
 
     Returns:
         None
     """
     print("Beginning Re-Index, this may take awhile...")
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
-    cmds_output = remote.execute_commands(
-        ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-    print(cmds_output)
-    print("-" * 135)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path)
+    if xtf_files is None:
+        try:
+            cmds_output = remote.execute_commands(
+                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+            print(cmds_output)
+            print("-" * 135)
+        except Exception as e:
+            print("An error occurred: " + str(e))
+    else:
+        # try:
+        cmds_output = remote.execute_commands(
+            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
+             {"set_permissions": xtf_files}])
+        print(cmds_output)
+        print("-" * 135)
+        # except Exception as e:
+        #     print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 

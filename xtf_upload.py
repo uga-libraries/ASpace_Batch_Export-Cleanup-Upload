@@ -1,9 +1,10 @@
 import sys
+import paramiko
 from os import system
 from pathlib import Path
 
 from loguru import logger
-from paramiko import SSHClient, AutoAddPolicy, RSAKey
+from paramiko import SSHClient, AutoAddPolicy, RSAKey, SFTPClient
 from paramiko.auth_handler import AuthenticationException, SSHException
 from scp import SCPClient, SCPException
 
@@ -20,7 +21,7 @@ logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
 
 
 class RemoteClient:
-    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_ssh_key=None):
+    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path, xtf_ssh_key=None):
         self.host = xtf_host
         self.user = xtf_username
         self.password = xtf_password
@@ -28,7 +29,9 @@ class RemoteClient:
         self.remote_path = xtf_remote_path
         self.client = None
         self.scp = None
+        self.sftp = None
         self.__upload_ssh_key()
+        self.lazyindex_path = xtf_lazyindex_path
 
     def __get_ssh_key(self):
         # fetch locally stored SSH key
@@ -56,11 +59,14 @@ class RemoteClient:
             self.client.connect(self.host,
                                 port=22,
                                 username=self.user,
-                                password= self.password,
+                                password=self.password,
                                 # key_filename=self.ssh_key_filepath,
                                 # look_for_keys=True,
                                 timeout=10)
             self.scp = SCPClient(self.client.get_transport())
+            transport = paramiko.Transport((self.host, 22))
+            transport.connect(None, self.user, self.password)
+            self.sftp = SFTPClient.from_transport(transport)
         except AuthenticationException as error:
             logger.info('Authentication failed: did you enter the correct username and password?')
             logger.error(error)
@@ -78,14 +84,26 @@ class RemoteClient:
         if self.client is None:
             self.client = self.connect_remote()
         for cmd in commands:
-            stdin, stdout, stderr = self.client.exec_command(cmd)
-            stdout.channel.recv_exit_status()
-            output_string = ""
-            response = stdout.readlines()
-            for line in response:
-                output_string += f'{line}'
-                logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
-                # print("OUTPUT: " + line)
+            if isinstance(cmd, dict):
+                for file in cmd["set_permissions"]:
+                    filepath = Path(file)
+                    # self.sftp.chmod(path=self.lazyindex_path, mode=777)  Permission denied
+                    stdin, stdout, stderr = self.sftp.chmod(path=self.lazyindex_path + "/" + filepath.stem + ".lazy",
+                                                            mode=664)
+                    stdout.channel.recv_exit_status()
+                    output_string = ""
+                    response = stdout.readlines()
+                    for line in response:
+                        output_string += f'{line}'
+                        logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
+            else:
+                stdin, stdout, stderr = self.client.exec_command(cmd)
+                stdout.channel.recv_exit_status()
+                output_string = ""
+                response = stdout.readlines()
+                for line in response:
+                    output_string += f'{line}'
+                    logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
         return output_string
 
     def bulk_upload(self, files):
