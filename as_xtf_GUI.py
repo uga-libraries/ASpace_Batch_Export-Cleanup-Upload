@@ -415,8 +415,8 @@ def run_gui(defaults):
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
         if event_simple == "Reset Defaults":
-            reset_defaults = sg.PopupYesNo("You are about to reset your configurations.\n"
-                                           "Are you sure?")
+            reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
+                                           "You will have to restart the program to see changes.")
             if reset_defaults == "Yes":
                 dsetup.reset_defaults()
         # ------------------- EDIT -------------------

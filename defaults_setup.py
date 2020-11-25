@@ -39,12 +39,12 @@ def set_defaults_file():
                         if value_key not in defaults_keys:
                             defaults_keys.append(value_key)
             for default in xtf_default:
-                print(default)
                 if default not in defaults_keys:
                     raise Exception
             DEFAULTS.close()
     except Exception as xtf_error:
         print(xtf_error)
+        print("Generating new defaults file...", end='', flush=True)
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
                                                "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
@@ -69,6 +69,7 @@ def set_defaults_file():
             dump_defaults = json.dumps(defaults)
             DEFAULTS.write(dump_defaults)
             DEFAULTS.close()
+            print("Done")
         with open("defaults.json", "r") as DEFAULTS:
             json_data = json.load(DEFAULTS)
             DEFAULTS.close()
@@ -162,9 +163,11 @@ def create_default_folders():
 def reset_defaults():
     """
     Deletes and recreates defaults.json file.
+
     Returns:
         None
     """
     if os.path.isfile(Path(os.getcwd(), "defaults.json")) is True:
         os.remove(Path(os.getcwd(), "defaults.json"))
+        print("defaults.json deleted")
     set_defaults_file()
