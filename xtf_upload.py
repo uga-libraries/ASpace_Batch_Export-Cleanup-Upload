@@ -83,7 +83,6 @@ class RemoteClient:
         # execute multiple commands in succession
         if self.client is None:
             self.client = self.connect_remote()
-        output_string = ""
         for cmd in commands:
             if isinstance(cmd, dict):
                 for file in cmd["set_permissions"]:
@@ -92,6 +91,7 @@ class RemoteClient:
                     stdin, stdout, stderr = self.sftp.chmod(path=self.lazyindex_path + "/" + filepath.stem + ".lazy",
                                                             mode=664)
                     stdout.channel.recv_exit_status()
+                    output_string = ""
                     response = stdout.readlines()
                     for line in response:
                         output_string += f'{line}'
@@ -99,6 +99,7 @@ class RemoteClient:
             else:
                 stdin, stdout, stderr = self.client.exec_command(cmd)
                 stdout.channel.recv_exit_status()
+                output_string = ""
                 response = stdout.readlines()
                 for line in response:
                     output_string += f'{line}'
