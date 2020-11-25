@@ -460,9 +460,9 @@ def run_gui(defaults):
             window_upl_active = True
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                           if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
-            upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
-                                      sg.Text("* The program may be unresponsive, please wait.")],
-                                     [sg.Text("Options", font=("Roboto", 12))],
+            upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False)],
+                                     [sg.Text("Options", font=("Roboto", 12)),
+                                      sg.Text(" "*70)],
                                      [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
                                      ]
             xtf_upload_layout = [[sg.Text("Files to Upload:", font=("Roboto", 14))],
@@ -1288,7 +1288,8 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         # try:
         cmds_output = remote.execute_commands(
             ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
-             {"set_permissions": xtf_files}])
+             '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
+
         print(cmds_output)
         print("-" * 135)
         # except Exception as e:
