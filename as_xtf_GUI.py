@@ -1220,7 +1220,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         else:
             print(resource_export.error)
     print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
-    gui_window.write_event_value('-CONTLABELS_THREAD-', (threading.current_thread().name,))
+    gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path,
