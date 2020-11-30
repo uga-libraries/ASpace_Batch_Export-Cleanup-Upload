@@ -26,7 +26,7 @@ def set_defaults_file():
                    "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_",
                    "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "repo_default", "_REPO_NAME_", "_REPO_ID_",
                    "xtf_default", "xtf_version", "xtf_host", "xtf_remote_path", "xtf_local_path", "xtf_indexer_path",
-                   "_REINDEX_AUTO_"]
+                   "xtf_lazyindex_path", "_REINDEX_AUTO_"]
     defaults_keys = []
     try:
         with open("defaults.json", "r") as DEFAULTS:
@@ -65,6 +65,7 @@ def set_defaults_file():
                                         "xtf_remote_path": "",
                                         "xtf_local_path": clean_eads,
                                         "xtf_indexer_path": "",
+                                        "xtf_lazyindex_path": "",
                                         "_REINDEX_AUTO_": True}}
             dump_defaults = json.dumps(defaults)
             DEFAULTS.write(dump_defaults)
