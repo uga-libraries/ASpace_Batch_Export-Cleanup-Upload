@@ -4,7 +4,7 @@ from os import system
 from pathlib import Path
 
 from loguru import logger
-from paramiko import SSHClient, AutoAddPolicy, RSAKey, SFTPClient
+from paramiko import SSHClient, AutoAddPolicy, RSAKey
 from paramiko.auth_handler import AuthenticationException, SSHException
 from scp import SCPClient, SCPException
 
@@ -29,7 +29,6 @@ class RemoteClient:
         self.remote_path = xtf_remote_path
         self.client = None
         self.scp = None
-        self.sftp = None
         self.__upload_ssh_key()
 
     def __get_ssh_key(self):
