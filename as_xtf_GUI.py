@@ -457,7 +457,7 @@ def run_gui(defaults):
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                           if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
             upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
-                                      sg.Text("* The program may be unresponsive, please wait.")],
+                                      sg.Text(" "*62)],
                                      [sg.Text("Options", font=("Roboto", 12))],
                                      [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
                                      ]
