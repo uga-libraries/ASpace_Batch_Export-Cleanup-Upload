@@ -79,10 +79,10 @@ class RemoteClient:
         # execute multiple commands in succession
         if self.client is None:
             self.client = self.connect_remote()
+        output_string = ""
         for cmd in commands:
             stdin, stdout, stderr = self.client.exec_command(cmd)
             stdout.channel.recv_exit_status()
-            output_string = ""
             response = stdout.readlines()
             for line in response:
                 output_string += f'{line}'
