@@ -489,9 +489,8 @@ def run_gui(defaults):
                     window_upl.close()
                     window_upl_active = False
         if event_simple == "_INDEX_":
-            xtfind_thread = threading.Thread(target=index_xtf(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                              xtf_remote_path, xtf_lazyindex_path, window_simple,
-                                                              xtf_files=None,))
+            xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
+                                                                     xtf_remote_path, window_simple,))
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -1249,16 +1248,14 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path, gui_window,
-                  xtf_files)
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window, xtf_files)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path, gui_window,
-              xtf_files=None):
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window, xtf_files=None):
     """
     Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
 
@@ -1269,6 +1266,7 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+        xtf_files (list, optional): the list of file paths of files that were uploaded
 
     Returns:
         None
@@ -1278,21 +1276,23 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     if xtf_files is None:
         try:
             cmds_output = remote.execute_commands(
-                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
+                 '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
             print(cmds_output)
             print("-" * 135)
         except Exception as e:
             print("An error occurred: " + str(e))
     else:
-        # try:
-        cmds_output = remote.execute_commands(
-            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
-             '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
-
-        print(cmds_output)
-        print("-" * 135)
-        # except Exception as e:
-        #     print("An error occurred: " + str(e))
+        try:
+            commands = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
+            for file in xtf_files:
+                lazyfile = Path(file).name + ".lazy"
+                commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"], lazyfile))
+            cmds_output = remote.execute_commands(commands)
+            print(cmds_output)
+            print("-" * 135)
+        except Exception as e:
+            print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
