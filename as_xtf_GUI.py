@@ -45,9 +45,10 @@ def run_gui(defaults):
     if close_program_as is True:
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
-    asp_pdf_api = False
     if asp_version in pdf_broken:
         asp_pdf_api = True
+    else:
+        asp_pdf_api = False
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
@@ -575,7 +576,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                     as_password = values_log["_ASPACE_PWORD_"]
                     as_api = values_log["_ASPACE_API_"]
                     xtf_version = values_log["_USE_XTF_"]
-                    asp_version = client.get("/version").content.decode().split(" ")[1]
+                    asp_version = client.get("/version").content.decode().split(" ")[1].replace("(", "").replace(")",
+                                                                                                                 "")
                     with open("defaults.json",
                               "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
                         defaults["as_api"] = as_api
