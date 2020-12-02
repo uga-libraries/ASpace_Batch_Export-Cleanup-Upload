@@ -484,8 +484,8 @@ def run_gui(defaults):
                     window_upl.close()
                     window_upl_active = False
         if event_simple == "_INDEX_":
-            xtfind_thread = threading.Thread(target=index_xtf(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                              xtf_remote_path, window_simple))
+            xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
+                                                                     xtf_remote_path, window_simple,))
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
