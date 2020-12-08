@@ -1224,7 +1224,7 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        values_upl (list): the GUI values a user chose when selecting files to upload to XTF
+        values_upl (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
