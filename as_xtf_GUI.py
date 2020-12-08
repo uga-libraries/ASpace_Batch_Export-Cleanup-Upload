@@ -437,7 +437,7 @@ def run_gui(defaults):
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.1\n\n"
+                         "Version: 1.1.2\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -481,8 +481,8 @@ def run_gui(defaults):
                 if event_upl == "_UPLOAD_TO_XTF_":
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   xtf_lazyindex_path, values_upl,
-                                                                                   window_simple,))
+                                                                                   xtf_indexer_path, xtf_lazyindex_path,
+                                                                                   values_upl, window_simple,))
                     xtfup_thread.start()
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
                     window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -490,7 +490,7 @@ def run_gui(defaults):
                     window_upl_active = False
         if event_simple == "_INDEX_":
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                                     xtf_remote_path, window_simple,))
+                                                                     xtf_remote_path, xtf_indexer_path, window_simple,))
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -631,7 +631,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_ht (object, optional): the host URL for the XTF instance
         xtf_rp (object, optional): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_ip (object, optional): the path (file) where the website indexer is located
-        xtf_lp (object, optional): the path (folder) where xml.lazy files are stored - for permissions updates
 
     Returns:
         xtf_username (str): user's XTF username
@@ -639,7 +638,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
-        xtf_lazyindex_path (str): the path (folder) where lazy index files are generated. Use for permissions settings
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
     xtf_username = xtf_un
@@ -647,7 +645,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     xtf_host = xtf_ht
     xtf_remote_path = xtf_rp
     xtf_indexer_path = xtf_ip
-    xtf_lazyindex_path = xtf_lp
     if login is True:
         save_button_xtf = " Save and Continue "
     else:
@@ -1224,8 +1221,8 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 
-def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_lazyindex_path,
-                     values_upl, gui_window):
+def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                     xtf_lazyindex_path,  values_upl, gui_window):
     """
     Uploads files to XTF.
 
@@ -1235,6 +1232,7 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_username (str): user's XTF username
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
         xtf_lazyindex_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_upl (list): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
@@ -1242,20 +1240,20 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"], values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window, xtf_files)
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window, xtf_files)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, gui_window, xtf_files=None):
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window, xtf_files=None):
     """
     Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
 
@@ -1266,13 +1264,12 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
-        xtf_files (list, optional): the list of file paths of files that were uploaded
 
     Returns:
         None
     """
     print("Beginning Re-Index, this may take awhile...")
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     if xtf_files is None:
         try:
             cmds_output = remote.execute_commands(
