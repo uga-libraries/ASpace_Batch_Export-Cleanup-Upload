@@ -1246,6 +1246,10 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"], values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
+    for file in xtf_files:
+        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_remote_path"],
+                                                                                    Path(file).name)])
+        print(update_permissions)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
         index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
                   gui_window, xtf_files)
