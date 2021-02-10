@@ -17,3 +17,4 @@ Output
 Windows_Installer
 Mac Installer
 ASpace_Batch_Exporter.spec
+.gitignore
