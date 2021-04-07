@@ -65,12 +65,12 @@ def run_gui(defaults):
         xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path = "", "", "", \
                                                                                                      "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
-                        "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
-                        "_DEL_ALLNS_"]
+                        "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_",
+                        "_DEL_NMSPCS_", "_DEL_ALLNS_"]
     cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if bool_val is True]
     menu_def = [['File',
                  ['Clear Raw ASpace Export Folder',
-                  'Clear Cleaned EAD Folder',
+                  'Clear Cleaned EAD Export Folder',
                   '---',
                   'Reset Defaults',
                   '---',
@@ -104,7 +104,7 @@ def run_gui(defaults):
                    sg.Button(" Cleanup Options ", key="Change Cleanup Defaults",
                              tooltip=' Select what operations you want to perform on exported EAD.xml files ')],
                   [sg.Text("Output", font=("Roboto", 12))],
-                  [sg.Button(button_text=" Open Cleaned EAD Folder ", key="_OPEN_CLEAN_B_",
+                  [sg.Button(button_text=" Open Cleaned EAD Exports ", key="_OPEN_CLEAN_B_",
                              tooltip=' Open folder where cleaned EAD.xml files are stored '),
                    sg.Button(button_text=" Open Raw ASpace Exports ", key="_OPEN_RAW_EXPORTS_",
                              tooltip=' Open folder where raw ASpace EAD.xml files are stored ')]
@@ -256,14 +256,14 @@ def run_gui(defaults):
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
-        if event_simple == "_OPEN_CLEAN_B_" or event_simple == 'Open Cleaned EAD Folder':
+        if event_simple == "_OPEN_CLEAN_B_":
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("clean_eads"))
                 open_file(filepath_eads)
             else:
                 filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_eads)
-        if event_simple == "_OPEN_RAW_EXPORTS_" or event_simple == "Open RAW ASpace Exports":
+        if event_simple == "_OPEN_RAW_EXPORTS_":
             if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("source_eads"))
                 open_file(filepath_eads)
@@ -394,7 +394,7 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
-        if event_simple == "Clear Cleaned EAD Folder":
+        if event_simple == "Clear Cleaned EAD Export Folder":
             clean_files = os.listdir(defaults["ead_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -437,7 +437,7 @@ def run_gui(defaults):
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.1.2\n\n"
+                         "Version: 1.2.0\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -728,8 +728,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
         These include the following:
-            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_",
-            "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
@@ -887,8 +887,8 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
     Returns:
         cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
         These include the following:
-            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_CONTAIN_",
-            "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
     """
     cleanup_options = []
     window_adv_active = True
@@ -902,13 +902,15 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                                 default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])]]
     winadv_col2 = [[sg.Checkbox("Add label='Mixed Materials' to containers without label", key="_ADD_LABEL_",
                                 default=defaults["ead_cleanup_defaults"]["_ADD_LABEL_"])],
+                   [sg.Checkbox("Remove trailing . from langmaterial", key="_DEL_LANGTRAIL_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_LANGTRAIL_"])],
                    [sg.Checkbox("Delete Empty Containers", key="_DEL_CONTAIN_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"])],
                    [sg.Checkbox("Add Barcode as physloc Tag", key="_ADD_PHYSLOC_",
-                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])],
-                   [sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
-                                default=defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"])]]
-    winadv_col3 = [[sg.Checkbox("Remove xlink Prefixes from Digital Objects", key="_CNT_XLINKS_",
+                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])]]
+    winadv_col3 = [[sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"])],
+                   [sg.Checkbox("Remove xlink Prefixes from Digital Objects", key="_CNT_XLINKS_",
                                 default=defaults["ead_cleanup_defaults"]["_CNT_XLINKS_"])],
                    [sg.Checkbox("Remove Unused Namespaces", key="_DEL_NMSPCS_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_NMSPCS_"])],
@@ -934,6 +936,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                 defaults["ead_cleanup_defaults"]["_CLN_EXTENTS_"] = values_adv["_CLN_EXTENTS_"]
                 defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"] = values_adv["_ADD_CERTAIN_"]
                 defaults["ead_cleanup_defaults"]["_ADD_LABEL_"] = values_adv["_ADD_LABEL_"]
+                defaults["ead_cleanup_defaults"]["_DEL_LANGTRAIL_"] = values_adv["_DEL_LANGTRAIL_"]
                 defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"] = values_adv["_DEL_CONTAIN_"]
                 defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"] = values_adv["_ADD_PHYSLOC_"]
                 defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"] = values_adv["_DEL_ATIDS_"]
@@ -1413,14 +1416,11 @@ def setup_files():
         else:
             dsetup.create_default_folders()
     try:
-        with open("defaults.json", "r") as DEFAULTS:
-            json_data = json.load(DEFAULTS)
-            DEFAULTS.close()
-    except Exception as defaults_error:
-        print(str(defaults_error) + "\nThere was an error reading the defaults.json file. Recreating one now...")
         json_data = dsetup.set_defaults_file()
-        print("Done")
-    return json_data
+        return json_data
+    except Exception as defaults_error:
+        print(str(defaults_error) + "\nThere was an error checking the defaults.json file. "
+                                    "Please delete your defaults.json file and run the program again")
 
 
 # sg.theme_previewer()

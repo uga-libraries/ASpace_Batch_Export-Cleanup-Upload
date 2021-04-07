@@ -143,6 +143,26 @@ class EADRecord:
         self.results += "We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
             count_lb) + " label attributes\n"
 
+    def strip_langmaterial(self):
+        """
+        Removes ending period from <langmaterial> element in EAD exports.
+        Returns:
+            None
+        """
+        for element in self.root.iter():
+            if "langmaterial" in element.tag:
+                parent_element = element
+                child_count = 0
+                for child_element in parent_element:
+                    child_count += 1
+                    if len(parent_element) == child_count:
+                        try:
+                            child_element.tail = None
+                            self.results += f"We removed trailing period and whitespace from <langmaterial>\n"
+                        except Exception as e:
+                            self.results += f"There was an error removing trailing period and whitespace from " \
+                                            f"langmaterial: {e}\n"
+
     def delete_empty_containers(self):
         """
         Searches an EAD.xml file for all container elements and deletes any that are empty.
@@ -312,6 +332,8 @@ class EADRecord:
                 ead.add_certainty_attr()
             if "_ADD_LABEL_" in custom_clean:
                 ead.add_label_attr()
+            if "_DEL_LANGTRAIL_" in custom_clean:
+                ead.strip_langmaterial()
             if "_DEL_CONTAIN_" in custom_clean:
                 ead.delete_empty_containers()
             if "_ADD_PHYSLOC_" in custom_clean:
