@@ -18,6 +18,7 @@ import threading
 import gc
 
 EAD_EXPORT_THREAD = '-EAD_THREAD-'
+EXPORT_PROGRESS_THREAD = '-EXPORT_PROGRESS-'
 MARCXML_EXPORT_THREAD = '-MARCXML_THREAD-'
 PDF_EXPORT_THREAD = '-PDF_THREAD-'
 CONTLABEL_EXPORT_THREAD = '-CONTLABEL_THREAD-'
@@ -385,12 +386,14 @@ def run_gui(defaults):
                             "iner-labels-screen",
                             new=2)
         # ------------- EXPORT THREADS -------------
-        if event_simple == EAD_EXPORT_THREAD or event_simple == MARCXML_EXPORT_THREAD or event_simple == \
-                PDF_EXPORT_THREAD or event_simple == CONTLABEL_EXPORT_THREAD:
+        if event_simple in (EAD_EXPORT_THREAD, MARCXML_EXPORT_THREAD, PDF_EXPORT_THREAD, CONTLABEL_EXPORT_THREAD):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
+        if event_simple == EXPORT_PROGRESS_THREAD:
+            sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
+                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h')
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
@@ -746,6 +749,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         if resource_export.error is None:
             if resource_export.result is not None:
                 print(resource_export.result)
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -755,7 +759,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 print(resource_export.result + "\n")
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
-                        print("Cleaning up EAD record...", end='', flush=True)
+                        print("Cleaning up EAD record...")
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                             keep_raw_exports=True)
@@ -763,6 +767,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
+                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                     else:
@@ -773,10 +778,12 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
+                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -988,6 +995,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -1094,6 +1102,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -1207,6 +1216,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:

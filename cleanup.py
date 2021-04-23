@@ -50,7 +50,8 @@ class EADRecord:
                     else:
                         self.eadid = child.text
                         self.root[0][0].text = self.eadid
-            self.results += "Added " + str(self.eadid) + " as eadid\n"
+            print("Added " + str(self.eadid) + " as eadid")
+            # self.results += "Added " + str(self.eadid) + " as eadid\n"
 
     def delete_empty_notes(self):
         """
@@ -68,8 +69,10 @@ class EADRecord:
                     parent = child.getparent()
                     parent.remove(child)
                     count2_notes += 1
-        self.results += "We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(
-            count2_notes) + " empty notes\n"
+        print("We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(
+            count2_notes) + " empty notes")
+        # self.results += "We found " + str(count1_notes) + " <p>'s in " + str(self.eadid) + " and removed " + str(
+        #     count2_notes) + " empty notes\n"
 
     def edit_extents(self):
         """
@@ -97,11 +100,15 @@ class EADRecord:
                     try:
                         parent.remove(child)
                     except Exception as e:
-                        self.results += ("Could not remove empty extent field, error:\n" + str(e) + "\n")
+                        print("Could not remove empty extent field, error:\n" + str(e) + "\n")
+                        # self.results += ("Could not remove empty extent field, error:\n" + str(e) + "\n")
                     count_ext2 += 1
-        self.results += "We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
+        print("We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
             count_ext2) + " empty extents and corrected " + str(
-            count_ext3) + " extent descriptions starting with `(), [], or {}`\n"
+            count_ext3) + " extent descriptions starting with `(), [], or {}`")
+        # self.results += "We found " + str(count_ext1) + " <extent>'s in " + str(self.eadid) + " and removed " + str(
+        #     count_ext2) + " empty extents and corrected " + str(
+        #     count_ext3) + " extent descriptions starting with `(), [], or {}`\n"
 
     def add_certainty_attr(self):
         """
@@ -120,8 +127,10 @@ class EADRecord:
                     if date in EADRecord.cert_attrib:
                         child.set("certainty", "approximate")
                         count_appr += 1
-        self.results += "We found " + str(count_ud) + " unitdates in " + str(self.eadid) + " and set " + str(
-            count_appr) + " certainty attributes\n"
+        print("We found " + str(count_ud) + " unitdates in " + str(self.eadid) + " and set " + str(
+            count_appr) + " certainty attributes")
+        # self.results += "We found " + str(count_ud) + " unitdates in " + str(self.eadid) + " and set " + str(
+        #     count_appr) + " certainty attributes\n"
 
     def add_label_attr(self):
         """
@@ -140,8 +149,10 @@ class EADRecord:
                     count_cont += 1
                 else:
                     count_cont += 1
-        self.results += "We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
-            count_lb) + " label attributes\n"
+        print("We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
+            count_lb) + " label attributes")
+        # self.results += "We found " + str(count_cont) + " containers in " + str(self.eadid) + " and set " + str(
+        #     count_lb) + " label attributes\n"
 
     def strip_langmaterial(self):
         """
@@ -158,10 +169,13 @@ class EADRecord:
                     if len(parent_element) == child_count:
                         try:
                             child_element.tail = None
-                            self.results += f"We removed trailing period and whitespace from <langmaterial>\n"
+                            print("We removed trailing period and whitespace from <langmaterial>")
+                            # self.results += "We removed trailing period and whitespace from <langmaterial>\n"
                         except Exception as e:
-                            self.results += f"There was an error removing trailing period and whitespace from " \
-                                            f"langmaterial: {e}\n"
+                            print(f"There was an error removing trailing period and whitespace from langmaterial: "
+                                  f"{e}")
+                            # self.results += f"There was an error removing trailing period and whitespace from " \
+                            #                 f"langmaterial: {e}\n"
 
     def delete_empty_containers(self):
         """
@@ -181,8 +195,10 @@ class EADRecord:
                     parent.remove(child)
                     self.results += "Removed empty container\n"
                     count2_notes += 1
-        self.results += "We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + \
-                        str(count2_notes) + " empty containers\n"
+        print("We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + \
+                        str(count2_notes) + " empty containers")
+        # self.results += "We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + \
+        #                 str(count2_notes) + " empty containers\n"
 
     def update_barcode(self):
         """
@@ -208,8 +224,10 @@ class EADRecord:
                         parent = child.getparent()
                         barcode_tag = etree.SubElement(parent, "physloc", type="barcode")
                         barcode_tag.text = "{}".format(barcode)
-        self.results += "We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + \
-                        " and added " + str(count2_barcodes) + " barcodes in the physloc tag\n"
+        print("We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + \
+                        " and added " + str(count2_barcodes) + " barcodes in the physloc tag")
+        # self.results += "We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + \
+        #                 " and added " + str(count2_barcodes) + " barcodes in the physloc tag\n"
 
     def remove_at_leftovers(self):
         """
@@ -231,9 +249,12 @@ class EADRecord:
                         parent = element.getparent()
                         parent.remove(element)
                     else:
-                        self.results += "'Archivists Toolkit Database' not found in: " + str(attributes["label"]) + "\n"
-        self.results += "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
-            count2_at) + " Archivists Toolkit legacy ids\n"
+                        print("'Archivists Toolkit Database' not found in: " + str(attributes["label"]))
+                        # self.results += "'Archivists Toolkit Database' not found in: " + str(attributes["label"]) + "\n"
+        print("We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
+            count2_at) + " Archivists Toolkit legacy ids")
+        # self.results += "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
+        #     count2_at) + " Archivists Toolkit legacy ids\n"
 
     def count_xlinks(self):
         """
@@ -251,8 +272,10 @@ class EADRecord:
                 count1_xlink += 1
                 attributes = element.attrib
                 count2_xlink += len(attributes)
-        self.results += "We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " \
-                        + str(count2_xlink) + " xlink prefaces in attributes\n"
+        print("We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " \
+                        + str(count2_xlink) + " xlink prefaces in attributes")
+        # self.results += "We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " \
+        #                 + str(count2_xlink) + " xlink prefaces in attributes\n"
         ead_string = etree.tostring(self.root, encoding="unicode", pretty_print=True,
                                     doctype='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
         if "xlink" in ead_string:  # remove xlink prefixes if found in EAD.xml file

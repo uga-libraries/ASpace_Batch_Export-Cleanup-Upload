@@ -1,6 +1,6 @@
 loguru==0.5.3
 lxml==4.6.3
 paramiko==2.7.2
-PySimpleGUI==4.38.0
+PySimpleGUI==4.39.1
 scp==0.13.3
 ArchivesSnake==0.9.1
