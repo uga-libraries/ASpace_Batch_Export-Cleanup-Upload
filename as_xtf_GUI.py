@@ -4,6 +4,7 @@ import subprocess
 import sys
 import webbrowser
 import json
+import re
 from pathlib import Path
 
 import PySimpleGUI as sg
@@ -18,11 +19,14 @@ import threading
 import gc
 
 EAD_EXPORT_THREAD = '-EAD_THREAD-'
+EXPORT_PROGRESS_THREAD = '-EXPORT_PROGRESS-'
 MARCXML_EXPORT_THREAD = '-MARCXML_THREAD-'
 PDF_EXPORT_THREAD = '-PDF_THREAD-'
 CONTLABEL_EXPORT_THREAD = '-CONTLABEL_THREAD-'
 XTF_UPLOAD_THREAD = '-XTFUP_THREAD-'
 XTF_INDEX_THREAD = '-XTFIND_THREAD-'
+XTF_DELETE_THREAD = '-XTFDEL_THREAD'
+XTF_GETFILES_THREAD = '-XTFGET_THREAD-'
 
 
 def run_gui(defaults):
@@ -112,6 +116,9 @@ def run_gui(defaults):
     xtf_layout = [[sg.Button(button_text=" Upload Files ", key="_UPLOAD_",
                              tooltip=' Upload select files to XTF ', disabled=False),
                    sg.Text(" " * 2),
+                   sg.Button(button_text=" Delete Files ", key="_DELETE_",
+                             tooltip=" Delete existing files from XTF ", disabled=False),
+                   sg.Text(" " * 2),
                    sg.Button(button_text=" Index Changed Records ", key="_INDEX_",
                              tooltip=' Run an indexing of new/updated files in XTF ', disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
@@ -178,7 +185,7 @@ def run_gui(defaults):
                                     key="_LABEL_LAYOUT_",
                                     visible=False),
                            sg.Frame("Export PDF", pdf_layout, font=("Roboto", 15), key="_PDF_LAYOUT_", visible=False)],
-                          [sg.Frame("Upload to XTF", xtf_layout, font=("Roboto", 15), key="_XTF_LAYOUT_",
+                          [sg.Frame("XTF Commands", xtf_layout, font=("Roboto", 15), key="_XTF_LAYOUT_",
                                     visible=xtf_version)],
                           [sg.Text("Output Terminal:", font=("Roboto", 12),
                                    tooltip=' Program messages are output here. To clear, select all and delete. ')],
@@ -386,12 +393,14 @@ def run_gui(defaults):
                             "iner-labels-screen",
                             new=2)
         # ------------- EXPORT THREADS -------------
-        if event_simple == EAD_EXPORT_THREAD or event_simple == MARCXML_EXPORT_THREAD or event_simple == \
-                PDF_EXPORT_THREAD or event_simple == CONTLABEL_EXPORT_THREAD:
+        if event_simple in (EAD_EXPORT_THREAD, MARCXML_EXPORT_THREAD, PDF_EXPORT_THREAD, CONTLABEL_EXPORT_THREAD):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
+        if event_simple == EXPORT_PROGRESS_THREAD:
+            sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
+                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h')
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
@@ -437,7 +446,7 @@ def run_gui(defaults):
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.2.0\n\n"
+                         "Version: 1.3.0\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -456,13 +465,13 @@ def run_gui(defaults):
         if event_simple == "User Manual":
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
                             new=2)
-        # ------------- UPLOAD TO XTF SECTION -------------
+        # ------------- XTF SECTION -------------------
         if event_simple == "_UPLOAD_":
             window_upl_active = True
             files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                           if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
             upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
-                                      sg.Text(" "*62)],
+                                      sg.Text(" " * 62)],
                                      [sg.Text("Options", font=("Roboto", 12))],
                                      [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
                                      ]
@@ -486,8 +495,43 @@ def run_gui(defaults):
                     xtfup_thread.start()
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
                     window_simple[f'{"_INDEX_"}'].update(disabled=True)
+                    window_simple[f'{"_DELETE_"}'].update(disabled=True)
                     window_upl.close()
                     window_upl_active = False
+        if event_simple == "_DELETE_":
+            window_del_active = True
+            print("Getting remote files, this may take a second...", flush=True, end="")
+            remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
+                                            xtf_indexer_path, window_simple)
+            print("Done")
+            delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
+                                      sg.Text(" " * 62)],
+                                     [sg.Text("Options", font=("Roboto", 12))],
+                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS3_")]
+                                     ]
+            xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
+                                 [sg.Listbox(remote_files, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
+                                             key="_SELECT_FILES_")],
+                                 [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
+            window_del = sg.Window("Delete Files from XTF", xtf_delete_layout)
+            while window_del_active is True:
+                event_del, values_del = window_del.Read()
+                if event_del is None:
+                    window_del.close()
+                    window_del_active = False
+                if event_del == "_XTF_OPTIONS3_":
+                    get_xtf_options(defaults)
+                if event_del == "_DELETE_XTF_":
+                    xtfup_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname, xtf_username,
+                                                                                   xtf_password, xtf_remote_path,
+                                                                                   xtf_indexer_path, values_del,
+                                                                                   window_simple,))
+                    xtfup_thread.start()
+                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
+                    window_simple[f'{"_DELETE_"}'].update(disabled=True)
+                    window_del.close()
+                    window_del_active = False
         if event_simple == "_INDEX_":
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
                                                                      xtf_remote_path, xtf_indexer_path,
@@ -495,12 +539,14 @@ def run_gui(defaults):
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
+            window_simple[f'{"_DELETE_"}'].update(disabled=True)
         if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
             get_xtf_options(defaults)
         # ---------------- XTF THREADS ----------------
-        if event_simple == XTF_INDEX_THREAD or event_simple == XTF_UPLOAD_THREAD:
+        if event_simple in (XTF_INDEX_THREAD, XTF_UPLOAD_THREAD, XTF_DELETE_THREAD, XTF_GETFILES_THREAD):
             window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
             window_simple[f'{"_INDEX_"}'].update(disabled=False)
+            window_simple[f'{"_DELETE_"}'].update(disabled=False)
     window_simple.close()
 
 
@@ -756,6 +802,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         if resource_export.error is None:
             if resource_export.result is not None:
                 print(resource_export.result)
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -765,7 +812,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 print(resource_export.result + "\n")
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
-                        print("Cleaning up EAD record...", end='', flush=True)
+                        print("Cleaning up EAD record...")
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                             keep_raw_exports=True)
@@ -773,6 +820,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
+                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                     else:
@@ -783,15 +831,17 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
+                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error + "\n")
-    print("\n" + "-"*56 + "Finished {} exports".format(str(export_counter)) + "-"*56 + "\n")
+    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
@@ -998,6 +1048,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -1104,6 +1155,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -1217,6 +1269,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
@@ -1260,6 +1313,44 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
+
+
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
+                     gui_window):
+    """
+    Delete files from XTF.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_hostname (str): the host URL for the XTF instance
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        values_del (dict): the GUI values a user chose when selecting files to upload to XTF
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        None
+    """
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    print("Deleting files...")
+    xtf_files = [str(defaults["xtf_default"]["xtf_remote_path"] + "/" + str(file)) for file in
+                 values_del["_SELECT_FILES_"]]
+    try:
+        # print([file for file in xtf_files])
+        # print(['rm {}'.format(file) for file in xtf_files])
+        for file in xtf_files:
+            print(file)
+            cmds_output = remote.execute_commands(['rm {}'.format(file)])
+            print(cmds_output)
+        print("-" * 135)
+        if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
+            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
+        remote.disconnect()
+    except Exception as e:
+        print("An error occurred: " + str(e))
+    gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
 
 
 def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
@@ -1307,6 +1398,14 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
+def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    remote_files = sort_list(remote.execute_commands(
+        ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
+    gui_window.write_event_value('-XTFGET_THREAD-', (threading.current_thread().name,))
+    return remote_files
+
+
 def get_xtf_options(defaults):
     """
     Set options for uploading and re-indexing records to XTF.
@@ -1324,7 +1423,7 @@ def get_xtf_options(defaults):
     xtf_option_layout = [[sg.Text("Choose XTF Options", font=("Roboto", 14)),
                           sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                   key="_XTFOPT_HELP_")],
-                         [sg.Checkbox("Re-index changed records upon upload", key="_REINDEX_AUTO_",
+                         [sg.Checkbox("Re-index changed records after upload/delete", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
                          [sg.FolderBrowse(button_text=" Select source folder: ",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
@@ -1421,6 +1520,21 @@ def setup_files():
     except Exception as defaults_error:
         print(str(defaults_error) + "\nThere was an error checking the defaults.json file. "
                                     "Please delete your defaults.json file and run the program again")
+
+
+def sort_list(input_list):
+    """
+    Sorts a list in human readable order. Source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
+
+    Args:
+        input_list (list): a list to be sorted
+
+    Returns:
+        A list sorted in human readable order
+    """
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+    return sorted(input_list, key=alphanum_key)
 
 
 # sg.theme_previewer()
