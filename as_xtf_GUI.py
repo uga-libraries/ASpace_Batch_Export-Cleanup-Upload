@@ -124,7 +124,7 @@ def run_gui(defaults):
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(button_text=" XTF Options ", key="_XTF_OPTIONS_",
-                             tooltip=' Select options for XTF upload ')]
+                             tooltip=' Select options for XTF ')]
                   ]
     marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_",
                               tooltip=' Export MARC.xml resources ', disabled=False)],
@@ -468,8 +468,8 @@ def run_gui(defaults):
         # ------------- XTF SECTION -------------------
         if event_simple == "_UPLOAD_":
             window_upl_active = True
-            files_list = [ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
-                          if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"]
+            files_list = sort_list([ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
+                                    if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"])
             upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
                                      [sg.Text("Options", font=("Roboto", 12))],
@@ -502,7 +502,7 @@ def run_gui(defaults):
             window_del_active = True
             print("Getting remote files, this may take a second...", flush=True, end="")
             remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path, window_simple)
+                                            xtf_indexer_path, xtf_lazy_path, window_simple)
             print("Done")
             delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
@@ -524,8 +524,8 @@ def run_gui(defaults):
                 if event_del == "_DELETE_XTF_":
                     xtfup_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   xtf_indexer_path, values_del,
-                                                                                   window_simple,))
+                                                                                   xtf_indexer_path, xtf_lazy_path,
+                                                                                   values_del, window_simple,))
                     xtfup_thread.start()
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
                     window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -1315,8 +1315,8 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
-                     gui_window):
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+                     values_del, gui_window):
     """
     Delete files from XTF.
 
@@ -1327,26 +1327,26 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_del (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     print("Deleting files...")
     xtf_files = [str(defaults["xtf_default"]["xtf_remote_path"] + "/" + str(file)) for file in
                  values_del["_SELECT_FILES_"]]
     try:
-        # print([file for file in xtf_files])
-        # print(['rm {}'.format(file) for file in xtf_files])
         for file in xtf_files:
             print(file)
             cmds_output = remote.execute_commands(['rm {}'.format(file)])
             print(cmds_output)
         print("-" * 135)
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
+            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                      xtf_lazy_path, gui_window)
         remote.disconnect()
     except Exception as e:
         print("An error occurred: " + str(e))
@@ -1398,8 +1398,9 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
-def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+                     gui_window):
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
     gui_window.write_event_value('-XTFGET_THREAD-', (threading.current_thread().name,))
