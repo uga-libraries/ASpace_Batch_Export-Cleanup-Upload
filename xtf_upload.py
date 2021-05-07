@@ -21,15 +21,13 @@ logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
 
 
 class RemoteClient:
-    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                 xtf_ssh_key=None):
+    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_ssh_key=None):
         self.host = xtf_host
         self.user = xtf_username
         self.password = xtf_password
         self.ssh_key_filepath = xtf_ssh_key
         self.remote_path = xtf_remote_path
         self.index_path = xtf_index_path
-        self.lazy_path = xtf_lazy_path
         self.client = None
         self.scp = None
         self.__upload_ssh_key()
@@ -75,10 +73,6 @@ class RemoteClient:
                 sftp.stat(self.index_path)
             except FileNotFoundError:
                 raise AuthenticationException("Index path does not exist")
-            try:
-                sftp.stat(self.lazy_path)
-            except FileNotFoundError:
-                raise AuthenticationException("Lazy index path does not exist")
             return self.client
         except AuthenticationException as error:
             logger.info('Authentication failed: did you enter the correct username and password?')
