@@ -68,8 +68,8 @@ def run_gui(defaults):
         xtf_opt_button = '!Change XTF Options'
         xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path = "", "", "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
-                        "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_",
-                        "_DEL_NMSPCS_", "_DEL_ALLNS_"]
+                        "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_",
+                        "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"]
     cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if bool_val is True]
     menu_def = [['File',
                  ['Clear Raw ASpace Export Folder',
@@ -765,7 +765,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
         These include the following:
             "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
-            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
@@ -928,7 +929,8 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
         cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
         These include the following:
             "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
-            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
     """
     cleanup_options = []
     window_adv_active = True
@@ -939,17 +941,19 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                    [sg.Checkbox("Remove '(), [], {}' from and Empty Extents", key="_CLN_EXTENTS_",
                                 default=defaults["ead_cleanup_defaults"]["_CLN_EXTENTS_"])],
                    [sg.Checkbox("Add Certainty Attribute", key="_ADD_CERTAIN_",
-                                default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])]]
-    winadv_col2 = [[sg.Checkbox("Add label='Mixed Materials' to containers without label", key="_ADD_LABEL_",
+                                default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])],
+                   [sg.Checkbox("Add label='Mixed Materials' to containers without label", key="_ADD_LABEL_",
                                 default=defaults["ead_cleanup_defaults"]["_ADD_LABEL_"])],
                    [sg.Checkbox("Remove trailing . from langmaterial", key="_DEL_LANGTRAIL_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_LANGTRAIL_"])],
                    [sg.Checkbox("Delete Empty Containers", key="_DEL_CONTAIN_",
-                                default=defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"])],
-                   [sg.Checkbox("Add Barcode as physloc Tag", key="_ADD_PHYSLOC_",
-                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])]]
-    winadv_col3 = [[sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"])]]
+    winadv_col2 = [[sg.Checkbox("Add Barcode as physloc Tag", key="_ADD_PHYSLOC_",
+                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])],
+                   [sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"])],
+                   [sg.Checkbox("Remove Archon IDs", key="_DEL_ARCHIDS_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_ARCHIDS_"])],
                    [sg.Checkbox("Remove xlink Prefixes from Digital Objects", key="_CNT_XLINKS_",
                                 default=defaults["ead_cleanup_defaults"]["_CNT_XLINKS_"])],
                    [sg.Checkbox("Remove Unused Namespaces", key="_DEL_NMSPCS_",
@@ -959,7 +963,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
     layout_adv = [
         [sg.Text("Advanced Options for Cleaning EAD Records", font=("Roboto", 14)),
          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_CLEANUP_HELP_")],
-        [sg.Column(winadv_col1), sg.Column(winadv_col2), sg.Column(winadv_col3)],
+        [sg.Column(winadv_col1), sg.Column(winadv_col2)],
         [sg.Button(" Save Settings ", key="_SAVE_CLEAN_DEF_", bind_return_key=True)]
     ]
     window_adv = sg.Window("Change Cleanup Defaults", layout_adv)
@@ -980,6 +984,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                 defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"] = values_adv["_DEL_CONTAIN_"]
                 defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"] = values_adv["_ADD_PHYSLOC_"]
                 defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"] = values_adv["_DEL_ATIDS_"]
+                defaults["ead_cleanup_defaults"]["_DEL_ARCHIDS_"] = values_adv["_DEL_ARCHIDS_"]
                 defaults["ead_cleanup_defaults"]["_CNT_XLINKS_"] = values_adv["_CNT_XLINKS_"]
                 defaults["ead_cleanup_defaults"]["_DEL_NMSPCS_"] = values_adv["_DEL_NMSPCS_"]
                 defaults["ead_cleanup_defaults"]["_DEL_ALLNS_"] = values_adv["_DEL_ALLNS_"]
