@@ -1,11 +1,9 @@
 import sys
-import paramiko
-from os import system
 from pathlib import Path
 
 from loguru import logger
-from paramiko import SSHClient, AutoAddPolicy, RSAKey, SFTPClient
-from paramiko.auth_handler import AuthenticationException, SSHException
+from paramiko import SSHClient, AutoAddPolicy, SFTPClient
+from paramiko.ssh_exception import AuthenticationException
 from scp import SCPClient, SCPException
 
 # source code found here: https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
@@ -21,35 +19,15 @@ logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
 
 
 class RemoteClient:
-    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                 xtf_ssh_key=None):
+    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path):
         self.host = xtf_host
         self.user = xtf_username
         self.password = xtf_password
-        self.ssh_key_filepath = xtf_ssh_key
         self.remote_path = xtf_remote_path
         self.index_path = xtf_index_path
         self.lazy_path = xtf_lazy_path
         self.client = None
         self.scp = None
-        self.__upload_ssh_key()
-
-    def __get_ssh_key(self):
-        # fetch locally stored SSH key
-        try:
-            self.ssh_key = RSAKey.from_private_key_file(self.ssh_key_filepath)
-            logger.info(f'Found SSH key at self {self.ssh_key_filepath}')
-        except SSHException as error:
-            logger.error(error)
-        return self.ssh_key
-
-    def __upload_ssh_key(self):
-        try:
-            system(f'ssh-copy-id -i {self.ssh_key_filepath} {self.user}@{self.host}>/dev/null 2>&1')
-            system(f'ssh-copy-id -i {self.ssh_key_filepath}.pub {self.user}@{self.host}>/dev/null 2>&1')
-            logger.info(f'{self.ssh_key_filepath} uploaded to {self.host}')
-        except FileNotFoundError as error:
-            logger.error(error)
 
     def connect_remote(self):
         # open connection to remote host
@@ -61,9 +39,7 @@ class RemoteClient:
                                 port=22,
                                 username=self.user,
                                 password=self.password,
-                                # key_filename=self.ssh_key_filepath,
-                                # look_for_keys=False,
-                                # allow_agent=False,
+                                look_for_keys=False,
                                 timeout=10)
             self.scp = SCPClient(self.client.get_transport())
             sftp = SFTPClient.from_transport(self.client.get_transport())
