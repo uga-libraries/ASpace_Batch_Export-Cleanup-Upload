@@ -834,7 +834,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         else:
             print(resource_export.error + "\n")
     if export_all is False:
-        print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+        print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
         gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
@@ -851,7 +851,7 @@ def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui
                      export_all=True)
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_all_counter)) + "-" * 56 + "\n")
+    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_all_counter)) + "-" * 54 + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
@@ -1067,7 +1067,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
 
@@ -1174,7 +1174,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
 
@@ -1288,7 +1288,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 

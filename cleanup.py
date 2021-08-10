@@ -439,12 +439,12 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
     except Exception as e:
         valid_err += "Error: {}\n\n" \
                      "File saved in: {}\n".format(e, Path(filepath).parent)
-        valid_err += "-" * 135
+        valid_err += "-" * 139
         return False, valid_err
     ead_root = tree.getroot()
     ead = EADRecord(ead_root)
     clean_ead, results = ead.clean_suite(ead, custom_clean)
-    results += "\n" + "-" * 135
+    results += "\n" + "-" * 139
     clean_ead_file_root = str(Path(output_dir, '{}'.format(filename)))
     with open(clean_ead_file_root, "wb") as CLEANED_EAD:
         CLEANED_EAD.write(clean_ead)
