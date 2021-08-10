@@ -44,8 +44,8 @@ def run_gui(defaults):
     """
     gc.disable()
     sg.theme('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = get_aspace_log(
-        defaults, xtf_checkbox=True)
+    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
+        get_aspace_log(defaults, xtf_checkbox=True)
     if close_program_as is True:
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
@@ -99,7 +99,9 @@ def run_gui(defaults):
                  ]
                 ]
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_",
-                             tooltip=' Export EAD.xml resources ', disabled=False)],
+                             tooltip=' Export EAD.xml resources ', disabled=False),
+                   sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLEADS_",
+                             tooltip=" Export all resources as EAD.xml files ", disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_",
@@ -253,6 +255,31 @@ def run_gui(defaults):
                     ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
                                                                          repositories, client, values_simple,
                                                                          window_simple,))
+                    ead_thread.start()
+                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+        if event_simple == "_EXPORT_ALLEADS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        ead_thread = threading.Thread(target=get_all_eads, args=(input_ids, defaults, cleanup_options,
+                                                                                 repositories, client, window_simple,))
+                        ead_thread.start()
+                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    ead_thread = threading.Thread(target=get_all_eads, args=(input_ids, defaults, cleanup_options,
+                                                                             repositories, client, window_simple,))
                     ead_thread.start()
                     window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
                     window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
@@ -431,9 +458,10 @@ def run_gui(defaults):
                 dsetup.reset_defaults()
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
-                get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api,
-                               as_client=client, as_repos=repositories, xtf_ver=xtf_version)
+            as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, \
+                xtf_version = get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password,
+                                             as_ap=as_api, as_client=client, as_res=resources, as_repos=repositories,
+                                             xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
                 get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password, xtf_ht=xtf_hostname,
@@ -548,7 +576,7 @@ def run_gui(defaults):
 
 
 def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, as_client=None, as_repos=None,
-                   xtf_ver=None):
+                   as_res=None, xtf_ver=None):  # TODO: wouldn't it be easier to have a login option and if login is True, resources and repos are set and if False, they use defaults?
     """
     Gets a user's ArchiveSpace credentials.
 
@@ -589,6 +617,10 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         repositories = {"Search Across Repositories (Sys Admin Only)": None}
     else:
         repositories = as_repos
+    if as_res is None:
+        resource_ids = {}
+    else:
+        resource_ids = as_res
     xtf_version = xtf_ver
     if xtf_checkbox is True:
         save_button_asp = " Save and Continue "
@@ -633,11 +665,22 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         defaults["xtf_default"]["xtf_version"] = xtf_version
                         json.dump(defaults, defaults_asp)
                         defaults_asp.close()
-                    repo_results = client.get('/repositories')
-                    repo_results_dec = json.loads(repo_results.content.decode())
-                    for result in repo_results_dec:
-                        uri_components = result["uri"].split("/")
-                        repositories[result["name"]] = int(uri_components[-1])
+                    # Get repositories info
+                    if len(repositories) == 1:
+                        print(repositories)
+                        repo_results = client.get('/repositories')
+                        repo_results_dec = json.loads(repo_results.content.decode())
+                        for result in repo_results_dec:
+                            uri_components = result["uri"].split("/")
+                            repositories[result["name"]] = int(uri_components[-1])
+                        # Get resource ids
+                        for repository in repo_results.json():
+                            resources = client.get(f"{repository['uri']}/resources", params={"all_ids": True}).json()
+                            uri_components = repository["uri"].split("/")
+                            repository_id = int(uri_components[-1])
+                            # TODO: find a way to get only published resources
+                            resource_ids[repository_id] = [resource_id for resource_id in resources]
+                        print(resource_ids)
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
@@ -657,7 +700,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                 close_program = True
                 break
         window_login.close()
-    return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
+    return as_username, as_password, as_api, close_program, client, asp_version, repositories, resource_ids, xtf_version
 
 
 def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None):
@@ -752,7 +795,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
 
 
-def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window):
+def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_ead().
 
@@ -771,29 +814,38 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
-
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       defaults["ead_export_default"]["_SOURCE_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
+                                           export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             if resource_export.result is not None:
                 print(resource_export.result)
-            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            if export_all is False:
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -811,7 +863,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
-                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                     else:
@@ -822,17 +875,37 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
-                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
-                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                    if export_all is False:
+                        gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error + "\n")
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    if export_all is False:
+        print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+        gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui_window):
+    export_all_counter = 0
+    all_resources_counter = 0
+    print(len(input_ids.values()))
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+        for resource_uri in resource_uris:
+            get_eads(resource_uri, defaults, cleanup_options, repositories, client, repo_id, gui_window,
+                     export_all=True)
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_all_counter)) + "-" * 56 + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
