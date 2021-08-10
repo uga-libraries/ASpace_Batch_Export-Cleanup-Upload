@@ -243,23 +243,12 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
-                                                                             repositories, client, values_simple,
-                                                                             window_simple,))
-                        ead_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, cleanup_options, repositories, client, values_simple,
+                                window_simple,)
+                        start_thread(get_eads, args, window_simple)
                 else:
-                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
-                                                                         repositories, client, values_simple,
-                                                                         window_simple,))
-                    ead_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,)
+                    start_thread(get_eads, args, window_simple)
         if event_simple == "_EXPORT_ALLEADS_":
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
@@ -268,23 +257,13 @@ def run_gui(defaults):
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
                         input_ids = resources
-                        ead_thread = threading.Thread(target=get_all_eads, args=(input_ids, defaults, cleanup_options,
-                                                                                 repositories, client, window_simple,))
-                        ead_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
+                        start_thread(get_all_eads, args, window_simple)
                 else:
                     repo_id = repositories[values_simple["_REPO_SELECT_"]]
                     input_ids = {repo_id: resources[repo_id]}
-                    ead_thread = threading.Thread(target=get_all_eads, args=(input_ids, defaults, cleanup_options,
-                                                                             repositories, client, window_simple,))
-                    ead_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
+                    start_thread(get_all_eads, args, window_simple)
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
@@ -312,23 +291,11 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
-                                                                                    client, values_simple,
-                                                                                    window_simple,))
-                        marcxml_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_marcxml, args, window_simple)
                 else:
-                    marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
-                                                                                client, values_simple,
-                                                                                window_simple,))
-                    marcxml_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_marcxml, args, window_simple)
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
@@ -349,21 +316,11 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
-                                                                             values_simple, window_simple,))
-                        pdf_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_pdfs, args, window_simple)
                 else:
-                    pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
-                                                                         values_simple, window_simple,))
-                    pdf_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_pdfs, args, window_simple)
         if event_simple == "_OPEN_PDF_DEST_":
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
@@ -382,23 +339,11 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
-                                                                                         repositories, client,
-                                                                                         values_simple, window_simple,))
-                        contlabel_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_contlabels, args, window_simple)
                 else:
-                    contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
-                                                                                     repositories, client,
-                                                                                     values_simple, window_simple,))
-                    contlabel_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_contlabels, args, window_simple)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
@@ -421,6 +366,7 @@ def run_gui(defaults):
         # ------------- EXPORT THREADS -------------
         if event_simple in (EAD_EXPORT_THREAD, MARCXML_EXPORT_THREAD, PDF_EXPORT_THREAD, CONTLABEL_EXPORT_THREAD):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_ALLEADS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
@@ -1579,6 +1525,16 @@ def sort_list(input_list):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(input_list, key=alphanum_key)
+
+
+def start_thread(function, args, gui_window):
+    ead_thread = threading.Thread(target=function, args=args)
+    ead_thread.start()
+    gui_window[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_ALLEADS_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_PDF_"}'].update(disabled=True)
 
 
 # sg.theme_previewer()
