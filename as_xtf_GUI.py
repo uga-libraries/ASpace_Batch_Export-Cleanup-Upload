@@ -101,7 +101,7 @@ def run_gui(defaults):
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_",
                              tooltip=' Export EAD.xml resources ', disabled=False),
                    sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLEADS_",
-                             tooltip=" Export all resources as EAD.xml files ", disabled=False)],
+                             tooltip=" Export all published resources as EAD.xml files ", disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_",
@@ -843,10 +843,15 @@ def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui
     for resource_uris in input_ids.values():
         all_resources_counter += len(resource_uris)
     for repo_id, resource_uris in input_ids.items():
-        gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
         for resource_uri in resource_uris:
-            get_eads(resource_uri, defaults, cleanup_options, repositories, client, repo_id, gui_window,
-                     export_all=True)
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_eads(resource_uri, defaults, cleanup_options, repositories, client, repo_id, gui_window,
+                         export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
@@ -1071,6 +1076,8 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
 
+# TODO: insert export all marcxml files
+
 def get_marc_options(defaults):
     """
     Write the options selected to the defaults.json file.
@@ -1178,6 +1185,8 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
+
+# TODO: insert export all pdfs files
 
 def get_pdf_options(defaults):
     """
@@ -1293,6 +1302,8 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
+
+# TODO: insert export all contlabels files
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_upl,
                      gui_window):
