@@ -128,7 +128,9 @@ def run_gui(defaults):
                              tooltip=' Select options for XTF ')]
                   ]
     marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_",
-                              tooltip=' Export MARC.xml resources ', disabled=False)],
+                              tooltip=' Export MARC.xml resources ', disabled=False),
+                    sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLMARCXMLS_",
+                              tooltip=" Export all published resources as MARC.xml files ", disabled=False)],
                    [sg.Text("Options", font=("Roboto", 13))],
                    [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_",
                               tooltip=' Choose how you would like to export resources ')],
@@ -137,7 +139,9 @@ def run_gui(defaults):
                    [sg.Text(" " * 140)]
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_",
-                                   tooltip=' Export container labels for resources ', disabled=False)],
+                                   tooltip=' Export container labels for resources ', disabled=False),
+                         sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLCONTLABELS_",
+                                   tooltip=" Export all published resources as container label files ", disabled=False)],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
@@ -154,7 +158,9 @@ def run_gui(defaults):
                            "Your ArchivesSpace version is: {}".format(asp_version), font=("Roboto", 13),
                            visible=asp_pdf_api)],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_",
-                             tooltip=' Export PDF(s) for resources ', disabled=False)],
+                             tooltip=' Export PDF(s) for resources ', disabled=False),
+                   sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLPDFS_",
+                             tooltip=" Export all published resources as PDF files ", disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 125)],
                   [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_",
@@ -296,6 +302,21 @@ def run_gui(defaults):
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_marcxml, args, window_simple)
+        if event_simple == "_EXPORT_ALLMARCXMLS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_marcxml, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_marcxml, args, window_simple)
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
@@ -321,6 +342,21 @@ def run_gui(defaults):
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_pdfs, args, window_simple)
+        if event_simple == "_EXPORT_ALLPDFS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_pdfs, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_pdfs, args, window_simple)
         if event_simple == "_OPEN_PDF_DEST_":
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
@@ -344,6 +380,21 @@ def run_gui(defaults):
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_contlabels, args, window_simple)
+        if event_simple == "_EXPORT_ALLCONTLABELS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_contlabels, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_contlabels, args, window_simple)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
@@ -1027,7 +1078,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             return cleanup_options
 
 
-def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through user input and sends them to as_export.py to fetch_results() and export_marcxml().
 
@@ -1041,23 +1092,33 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1066,17 +1127,38 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
-    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_marcxml(input_ids, defaults, repositories, client, gui_window):
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_marcxml(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
-
-# TODO: insert export all marcxml files
 
 def get_marc_options(defaults):
     """
@@ -1135,7 +1217,7 @@ def get_marc_options(defaults):
         window_marc.close()
 
 
-def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_pdf().
 
@@ -1149,23 +1231,33 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1176,17 +1268,38 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
-    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_pdfs(input_ids, defaults, repositories, client, gui_window):
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_pdfs(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
-
-# TODO: insert export all pdfs files
 
 def get_pdf_options(defaults):
     """
@@ -1255,7 +1368,7 @@ def get_pdf_options(defaults):
         window_pdf.close()
 
 
-def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_labels().
 
@@ -1269,23 +1382,33 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["labels_export_default"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["labels_export_default"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["labels_export_default"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1293,17 +1416,38 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
-    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_contlabels(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
-
-# TODO: insert export all contlabels files
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_upl,
                      gui_window):
