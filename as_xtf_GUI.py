@@ -613,7 +613,6 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         defaults_asp.close()
                     # Get repositories info
                     if len(repositories) == 1:
-                        print(repositories)
                         repo_results = client.get('/repositories')
                         repo_results_dec = json.loads(repo_results.content.decode())
                         for result in repo_results_dec:
@@ -626,7 +625,6 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                             repository_id = int(uri_components[-1])
                             # TODO: find a way to get only published resources
                             resource_ids[repository_id] = [resource_id for resource_id in resources]
-                        print(resource_ids)
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
@@ -834,14 +832,14 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         else:
             print(resource_export.error + "\n")
     if export_all is False:
-        print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
 def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui_window):
     export_all_counter = 0
     all_resources_counter = 0
-    print(len(input_ids.values()))
     for resource_uris in input_ids.values():
         all_resources_counter += len(resource_uris)
     for repo_id, resource_uris in input_ids.items():
@@ -851,7 +849,8 @@ def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui
                      export_all=True)
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
-    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_all_counter)) + "-" * 54 + "\n")
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
@@ -1067,7 +1066,8 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
+    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
 
@@ -1174,7 +1174,8 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
+    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
 
@@ -1288,7 +1289,8 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 54 + "Finished {} exports".format(str(export_counter)) + "-" * 54 + "\n")
+    trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 
