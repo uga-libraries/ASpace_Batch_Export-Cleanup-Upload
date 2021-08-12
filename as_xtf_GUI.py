@@ -140,8 +140,8 @@ def run_gui(defaults):
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_",
                                    tooltip=' Export container labels for resources ', disabled=False),
-                         sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLCONTLABELS_",
-                                   tooltip=" Export all published resources as container label files ", disabled=False)],
+                         sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLCONTLABELS_", disabled=False,
+                                   tooltip=" Export all published resources as container label files ")],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
@@ -800,14 +800,14 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
     Args:
         input_ids (str): user inputs as gathered from the Resource Identifiers input box
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
-        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file
         These include the following:
             "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
             "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
             "_DEL_ALLNS_"
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
         export_all (bool): whether to pass URIs of all published resources to export
 
@@ -889,6 +889,24 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
 
 
 def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_eads() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        These include the following:
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
     export_all_counter = 0
     all_resources_counter = 0
     for resource_uris in input_ids.values():
@@ -1090,7 +1108,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
         export_all (bool): whether to pass URIs of all published resources to export
 
@@ -1140,6 +1158,19 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
 
 
 def get_all_marcxml(input_ids, defaults, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_marcxml() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
     export_all_counter = 0
     all_resources_counter = 0
     for resource_uris in input_ids.values():
@@ -1229,7 +1260,7 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
         export_all (bool): whether to pass URIs of all published resources to export
 
@@ -1281,6 +1312,19 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
 
 
 def get_all_pdfs(input_ids, defaults, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_pdfs() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
     export_all_counter = 0
     all_resources_counter = 0
     for resource_uris in input_ids.values():
@@ -1380,7 +1424,7 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
         export_all (bool): whether to pass URIs of all published resources to export
 
@@ -1429,6 +1473,19 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
 
 
 def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
+    """
+        Iterates through resources set to Publish = True and sends them to get_contlabels() to fetch and export files.
+
+        Args:
+            input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+            defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+            repositories (dict): repositories as listed in the ArchivesSpace instance
+            client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+            gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+        Returns:
+            None
+        """
     export_all_counter = 0
     all_resources_counter = 0
     for resource_uris in input_ids.values():
@@ -1546,6 +1603,21 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
 
 
 def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
+    """
+    Gets all of the files in the remote path directory currently on the XTF server.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_hostname (str): the host URL for the XTF instance
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        remote_files (list): a sorted list of all the files in the remote path directory
+    """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
@@ -1685,6 +1757,17 @@ def sort_list(input_list):
 
 
 def start_thread(function, args, gui_window):
+    """
+    Starts a thread and disables buttons to prevent multiple requests/threads.
+
+    Args:
+        function (function): the function to pass to the thread
+        args (tuple): the arguments to pass to the function with ending ,. Ex. (arg, arg, arg,)
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        None
+    """
     ead_thread = threading.Thread(target=function, args=args)
     ead_thread.start()
     gui_window[f'{"_EXPORT_EAD_"}'].update(disabled=True)
