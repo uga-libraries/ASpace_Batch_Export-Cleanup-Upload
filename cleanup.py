@@ -8,6 +8,7 @@ from lxml import etree
 extent_regex = re.compile(r"(^\W)")
 barcode_regex = re.compile(r"\[(.*?)\]")
 atid_regex = re.compile(r"Archivists Toolkit Database")
+archon_regex = re.compile(r"Archon Instance")
 dao_regex = re.compile(r"(\bdao\b)")
 
 
@@ -195,8 +196,8 @@ class EADRecord:
                     parent.remove(child)
                     self.results += "Removed empty container\n"
                     count2_notes += 1
-        print("We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + \
-                        str(count2_notes) + " empty containers")
+        print("We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " +
+              str(count2_notes) + " empty containers")
         # self.results += "We found " + str(count1_notes) + " <container>'s in " + str(self.eadid) + " and removed " + \
         #                 str(count2_notes) + " empty containers\n"
 
@@ -224,8 +225,8 @@ class EADRecord:
                         parent = child.getparent()
                         barcode_tag = etree.SubElement(parent, "physloc", type="barcode")
                         barcode_tag.text = "{}".format(barcode)
-        print("We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + \
-                        " and added " + str(count2_barcodes) + " barcodes in the physloc tag")
+        print("We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + " and added " +
+              str(count2_barcodes) + " barcodes in the physloc tag")
         # self.results += "We found " + str(count1_barcodes) + " <container labels>'s in " + str(self.eadid) + \
         #                 " and added " + str(count2_barcodes) + " barcodes in the physloc tag\n"
 
@@ -248,13 +249,34 @@ class EADRecord:
                         count2_at += 1
                         parent = element.getparent()
                         parent.remove(element)
-                    else:
-                        print("'Archivists Toolkit Database' not found in: " + str(attributes["label"]))
-                        # self.results += "'Archivists Toolkit Database' not found in: " + str(attributes["label"]) + "\n"
         print("We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
             count2_at) + " Archivists Toolkit legacy ids")
         # self.results += "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
         #     count2_at) + " Archivists Toolkit legacy ids\n"
+
+    def remove_archon_ids(self):
+        """
+        Finds any unitid element with an Archon unique identifier. Deletes that element.
+
+        Returns:
+            None
+        """
+        count1_at = 0
+        count2_at = 0
+        for element in self.root.iter():
+            if "unitid" in element.tag:
+                attributes = element.attrib
+                count1_at += 1
+                if "type" in attributes:
+                    match = archon_regex.match(attributes["type"])
+                    if match:
+                        count2_at += 1
+                        parent = element.getparent()
+                        parent.remove(element)
+        print("We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
+            count2_at) + " Archivists Toolkit legacy ids")
+        # self.results += "We found " + str(count1_at) + " unitids in " + str(self.eadid) + " and removed " + str(
+        #     count2_at) + " Archon legacy ids\n"
 
     def count_xlinks(self):
         """
@@ -272,9 +294,9 @@ class EADRecord:
                 count1_xlink += 1
                 attributes = element.attrib
                 count2_xlink += len(attributes)
-        print("We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " \
-                        + str(count2_xlink) + " xlink prefaces in attributes")
-        # self.results += "We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are " \
+        print("We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are "
+              + str(count2_xlink) + " xlink prefaces in attributes")
+        # self.results += "We found " + str(count1_xlink) + " digital objects in " + str(self.eadid) + " and there are "
         #                 + str(count2_xlink) + " xlink prefaces in attributes\n"
         ead_string = etree.tostring(self.root, encoding="unicode", pretty_print=True,
                                     doctype='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>')
@@ -363,6 +385,8 @@ class EADRecord:
                 ead.update_barcode()
             if "_DEL_ATIDS_" in custom_clean:
                 ead.remove_at_leftovers()
+            if "_DEL_ARCHIDS_" in custom_clean:
+                ead.remove_archon_ids()
             if "_CNT_XLINKS_" in custom_clean:
                 ead.count_xlinks()
             if "_DEL_NMSPCS_" in custom_clean:
@@ -415,12 +439,12 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
     except Exception as e:
         valid_err += "Error: {}\n\n" \
                      "File saved in: {}\n".format(e, Path(filepath).parent)
-        valid_err += "-" * 135
+        valid_err += "-" * 139
         return False, valid_err
     ead_root = tree.getroot()
     ead = EADRecord(ead_root)
     clean_ead, results = ead.clean_suite(ead, custom_clean)
-    results += "\n" + "-" * 135
+    results += "\n" + "-" * 139
     clean_ead_file_root = str(Path(output_dir, '{}'.format(filename)))
     with open(clean_ead_file_root, "wb") as CLEANED_EAD:
         CLEANED_EAD.write(clean_ead)

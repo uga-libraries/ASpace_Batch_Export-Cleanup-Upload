@@ -24,9 +24,9 @@ def set_defaults_file():
                    "_KEEP_RAW_", "_CLEAN_EADS_", "_OUTPUT_DIR_", "_SOURCE_DIR_", "marc_export_default",
                    "pdf_export_default", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
                    "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_",
-                   "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api", "repo_default",
-                   "_REPO_NAME_", "_REPO_ID_", "xtf_default", "xtf_version", "xtf_host", "xtf_remote_path",
-                   "xtf_local_path", "xtf_indexer_path", "xtf_lazyindex_path", "_REINDEX_AUTO_"]
+                   "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api",
+                   "repo_default", "_REPO_NAME_", "_REPO_ID_", "xtf_default", "xtf_version", "xtf_host",
+                   "xtf_remote_path", "xtf_local_path", "xtf_indexer_path", "_REINDEX_AUTO_"]
     defaults_keys = []
     try:
         with open("defaults.json", "r") as DEFAULTS:
@@ -57,7 +57,8 @@ def set_defaults_file():
                         "ead_cleanup_defaults": {"_ADD_EADID_": True, "_DEL_NOTES_": True, "_CLN_EXTENTS_": True,
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_LANGTRAIL_": True,
                                                  "_DEL_CONTAIN_": True, "_ADD_PHYSLOC_": True, "_DEL_ATIDS_": True,
-                                                 "_CNT_XLINKS_": True, "_DEL_NMSPCS_": True, "_DEL_ALLNS_": True},
+                                                 "_DEL_ARCHIDS_": True, "_CNT_XLINKS_": True, "_DEL_NMSPCS_": True,
+                                                 "_DEL_ALLNS_": True},
                         "as_api": "",
                         "repo_default": {"_REPO_NAME_": "", "_REPO_ID_": ""},
                         "xtf_default": {"xtf_version": True,
@@ -65,7 +66,6 @@ def set_defaults_file():
                                         "xtf_remote_path": "",
                                         "xtf_local_path": clean_eads,
                                         "xtf_indexer_path": "",
-                                        "xtf_lazyindex_path": "",
                                         "_REINDEX_AUTO_": True}}
             dump_defaults = json.dumps(defaults)
             DEFAULTS.write(dump_defaults)

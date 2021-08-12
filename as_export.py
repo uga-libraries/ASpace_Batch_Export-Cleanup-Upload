@@ -11,7 +11,7 @@ class ASExport:
     """
     Interacts with the ASpace API to search for and retrieve records.
     """
-    def __init__(self, input_id, repo_id, client, output_dir):
+    def __init__(self, input_id, repo_id, client, output_dir, export_all=False):
         """
         Must contain resource identifier, repository identifier, ASnake client, and output directory.
 
@@ -23,7 +23,7 @@ class ASExport:
         """
         self.input_id = input_id  #:
         """str: user generated resource identifier"""
-        if "/" in self.input_id:
+        if type(input_id) is str and "/" in self.input_id:
             self.filename = self.input_id.replace("/", "")
             """str: the name assigned to the exported file, takes input_id and removes any "/"s"""
         else:
@@ -42,8 +42,12 @@ class ASExport:
         self.result = None
         """str: value is none unless an operation completes or multiple results are returned and is then populated 
         with a string detailing the result(s)"""
-        self.filepath = str(Path(output_dir, self.filename))
+        self.filepath = str(Path(output_dir, str(self.filename)))
         """str: filepath where records will be exported to"""
+        self.output_directory = output_dir
+        """str: location of the output directory for the file"""
+        self.export_all = export_all
+        """bool: whether exporting all records for a repository"""
 
     def fetch_results(self):
         """
@@ -55,17 +59,21 @@ class ASExport:
         Returns:
             None
         """
-        combined_user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
-        if self.repo_id is not None:
-            search_resources = self.client.get_paged('/repositories/{}/search'.format(str(self.repo_id)),
-                                                     params={"q": 'four_part_id:' + self.input_id,
-                                                             "type": ['resource']})
+        if self.export_all is False:
+            combined_user_id = id_combined_regex.sub('', self.input_id)  # remove all non-alphanumeric characters
+            if self.repo_id is not None:
+                search_resources = self.client.get_paged('/repositories/{}/search'.format(str(self.repo_id)),
+                                                         params={"q": 'four_part_id:' + self.input_id,
+                                                                 "type": ['resource']})
+            else:
+                search_resources = self.client.get_paged('/search', params={"q": 'four_part_id:' + self.input_id,
+                                                                            "type": ['resource']})
+            search_results = []
+            for result in search_resources:
+                search_results.append(result)
         else:
-            search_resources = self.client.get_paged('/search', params={"q": 'four_part_id:' + self.input_id,
-                                                                        "type": ['resource']})
-        search_results = []
-        for result in search_resources:
-            search_results.append(result)
+            search_results = [{"json": json.dumps(self.client.get(f'/repositories/{str(self.repo_id)}/resources/{str(self.input_id)}').json())}]
+            combined_user_id = ""
         if not search_results:
             self.error = "No results were found. Have you entered the correct repository and/or resource ID?\n" \
                          "Results: " + str(search_results) + \
@@ -84,11 +92,14 @@ class ASExport:
                     if id_match:
                         combined_aspace_id += value + "-"
                 combined_aspace_id_clean = id_combined_regex.sub('', combined_aspace_id)  # remove all non-alphanumeric characters
+                if self.export_all is True:
+                    combined_user_id = combined_aspace_id_clean
+                    self.filepath = str(Path(self.output_directory, combined_aspace_id_clean))
                 user_id_index = 0
                 try:
                     if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
                         aspace_id = combined_aspace_id[:-1]
-                        resource_full_uri = result["uri"].split("/")
+                        resource_full_uri = json_info["uri"].split("/")
                         self.resource_id = resource_full_uri[-1]
                         self.resource_repo = resource_full_uri[2]
                         match_results[aspace_id] = json_info["title"]

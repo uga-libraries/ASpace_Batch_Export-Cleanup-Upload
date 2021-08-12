@@ -44,8 +44,8 @@ def run_gui(defaults):
     """
     gc.disable()
     sg.theme('LightBlue2')
-    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = get_aspace_log(
-        defaults, xtf_checkbox=True)
+    as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
+        get_aspace_log(defaults, xtf_checkbox=True)
     if close_program_as is True:
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
@@ -56,8 +56,8 @@ def run_gui(defaults):
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, close_program_xtf \
-            = get_xtf_log(defaults, login=True)
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+            get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
             sys.exit()
         xtf_login_menu_button = 'Change XTF Login Credentials'
@@ -66,11 +66,10 @@ def run_gui(defaults):
     else:
         xtf_login_menu_button = '!Change XTF Login Credentials'
         xtf_opt_button = '!Change XTF Options'
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path = "", "", "", \
-                                                                                                     "", "", ""
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path = "", "", "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
-                        "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_",
-                        "_DEL_NMSPCS_", "_DEL_ALLNS_"]
+                        "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_",
+                        "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"]
     cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if bool_val is True]
     menu_def = [['File',
                  ['Clear Raw ASpace Export Folder',
@@ -100,7 +99,9 @@ def run_gui(defaults):
                  ]
                 ]
     ead_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_EAD_",
-                             tooltip=' Export EAD.xml resources ', disabled=False)],
+                             tooltip=' Export EAD.xml resources ', disabled=False),
+                   sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLEADS_",
+                             tooltip=" Export all published resources as EAD.xml files ", disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 123)],
                   [sg.Button(" EAD Export Options ", key="_EAD_OPTIONS_",
@@ -127,7 +128,9 @@ def run_gui(defaults):
                              tooltip=' Select options for XTF ')]
                   ]
     marc_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_MARCXML_",
-                              tooltip=' Export MARC.xml resources ', disabled=False)],
+                              tooltip=' Export MARC.xml resources ', disabled=False),
+                    sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLMARCXMLS_",
+                              tooltip=" Export all published resources as MARC.xml files ", disabled=False)],
                    [sg.Text("Options", font=("Roboto", 13))],
                    [sg.Button(" MARCXML Export Options ", key="_MARCXML_OPTIONS_",
                               tooltip=' Choose how you would like to export resources ')],
@@ -136,7 +139,9 @@ def run_gui(defaults):
                    [sg.Text(" " * 140)]
                    ]
     contlabel_layout = [[sg.Button(button_text=" EXPORT ", key="_EXPORT_LABEL_",
-                                   tooltip=' Export container labels for resources ', disabled=False)],
+                                   tooltip=' Export container labels for resources ', disabled=False),
+                         sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLCONTLABELS_", disabled=False,
+                                   tooltip=" Export all published resources as container label files ")],
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
@@ -153,7 +158,9 @@ def run_gui(defaults):
                            "Your ArchivesSpace version is: {}".format(asp_version), font=("Roboto", 13),
                            visible=asp_pdf_api)],
                   [sg.Button(button_text=" EXPORT ", key="_EXPORT_PDF_",
-                             tooltip=' Export PDF(s) for resources ', disabled=False)],
+                             tooltip=' Export PDF(s) for resources ', disabled=False),
+                   sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLPDFS_",
+                             tooltip=" Export all published resources as PDF files ", disabled=False)],
                   [sg.Text("Options", font=("Roboto", 13)),
                    sg.Text(" " * 125)],
                   [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_",
@@ -242,23 +249,27 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
-                                                                             repositories, client, values_simple,
-                                                                             window_simple,))
-                        ead_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, cleanup_options, repositories, client, values_simple,
+                                window_simple,)
+                        start_thread(get_eads, args, window_simple)
                 else:
-                    ead_thread = threading.Thread(target=get_eads, args=(input_ids, defaults, cleanup_options,
-                                                                         repositories, client, values_simple,
-                                                                         window_simple,))
-                    ead_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,)
+                    start_thread(get_eads, args, window_simple)
+        if event_simple == "_EXPORT_ALLEADS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
+                        start_thread(get_all_eads, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
+                    start_thread(get_all_eads, args, window_simple)
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
@@ -286,23 +297,26 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
-                                                                                    client, values_simple,
-                                                                                    window_simple,))
-                        marcxml_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_marcxml, args, window_simple)
                 else:
-                    marcxml_thread = threading.Thread(target=get_marcxml, args=(input_ids, defaults, repositories,
-                                                                                client, values_simple,
-                                                                                window_simple,))
-                    marcxml_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_marcxml, args, window_simple)
+        if event_simple == "_EXPORT_ALLMARCXMLS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_marcxml, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_marcxml, args, window_simple)
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
@@ -323,21 +337,26 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
-                                                                             values_simple, window_simple,))
-                        pdf_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_pdfs, args, window_simple)
                 else:
-                    pdf_thread = threading.Thread(target=get_pdfs, args=(input_ids, defaults, repositories, client,
-                                                                         values_simple, window_simple,))
-                    pdf_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_pdfs, args, window_simple)
+        if event_simple == "_EXPORT_ALLPDFS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_pdfs, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_pdfs, args, window_simple)
         if event_simple == "_OPEN_PDF_DEST_":
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
@@ -356,23 +375,26 @@ def run_gui(defaults):
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
-                        contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
-                                                                                         repositories, client,
-                                                                                         values_simple, window_simple,))
-                        contlabel_thread.start()
-                        window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                        window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                        args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                        start_thread(get_contlabels, args, window_simple)
                 else:
-                    contlabel_thread = threading.Thread(target=get_contlabels, args=(input_ids, defaults,
-                                                                                     repositories, client,
-                                                                                     values_simple, window_simple,))
-                    contlabel_thread.start()
-                    window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
-                    window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=True)
+                    args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
+                    start_thread(get_contlabels, args, window_simple)
+        if event_simple == "_EXPORT_ALLCONTLABELS_":
+            if not values_simple["_REPO_SELECT_"]:
+                sg.Popup("WARNING!\nPlease select a repository")
+            else:
+                if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
+                    sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
+                    if sysadmin_popup == "Yes":
+                        input_ids = resources
+                        args = (input_ids, defaults, repositories, client, window_simple,)
+                        start_thread(get_all_contlabels, args, window_simple)
+                else:
+                    repo_id = repositories[values_simple["_REPO_SELECT_"]]
+                    input_ids = {repo_id: resources[repo_id]}
+                    args = (input_ids, defaults, repositories, client, window_simple,)
+                    start_thread(get_all_contlabels, args, window_simple)
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
@@ -395,6 +417,7 @@ def run_gui(defaults):
         # ------------- EXPORT THREADS -------------
         if event_simple in (EAD_EXPORT_THREAD, MARCXML_EXPORT_THREAD, PDF_EXPORT_THREAD, CONTLABEL_EXPORT_THREAD):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_ALLEADS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
@@ -432,21 +455,21 @@ def run_gui(defaults):
                 dsetup.reset_defaults()
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
-            as_username, as_password, as_api, close_program_as, client, asp_version, repositories, xtf_version = \
-                get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password, as_ap=as_api,
-                               as_client=client, as_repos=repositories, xtf_ver=xtf_version)
+            as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, \
+                xtf_version = get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password,
+                                             as_ap=as_api, as_client=client, as_res=resources, as_repos=repositories,
+                                             xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
-            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, \
-             close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
-                                             xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
-                                             xtf_lp=xtf_lazy_path)
+            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
+                get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password, xtf_ht=xtf_hostname,
+                            xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
             # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.3.0\n\n"
+                         "Version: 1.3.1\n\n"
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -490,8 +513,8 @@ def run_gui(defaults):
                 if event_upl == "_UPLOAD_TO_XTF_":
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   xtf_indexer_path, xtf_lazy_path,
-                                                                                   values_upl, window_simple,))
+                                                                                   xtf_indexer_path, values_upl,
+                                                                                   window_simple,))
                     xtfup_thread.start()
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
                     window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -502,7 +525,7 @@ def run_gui(defaults):
             window_del_active = True
             print("Getting remote files, this may take a second...", flush=True, end="")
             remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path, xtf_lazy_path, window_simple)
+                                            xtf_indexer_path, window_simple)
             print("Done")
             delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
@@ -524,8 +547,8 @@ def run_gui(defaults):
                 if event_del == "_DELETE_XTF_":
                     xtfup_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   xtf_indexer_path, xtf_lazy_path,
-                                                                                   values_del, window_simple,))
+                                                                                   xtf_indexer_path, values_del,
+                                                                                   window_simple,))
                     xtfup_thread.start()
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
                     window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -534,8 +557,7 @@ def run_gui(defaults):
                     window_del_active = False
         if event_simple == "_INDEX_":
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                                     xtf_remote_path, xtf_indexer_path,
-                                                                     xtf_lazy_path, window_simple,))
+                                                                     xtf_remote_path, xtf_indexer_path, window_simple,))
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -551,7 +573,7 @@ def run_gui(defaults):
 
 
 def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, as_client=None, as_repos=None,
-                   xtf_ver=None):
+                   as_res=None, xtf_ver=None):  # TODO: wouldn't it be easier to have a login option and if login is True, resources and repos are set and if False, they use defaults?
     """
     Gets a user's ArchiveSpace credentials.
 
@@ -592,6 +614,10 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         repositories = {"Search Across Repositories (Sys Admin Only)": None}
     else:
         repositories = as_repos
+    if as_res is None:
+        resource_ids = {}
+    else:
+        resource_ids = as_res
     xtf_version = xtf_ver
     if xtf_checkbox is True:
         save_button_asp = " Save and Continue "
@@ -636,11 +662,20 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         defaults["xtf_default"]["xtf_version"] = xtf_version
                         json.dump(defaults, defaults_asp)
                         defaults_asp.close()
-                    repo_results = client.get('/repositories')
-                    repo_results_dec = json.loads(repo_results.content.decode())
-                    for result in repo_results_dec:
-                        uri_components = result["uri"].split("/")
-                        repositories[result["name"]] = int(uri_components[-1])
+                    # Get repositories info
+                    if len(repositories) == 1:
+                        repo_results = client.get('/repositories')
+                        repo_results_dec = json.loads(repo_results.content.decode())
+                        for result in repo_results_dec:
+                            uri_components = result["uri"].split("/")
+                            repositories[result["name"]] = int(uri_components[-1])
+                        # Get resource ids
+                        for repository in repo_results.json():
+                            resources = client.get(f"{repository['uri']}/resources", params={"all_ids": True}).json()
+                            uri_components = repository["uri"].split("/")
+                            repository_id = int(uri_components[-1])
+                            # TODO: find a way to get only published resources
+                            resource_ids[repository_id] = [resource_id for resource_id in resources]
                     window_asplog_active = False
                     correct_creds = True
                 except Exception as e:
@@ -660,10 +695,10 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                 close_program = True
                 break
         window_login.close()
-    return as_username, as_password, as_api, close_program, client, asp_version, repositories, xtf_version
+    return as_username, as_password, as_api, close_program, client, asp_version, repositories, resource_ids, xtf_version
 
 
-def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None, xtf_lp=None):
+def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None):
     """
     Gets a user's XTF credentials.
 
@@ -678,7 +713,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_ht (object, optional): the host URL for the XTF instance
         xtf_rp (object, optional): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_ip (object, optional): the path (file) where the website indexer is located
-        xtf_lp (object, optional): the path (folder) where xml.lazy files are stored - for permissions updates
 
     Returns:
         xtf_username (str): user's XTF username
@@ -686,7 +720,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
     xtf_username = xtf_un
@@ -694,7 +727,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     xtf_host = xtf_ht
     xtf_remote_path = xtf_rp
     xtf_indexer_path = xtf_ip
-    xtf_lazy_path = xtf_lp
     if login is True:
         save_button_xtf = " Save and Continue "
     else:
@@ -707,14 +739,12 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                        [sg.Text("XTF password:", font=("Roboto", 11))],
                        [sg.Text("XTF Hostname:", font=("Roboto", 11))],
                        [sg.Text("XTF Remote Path:", font=("Roboto", 11))],
-                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))],
-                       [sg.Text("XTF Lazy Index Path:", font=("Roboto", 11))]]
+                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_remote_path"], key="_XTF_REMPATH_")],
-                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")],
-                       [sg.InputText(defaults["xtf_default"]["xtf_lazyindex_path"], key="_XTF_LAZYPATH_")]]
+                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")]]
         layout_xtflog = [
             [sg.Column(xtflog_col1), sg.Column(xtflog_col2)],
             [sg.Button(save_button_xtf, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
@@ -726,7 +756,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
                                               values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"],
-                                              values_xlog["_XTF_INDPATH_"], values_xlog["_XTF_LAZYPATH_"])
+                                              values_xlog["_XTF_INDPATH_"])
                     remote.client = remote.connect_remote()
                     if remote.scp is None:
                         raise Exception(remote.client)
@@ -736,13 +766,11 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_host = values_xlog["_XTF_HOSTNAME_"]
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
-                        xtf_lazy_path = values_xlog["_XTF_LAZYPATH_"]
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
                             defaults["xtf_default"]["xtf_remote_path"] = values_xlog["_XTF_REMPATH_"]
                             defaults["xtf_default"]["xtf_indexer_path"] = values_xlog["_XTF_INDPATH_"]
-                            defaults["xtf_default"]["xtf_lazyindex_path"] = values_xlog["_XTF_LAZYPATH_"]
                             json.dump(defaults, defaults_xtf)
                             defaults_xtf.close()
                         window_xtflog_active = False
@@ -759,10 +787,10 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 close_program = True
                 break
         window_xtfcred.close()
-    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, close_program
+    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
 
 
-def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window):
+def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_ead().
 
@@ -772,37 +800,47 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
     Args:
         input_ids (str): user inputs as gathered from the Resource Identifiers input box
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
-        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file
         These include the following:
             "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
-            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
-
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       defaults["ead_export_default"]["_SOURCE_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
+                                           export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             if resource_export.result is not None:
                 print(resource_export.result)
-            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            if export_all is False:
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -820,7 +858,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
-                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                     else:
@@ -831,17 +870,61 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                             print("Done")
                             print(results)
                             export_counter += 1
-                            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
-                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                    if export_all is False:
+                        gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error + "\n")
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_eads() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
+        These include the following:
+            "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_eads(resource_uri, defaults, cleanup_options, repositories, client, repo_id, gui_window,
+                         export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
 
@@ -938,7 +1021,8 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
         cleanup_options (list): options a user wants to run against an EAD.xml file after export to clean the file.
         These include the following:
             "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
-            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"
+            "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+            "_DEL_ALLNS_"
     """
     cleanup_options = []
     window_adv_active = True
@@ -949,17 +1033,19 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                    [sg.Checkbox("Remove '(), [], {}' from and Empty Extents", key="_CLN_EXTENTS_",
                                 default=defaults["ead_cleanup_defaults"]["_CLN_EXTENTS_"])],
                    [sg.Checkbox("Add Certainty Attribute", key="_ADD_CERTAIN_",
-                                default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])]]
-    winadv_col2 = [[sg.Checkbox("Add label='Mixed Materials' to containers without label", key="_ADD_LABEL_",
+                                default=defaults["ead_cleanup_defaults"]["_ADD_CERTAIN_"])],
+                   [sg.Checkbox("Add label='Mixed Materials' to containers without label", key="_ADD_LABEL_",
                                 default=defaults["ead_cleanup_defaults"]["_ADD_LABEL_"])],
                    [sg.Checkbox("Remove trailing . from langmaterial", key="_DEL_LANGTRAIL_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_LANGTRAIL_"])],
                    [sg.Checkbox("Delete Empty Containers", key="_DEL_CONTAIN_",
-                                default=defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"])],
-                   [sg.Checkbox("Add Barcode as physloc Tag", key="_ADD_PHYSLOC_",
-                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])]]
-    winadv_col3 = [[sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"])]]
+    winadv_col2 = [[sg.Checkbox("Add Barcode as physloc Tag", key="_ADD_PHYSLOC_",
+                                default=defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"])],
+                   [sg.Checkbox("Remove Archivists' Toolkit IDs", key="_DEL_ATIDS_",
                                 default=defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"])],
+                   [sg.Checkbox("Remove Archon IDs", key="_DEL_ARCHIDS_",
+                                default=defaults["ead_cleanup_defaults"]["_DEL_ARCHIDS_"])],
                    [sg.Checkbox("Remove xlink Prefixes from Digital Objects", key="_CNT_XLINKS_",
                                 default=defaults["ead_cleanup_defaults"]["_CNT_XLINKS_"])],
                    [sg.Checkbox("Remove Unused Namespaces", key="_DEL_NMSPCS_",
@@ -969,7 +1055,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
     layout_adv = [
         [sg.Text("Advanced Options for Cleaning EAD Records", font=("Roboto", 14)),
          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_CLEANUP_HELP_")],
-        [sg.Column(winadv_col1), sg.Column(winadv_col2), sg.Column(winadv_col3)],
+        [sg.Column(winadv_col1), sg.Column(winadv_col2)],
         [sg.Button(" Save Settings ", key="_SAVE_CLEAN_DEF_", bind_return_key=True)]
     ]
     window_adv = sg.Window("Change Cleanup Defaults", layout_adv)
@@ -990,6 +1076,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
                 defaults["ead_cleanup_defaults"]["_DEL_CONTAIN_"] = values_adv["_DEL_CONTAIN_"]
                 defaults["ead_cleanup_defaults"]["_ADD_PHYSLOC_"] = values_adv["_ADD_PHYSLOC_"]
                 defaults["ead_cleanup_defaults"]["_DEL_ATIDS_"] = values_adv["_DEL_ATIDS_"]
+                defaults["ead_cleanup_defaults"]["_DEL_ARCHIDS_"] = values_adv["_DEL_ARCHIDS_"]
                 defaults["ead_cleanup_defaults"]["_CNT_XLINKS_"] = values_adv["_CNT_XLINKS_"]
                 defaults["ead_cleanup_defaults"]["_DEL_NMSPCS_"] = values_adv["_DEL_NMSPCS_"]
                 defaults["ead_cleanup_defaults"]["_DEL_ALLNS_"] = values_adv["_DEL_ALLNS_"]
@@ -1009,7 +1096,7 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             return cleanup_options
 
 
-def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through user input and sends them to as_export.py to fetch_results() and export_marcxml().
 
@@ -1021,25 +1108,35 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1048,12 +1145,49 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_marcxml(input_ids, defaults, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_marcxml() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_marcxml(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
 
@@ -1114,7 +1248,7 @@ def get_marc_options(defaults):
         window_marc.close()
 
 
-def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_pdf().
 
@@ -1126,25 +1260,35 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1155,12 +1299,49 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_pdfs(input_ids, defaults, repositories, client, gui_window):
+    """
+    Iterates through resources set to Publish = True and sends them to get_pdfs() to fetch and export files.
+
+    Args:
+        input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        repositories (dict): repositories as listed in the ArchivesSpace instance
+        client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+        gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+    Returns:
+        None
+    """
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_pdfs(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
 
@@ -1231,7 +1412,7 @@ def get_pdf_options(defaults):
         window_pdf.close()
 
 
-def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui_window):
+def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui_window, export_all=False):
     """
     Iterates through the user input and sends them to as_export.py to fetch_results() and export_labels().
 
@@ -1243,25 +1424,35 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
         repositories (dict): repositories as listed in the ArchivesSpace instance
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
-        values_simple (dict): values as entered with the run_gui() function. See PySimpleGUI documentation for more info
+        values_simple (dict or int): values as entered with the run_gui() function, or repository ID for export all
         gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+        export_all (bool): whether to pass URIs of all published resources to export
 
     Returns:
         None
     """
     resources = []
     export_counter = 0
-    if "," in input_ids:
-        csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
-        for resource in csep_resources:
-            linebreak_resources = resource.splitlines()
-            for lb_resource in linebreak_resources:
-                resources.append(lb_resource)
+    if export_all is True:
+        resources = [input_ids]
+        repo_id = values_simple
     else:
-        resources = [user_input.strip() for user_input in input_ids.splitlines()]
+        repo_id = repositories[values_simple["_REPO_SELECT_"]]
+        if "," in input_ids:
+            csep_resources = [user_input.strip() for user_input in input_ids.split(",")]
+            for resource in csep_resources:
+                linebreak_resources = resource.splitlines()
+                for lb_resource in linebreak_resources:
+                    resources.append(lb_resource)
+        else:
+            resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
-        resource_export = asx.ASExport(input_id, repositories[values_simple["_REPO_SELECT_"]], client,
-                                       output_dir=defaults["labels_export_default"])
+        if export_all is True:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["labels_export_default"], export_all=True)
+        else:
+            resource_export = asx.ASExport(input_id, repo_id, client,
+                                           output_dir=defaults["labels_export_default"])
         resource_export.fetch_results()
         if resource_export.error is None:
             print("Exporting {}...".format(input_id), end='', flush=True)
@@ -1269,17 +1460,54 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             if resource_export.error is None:
                 print(resource_export.result + "\n")
                 export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                if export_all is False:
+                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
-    print("\n" + "-" * 56 + "Finished {} exports".format(str(export_counter)) + "-" * 56 + "\n")
+    if export_all is False:
+        trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
+        gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
+
+
+def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
+    """
+        Iterates through resources set to Publish = True and sends them to get_contlabels() to fetch and export files.
+
+        Args:
+            input_ids (dict): contains repository ASpace ID as key and all published resource IDs in a list as value.
+            defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+            repositories (dict): repositories as listed in the ArchivesSpace instance
+            client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
+            gui_window (PySimpleGUI Object): is the GUI window for the app. See PySimpleGUI.org for more info
+
+        Returns:
+            None
+        """
+    export_all_counter = 0
+    all_resources_counter = 0
+    for resource_uris in input_ids.values():
+        all_resources_counter += len(resource_uris)
+    for repo_id, resource_uris in input_ids.items():
+        for resource_uri in resource_uris:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+            resource_json = client.get(f'/repositories/{str(repo_id)}/resources/{str(resource_uri)}').json()
+            if resource_json["publish"] is True:
+                get_contlabels(resource_uri, defaults, repositories, client, repo_id, gui_window, export_all=True)
+            else:
+                export_all_counter += -1
+                all_resources_counter += -1
+            export_all_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
+    trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 
-def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
-                     xtf_lazy_path,  values_upl, gui_window):
+def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_upl,
+                     gui_window):
     """
     Uploads files to XTF.
 
@@ -1290,33 +1518,27 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_upl (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"], values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
-    for file in xtf_files:
-        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_remote_path"],
-                                                                                    Path(file).name)])
-        print(update_permissions)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                  gui_window, xtf_files)
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                     values_del, gui_window):
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
+                     gui_window):
     """
     Delete files from XTF.
 
@@ -1327,14 +1549,13 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_del (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     print("Deleting files...")
     xtf_files = [str(defaults["xtf_default"]["xtf_remote_path"] + "/" + str(file)) for file in
                  values_del["_SELECT_FILES_"]]
@@ -1345,16 +1566,14 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
             print(cmds_output)
         print("-" * 135)
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
-                      xtf_lazy_path, gui_window)
+            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
         remote.disconnect()
     except Exception as e:
         print("An error occurred: " + str(e))
     gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
 
 
-def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-              gui_window, xtf_files=None):
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
     """
     Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
 
@@ -1365,42 +1584,41 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        xtf_lazy_path (str): the path (folder) where the lazy files are generated from an index, used to set permissions
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
-        xtf_files (list, optional): the list of file paths of files that were uploaded
 
     Returns:
         None
     """
     print("Beginning Re-Index, this may take awhile...")
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
-    if xtf_files is None:
-        try:
-            cmds_output = remote.execute_commands(
-                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
-                 '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
-            print(cmds_output)
-            print("-" * 135)
-        except Exception as e:
-            print("An error occurred: " + str(e))
-    else:
-        try:
-            commands = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
-            for file in xtf_files:
-                lazyfile = Path(file).name + ".lazy"
-                commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"], lazyfile))
-            cmds_output = remote.execute_commands(commands)
-            print(cmds_output)
-            print("-" * 135)
-        except Exception as e:
-            print("An error occurred: " + str(e))
-    remote.disconnect()
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    try:
+        cmds_output = remote.execute_commands(
+            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+        print(cmds_output)
+        print("-" * 135)
+        remote.disconnect()
+    except Exception as e:
+        print("An error occurred: " + str(e))
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
-def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                     gui_window):
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
+    """
+    Gets all of the files in the remote path directory currently on the XTF server.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        xtf_hostname (str): the host URL for the XTF instance
+        xtf_username (str): user's XTF username
+        xtf_password (str): user's XTF password
+        xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
+        xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        remote_files (list): a sorted list of all the files in the remote path directory
+    """
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
     gui_window.write_event_value('-XTFGET_THREAD-', (threading.current_thread().name,))
@@ -1536,6 +1754,27 @@ def sort_list(input_list):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(input_list, key=alphanum_key)
+
+
+def start_thread(function, args, gui_window):
+    """
+    Starts a thread and disables buttons to prevent multiple requests/threads.
+
+    Args:
+        function (function): the function to pass to the thread
+        args (tuple): the arguments to pass to the function with ending ,. Ex. (arg, arg, arg,)
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns:
+        None
+    """
+    ead_thread = threading.Thread(target=function, args=args)
+    ead_thread.start()
+    gui_window[f'{"_EXPORT_EAD_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_ALLEADS_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_MARCXML_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_LABEL_"}'].update(disabled=True)
+    gui_window[f'{"_EXPORT_PDF_"}'].update(disabled=True)
 
 
 # sg.theme_previewer()
