@@ -73,8 +73,12 @@ def run_gui(defaults):
                         "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"]
     cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if bool_val is True]
     menu_def = [['File',
-                 ['Clear Raw EAD ASpace Export Folder',
-                  'Clear Cleaned EAD Export Folder',
+                 ['Clear Cleaned EAD Export Folder',
+                  '---',
+                  'Clear EAD Export Folder',
+                  'Clear MARCXML Export Folder',
+                  'Clear Container Label Export Folder',
+                  'Clear PDF Export Folder',
                   '---',
                   'Reset Defaults',
                   '---',
@@ -420,11 +424,14 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_ALLEADS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_MARCXML_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_ALLMARCXMLS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_LABEL_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_ALLCONTLABELS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
+            window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
         if event_simple == EXPORT_PROGRESS_THREAD:
             sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
-                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h')
+                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h', no_button=False)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
@@ -438,7 +445,7 @@ def run_gui(defaults):
                 print("Deleted {} files in clean_eads".format(str(file_count)))
             except Exception as e:
                 print("No files in clean_eads folder\n" + str(e))
-        if event_simple == "Clear Raw EAD ASpace Export Folder":
+        if event_simple == "Clear EAD Export Folder":
             raw_files = os.listdir(defaults["ead_export_default"]["_SOURCE_DIR_"])
             try:
                 file_count = 0
@@ -449,6 +456,39 @@ def run_gui(defaults):
                 print("Deleted {} files in source_eads".format(str(file_count)))
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
+        if event_simple == "Clear MARCXML Export Folder":
+            raw_files = os.listdir(defaults["marc_export_default"]["_OUTPUT_DIR_"])
+            try:
+                file_count = 0
+                for file in raw_files:
+                    file_count += 1
+                    full_path = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"], file))
+                    os.remove(full_path)
+                print("Deleted {} files in source_marcs".format(str(file_count)))
+            except Exception as e:
+                print("No files in source_marcs folder\n" + str(e))
+        if event_simple == "Clear Container Label Export Folder":
+            raw_files = os.listdir(defaults["labels_export_default"])
+            try:
+                file_count = 0
+                for file in raw_files:
+                    file_count += 1
+                    full_path = str(Path(defaults["labels_export_default"], file))
+                    os.remove(full_path)
+                print("Deleted {} files in source_labels".format(str(file_count)))
+            except Exception as e:
+                print("No files in source_labels folder\n" + str(e))
+        if event_simple == "Clear PDF Export Folder":
+            raw_files = os.listdir(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
+            try:
+                file_count = 0
+                for file in raw_files:
+                    file_count += 1
+                    full_path = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"], file))
+                    os.remove(full_path)
+                print("Deleted {} files in source_pdfs".format(str(file_count)))
+            except Exception as e:
+                print("No files in source_pdfs folder\n" + str(e))
         if event_simple == "Reset Defaults":
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
                                            "You will have to restart the program to see changes.")
