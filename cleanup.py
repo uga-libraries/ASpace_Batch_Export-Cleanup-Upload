@@ -419,12 +419,9 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
 
     Args:
         filepath (str): filepath of the EAD record to be cleaned
-        custom_clean (list): strings as passed from as_xtf_GUI.py that determines what methods will be run against the
-        lxml element when running the clean_suite() method. The user can specify what they want cleaned in
-        as_xtf_GUI.py, so this is how those specifications are passed.
+        custom_clean (list): strings as passed from as_xtf_GUI.py that determines what methods will be run against the lxml element when running the clean_suite() method. The user can specify what they want cleaned in as_xtf_GUI.py, so this is how those specifications are passed.
         output_dir (str): filepath of where the EAD record should be sent after cleaning, as specified by the user ("clean_eads" is default)
-        keep_raw_exports (bool): if a user in as_xtf_GUI.py specifies to keep the exports that come from
-        as_export.py, this parameter will prevent the function from deleting those files in source_eads.
+        keep_raw_exports (bool): if a user in as_xtf_GUI.py specifies to keep the exports that come from as_export.py, this parameter will prevent the function from deleting those files in source_eads.
 
     Returns:
         (bool): if True, the XML was valid. If False, the XML was not valid.
