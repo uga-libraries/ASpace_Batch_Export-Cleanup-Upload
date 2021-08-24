@@ -25,7 +25,7 @@ PDF_EXPORT_THREAD = '-PDF_THREAD-'
 CONTLABEL_EXPORT_THREAD = '-CONTLABEL_THREAD-'
 XTF_UPLOAD_THREAD = '-XTFUP_THREAD-'
 XTF_INDEX_THREAD = '-XTFIND_THREAD-'
-XTF_DELETE_THREAD = '-XTFDEL_THREAD'
+XTF_DELETE_THREAD = '-XTFDEL_THREAD-'
 XTF_GETFILES_THREAD = '-XTFGET_THREAD-'
 
 
@@ -502,16 +502,15 @@ def run_gui(defaults):
                                              xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, \
-            close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
-                                            xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
-                                            xtf_lp=xtf_lazy_path)
+                close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
+                                                xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
+                                                xtf_lp=xtf_lazy_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
-            # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.4.0-UGA\n\n"
+                         "Version: 1.4.1-UGA\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -567,7 +566,10 @@ def run_gui(defaults):
             window_del_active = True
             print("Getting remote files, this may take a second...", flush=True, end="")
             remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path, xtf_lazy_path, window_simple)
+                                            xtf_indexer_path, xtf_lazy_path)
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+            window_simple[f'{"_INDEX_"}'].update(disabled=True)
+            window_simple[f'{"_DELETE_"}'].update(disabled=True)
             print("Done")
             delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
@@ -587,14 +589,12 @@ def run_gui(defaults):
                 if event_del == "_XTF_OPTIONS3_":
                     get_xtf_options(defaults)
                 if event_del == "_DELETE_XTF_":
-                    xtfup_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname, xtf_username,
-                                                                                   xtf_password, xtf_remote_path,
-                                                                                   xtf_indexer_path, xtf_lazy_path,
-                                                                                   values_del, window_simple,))
-                    xtfup_thread.start()
-                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
-                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
-                    window_simple[f'{"_DELETE_"}'].update(disabled=True)
+                    xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
+                                                                                    xtf_username, xtf_password,
+                                                                                    xtf_remote_path, xtf_indexer_path,
+                                                                                    xtf_lazy_path, values_del,
+                                                                                    window_simple,))
+                    xtfdel_thread.start()
                     window_del.close()
                     window_del_active = False
         if event_simple == "_INDEX_":
@@ -616,7 +616,7 @@ def run_gui(defaults):
 
 
 def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, as_client=None, as_repos=None,
-                   as_res=None, xtf_ver=None):  # TODO: wouldn't it be easier to have a login option and if login is True, resources and repos are set and if False, they use defaults?
+                   as_res=None, xtf_ver=None):
     """
     Gets a user's ArchiveSpace credentials.
 
@@ -1557,7 +1557,7 @@ def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
 
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
-                     xtf_lazy_path,  values_upl, gui_window):
+                     xtf_lazy_path, values_upl, gui_window):
     """
     Uploads files to XTF.
     Args:
@@ -1579,7 +1579,8 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     upload_output = remote.bulk_upload(xtf_files)
     print(upload_output)
     for file in xtf_files:
-        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_remote_path"],
+        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
+                                                                                    ["xtf_remote_path"],
                                                                                     Path(file).name)])
         print(update_permissions)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
@@ -1621,9 +1622,9 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
             index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
                       xtf_lazy_path, gui_window)
-        remote.disconnect()
     except Exception as e:
         print("An error occurred: " + str(e))
+    remote.disconnect()
     gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
 
 
@@ -1670,8 +1671,8 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
-def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                     gui_window):
+def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                     xtf_lazy_path):
     """
     Gets all of the files in the remote path directory currently on the XTF server.
 
@@ -1683,7 +1684,6 @@ def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
         xtf_lazy_path (str): the path (folder) where the lazy files are generated from an index, used to set permissions
-        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
 
     Returns:
         remote_files (list): a sorted list of all the files in the remote path directory
@@ -1691,7 +1691,7 @@ def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
-    gui_window.write_event_value('-XTFGET_THREAD-', (threading.current_thread().name,))
+    remote.disconnect()
     return remote_files
 
 

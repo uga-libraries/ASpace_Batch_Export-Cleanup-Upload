@@ -4,7 +4,7 @@ This application batch exports records from ArchivesSpace in EAD, MARCXML, Conta
 Additionally, it can run exported EAD records through a series of cleanup processes. Lastly, a user can
 enable the XTF version to upload .xml or .pdf files to their instance of XTF, a finding aid website hosting platform.
 
-![ead_screen-v11](https://user-images.githubusercontent.com/62658840/100744058-35cd4000-33ab-11eb-8ed3-677826d5ec84.gif)
+![EAD_Export_Demo](https://user-images.githubusercontent.com/62658840/129760524-5895c29c-1b82-4572-9b68-6952a6710b0e.gif)
 
 ## Getting Started
 
@@ -51,7 +51,7 @@ or 42.
 #### For UGA
 For Hargrett and Russell Libraries, input the following to generate different results:
 
-* ms905 - biggest one, will take a long time to export and index
+* ms3000_2e - biggest one, will take a long time to export and index
 * ms1170-series1
 * ms1376
 * RBRL/025/ACLU
