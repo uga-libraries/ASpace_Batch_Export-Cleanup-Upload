@@ -1630,9 +1630,9 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
             ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
         print(cmds_output)
         print("-" * 135)
-        remote.disconnect()
     except Exception as e:
         print("An error occurred: " + str(e))
+    remote.disconnect()
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
