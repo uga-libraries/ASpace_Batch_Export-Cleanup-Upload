@@ -506,10 +506,9 @@ def run_gui(defaults):
         # ------------------- HELP -------------------
         if event_simple == "About":
             window_about_active = True
-            # TODO Change Version #
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.4.1\n\n"
+                         "Version: 1.4.1\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -531,6 +530,9 @@ def run_gui(defaults):
         # ------------- XTF SECTION -------------------
         if event_simple == "_UPLOAD_":
             window_upl_active = True
+            window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
+            window_simple[f'{"_INDEX_"}'].update(disabled=True)
+            window_simple[f'{"_DELETE_"}'].update(disabled=True)
             files_list = sort_list([ead_file for ead_file in os.listdir(defaults["xtf_default"]["xtf_local_path"])
                                     if Path(ead_file).suffix == ".xml" or Path(ead_file).suffix == ".pdf"])
             upload_options_layout = [[sg.Button(" Upload to XTF ", key="_UPLOAD_TO_XTF_", disabled=False),
@@ -546,6 +548,9 @@ def run_gui(defaults):
             while window_upl_active is True:
                 event_upl, values_upl = window_upl.Read()
                 if event_upl is None:
+                    window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+                    window_simple[f'{"_INDEX_"}'].update(disabled=False)
+                    window_simple[f'{"_DELETE_"}'].update(disabled=False)
                     window_upl.close()
                     window_upl_active = False
                 if event_upl == "_XTF_OPTIONS_2_":
@@ -556,19 +561,16 @@ def run_gui(defaults):
                                                                                    xtf_indexer_path, values_upl,
                                                                                    window_simple,))
                     xtfup_thread.start()
-                    window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
-                    window_simple[f'{"_INDEX_"}'].update(disabled=True)
-                    window_simple[f'{"_DELETE_"}'].update(disabled=True)
                     window_upl.close()
                     window_upl_active = False
         if event_simple == "_DELETE_":
             window_del_active = True
-            print("Getting remote files, this may take a second...", flush=True, end="")
-            remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path)
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
             window_simple[f'{"_DELETE_"}'].update(disabled=True)
+            print("Getting remote files, this may take a second...", flush=True, end="")
+            remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
+                                            xtf_indexer_path)
             print("Done")
             delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
@@ -583,6 +585,9 @@ def run_gui(defaults):
             while window_del_active is True:
                 event_del, values_del = window_del.Read()
                 if event_del is None:
+                    window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+                    window_simple[f'{"_INDEX_"}'].update(disabled=False)
+                    window_simple[f'{"_DELETE_"}'].update(disabled=False)
                     window_del.close()
                     window_del_active = False
                 if event_del == "_XTF_OPTIONS3_":
