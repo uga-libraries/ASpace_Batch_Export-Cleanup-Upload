@@ -651,8 +651,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         asp_version (str): the current version of ArchivesSpace
-        repositories (dict): contains info on all the repositories for an ArchivesSpace instance, including name as the
-        key and id # as it's value
+        repositories (dict): contains info on all the repositories for an ArchivesSpace instance, including name as the key and id # as it's value
+        resource_ids (dict): contains info on all the resources for each repository for an ArchivesSpace instance, including repository # as the key and a list of resource #s as strings as it's value
         xtf_version (bool): user indicated value whether they want to display xtf features in the GUI
     """
     as_username = as_un
