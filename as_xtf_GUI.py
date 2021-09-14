@@ -9,12 +9,14 @@ from pathlib import Path
 
 import PySimpleGUI as sg
 from asnake.client import ASnakeClient
+from asnake.client.web_client import ASnakeAuthError
 
 import as_export as asx
 import cleanup as clean
 import xtf_upload as xup
 import defaults_setup as dsetup
 
+import requests
 import threading
 import gc
 
@@ -690,49 +692,57 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         while window_asplog_active is True:
             event_log, values_log = window_login.Read()
             if event_log == "_SAVE_CLOSE_LOGIN_":
+                connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
+                                              username=values_log["_ASPACE_UNAME_"],
+                                              password=values_log["_ASPACE_PWORD_"])
                 try:
-                    connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
-                                                  username=values_log["_ASPACE_UNAME_"],
-                                                  password=values_log["_ASPACE_PWORD_"])
-                    connect_client.authorize()
-                    client = connect_client
-                    as_username = values_log["_ASPACE_UNAME_"]
-                    as_password = values_log["_ASPACE_PWORD_"]
-                    as_api = values_log["_ASPACE_API_"]
-                    xtf_version = values_log["_USE_XTF_"]
-                    asp_version = client.get("/version").content.decode().split(" ")[1].replace("(", "").replace(")",
-                                                                                                                 "")
-                    with open("defaults.json",
-                              "w") as defaults_asp:  # If connection is successful, save the ASpace API in defaults.json
-                        defaults["as_api"] = as_api
-                        defaults["xtf_default"]["xtf_version"] = xtf_version
-                        json.dump(defaults, defaults_asp)
-                        defaults_asp.close()
-                    # Get repositories info
-                    if len(repositories) == 1:
-                        repo_results = client.get('/repositories')
-                        repo_results_dec = json.loads(repo_results.content.decode())
-                        for result in repo_results_dec:
-                            uri_components = result["uri"].split("/")
-                            repositories[result["name"]] = int(uri_components[-1])
-                        # Get resource ids
-                        for repository in repo_results.json():
-                            resources = client.get(f"{repository['uri']}/resources", params={"all_ids": True}).json()
-                            uri_components = repository["uri"].split("/")
-                            repository_id = int(uri_components[-1])
-                            resource_ids[repository_id] = [resource_id for resource_id in resources]
-                    window_asplog_active = False
-                    correct_creds = True
-                except Exception as e:
-                    error_message = ""
-                    if ":" in str(e):
-                        error_divided = str(e).split(":")
-                        for line in error_divided:
-                            error_message += line + "\n"
+                    requests.get(values_log["_ASPACE_API_"])
+                except Exception as api_error:
+                    sg.Popup("Your API credentials were entered incorrectly.\n"
+                             "Please try again.\n\n" + api_error.__str__())
+                else:
+                    try:
+                        connect_client.authorize()
+                    except ASnakeAuthError as e:
+                        error_message = ""
+                        if ":" in str(e):
+                            error_divided = str(e).split(":")
+                            for line in error_divided:
+                                error_message += line + "\n"
+                        else:
+                            error_message = str(e)
+                        sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
+                                 error_message)
                     else:
-                        error_message = str(e)
-                    sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
-                             error_message)
+                        client = connect_client
+                        as_username = values_log["_ASPACE_UNAME_"]
+                        as_password = values_log["_ASPACE_PWORD_"]
+                        as_api = values_log["_ASPACE_API_"]
+                        xtf_version = values_log["_USE_XTF_"]
+                        asp_version = client.get("/version").content.decode().split(" ")[1].replace("(",
+                                                                                                    "").replace(")", "")
+                        with open("defaults.json",
+                                  "w") as defaults_asp:  # If connection is successful, save ASpace API in defaults.json
+                            defaults["as_api"] = as_api
+                            defaults["xtf_default"]["xtf_version"] = xtf_version
+                            json.dump(defaults, defaults_asp)
+                            defaults_asp.close()
+                        # Get repositories info
+                        if len(repositories) == 1:
+                            repo_results = client.get('/repositories')
+                            repo_results_dec = json.loads(repo_results.content.decode())
+                            for result in repo_results_dec:
+                                uri_components = result["uri"].split("/")
+                                repositories[result["name"]] = int(uri_components[-1])
+                            # Get resource ids
+                            for repository in repo_results.json():
+                                resources = client.get(f"{repository['uri']}/resources", params={"all_ids":
+                                                                                                 True}).json()
+                                uri_components = repository["uri"].split("/")
+                                repository_id = int(uri_components[-1])
+                                resource_ids[repository_id] = [resource_id for resource_id in resources]
+                        window_asplog_active = False
+                        correct_creds = True
             if event_log is None or event_log == 'Cancel':
                 window_login.close()
                 window_asplog_active = False

@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 id_field_regex = re.compile(r"(^id_+\d)")
-id_combined_regex = re.compile('[\W_]+', re.UNICODE)
+id_combined_regex = re.compile(r'[\W_]+', re.UNICODE)
 
 
 class ASExport:
