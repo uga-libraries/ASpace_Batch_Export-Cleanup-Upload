@@ -740,7 +740,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                                 repositories[result["name"]] = int(uri_components[-1])
                             # Get resource ids
                             for repository in repo_results.json():
-                                resources = client.get(f"{repository['uri']}/resources", params={"all_ids": True}).json()
+                                resources = client.get(f"{repository['uri']}/resources", params={"all_ids":
+                                                                                                 True}).json()
                                 uri_components = repository["uri"].split("/")
                                 repository_id = int(uri_components[-1])
                                 resource_ids[repository_id] = [resource_id for resource_id in resources]
