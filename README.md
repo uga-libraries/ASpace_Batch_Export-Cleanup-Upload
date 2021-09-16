@@ -1,3 +1,6 @@
+***NOTICE: Microsoft has flagged the UGA-Version of this software as a trojan. This should be a false-positive and we 
+are working to resolve this issue as swiftly as possible. If you want to use this software, we recommend using the 
+standard release.
 # ArchivesSpace Batching
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
