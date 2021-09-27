@@ -21,7 +21,7 @@ through the program and its features can be found on the Wiki page.
 ### For Mac Users
 1. Install Python 3 on your computer. You can install python using the following link:
 https://www.python.org/downloads/mac-osx/
-2. Download the Github repo using the Code button on the top right corner of the repo, then unzip the downloaded file.
+2. Download the GitHub repo using the Code button in the top right corner of the repo, then unzip the downloaded file.
 3. Open your terminal and go to the unzipped folder. Run the command: `pip3 install -r requirements.txt`.
 4. After installing requirements, run the command: `python3 as_xtf_GUI.py`. This will start the program.
 5. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
@@ -54,7 +54,7 @@ or 42.
 #### For UGA
 For Hargrett and Russell Libraries, input the following to generate different results:
 
-* ms3000_2e - biggest one, will take a long time to export and index
+* ms3000_2e - the biggest one, will take a long time to export and index
 * ms1170-series1
 * ms1376
 * RBRL/025/ACLU
