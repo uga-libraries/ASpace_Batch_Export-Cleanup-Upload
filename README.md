@@ -1,3 +1,6 @@
+*NOTE:* The most recent UGA version release, ASpace_Batch_Export_v142-UGA.exe, has been flagged by multiple security
+vendors. These are false-positives and we are working hard to correct them.
+
 # ArchivesSpace Batching
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
