@@ -1,5 +1,6 @@
-*NOTE:* The most recent UGA version release, ASpace_Batch_Export_v142-UGA.exe, has been flagged by multiple security
-vendors. These are false-positives and we are working hard to correct them.
+*NOTE:* Previous versions of the UGA-Version of this app have been flagged by multiple security vendors with 
+false-positives. Please download the latest release as this issue should be resolved. If you have any problems, please
+post them to the [Issues page](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/issues).
 
 # ArchivesSpace Batching
 
