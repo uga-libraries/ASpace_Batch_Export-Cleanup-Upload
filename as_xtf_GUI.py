@@ -5,6 +5,7 @@ import sys
 import webbrowser
 import json
 import re
+from loguru import logger
 from pathlib import Path
 
 import PySimpleGUI as sg
@@ -30,7 +31,11 @@ XTF_INDEX_THREAD = '-XTFIND_THREAD-'
 XTF_DELETE_THREAD = '-XTFDEL_THREAD-'
 XTF_GETFILES_THREAD = '-XTFGET_THREAD-'
 
+logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
+           format="{time}-{level}: {message}")
 
+
+@logger.catch
 def run_gui(defaults):
     """
     Handles the GUI operation as outlined by PySimpleGUI's guidelines.
@@ -45,10 +50,14 @@ def run_gui(defaults):
         None
     """
     gc.disable()
+    logger.info("Garbage Collect disabled")
     sg.theme('LightBlue2')
+    logger.info("ArchivesSpace Login popup initiated")
     as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
         get_aspace_log(defaults, xtf_checkbox=True)
+    logger.info("ArchivesSpace login successful")
     if close_program_as is True:
+        logger.info("User initiated closing program")
         sys.exit()
     pdf_broken = ["v2.6.0", "v2.7.0", "v2.7.1"]
     if asp_version in pdf_broken:
@@ -58,13 +67,16 @@ def run_gui(defaults):
     # For XTF Users Only
     rid_box_len = 36
     if xtf_version is True:
+        logger.info("XTF Login popup initiated")
         xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, close_program_xtf \
             = get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
+            logger.info("User initiated closing program")
             sys.exit()
         xtf_login_menu_button = 'Change XTF Login Credentials'
         xtf_opt_button = 'Change XTF Options'
         rid_box_len = 44
+        logger.info("XTF login successful")
     else:
         xtf_login_menu_button = '!Change XTF Login Credentials'
         xtf_opt_button = '!Change XTF Options'
@@ -209,32 +221,39 @@ def run_gui(defaults):
                      [sg.Column(simple_layout_col1), sg.Column(simple_layout_col2)]
                      ]
     window_simple = sg.Window("ArchivesSpace Batch Export-Cleanup-Upload Program", layout_simple)
+    logger.info("Initiate GUI window")
     while True:
         gc.collect()
+        logger.info("Garbace Collect initiated")
         event_simple, values_simple = window_simple.Read()
         if event_simple == 'Cancel' or event_simple is None or event_simple == "Exit":
+            logger.info("User initiated closing program")
             window_simple.close()
             break
         # ------------- CHANGE LAYOUTS SECTION -------------
         if event_simple == "_EXPORT_EAD_RAD_":
+            logger.info("_EXPORT_EAD_RAD_ - EAD window selected")
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=True)
             window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=xtf_version)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         if event_simple == "_EXPORT_MARCXML_RAD_":
+            logger.info("_EXPORT_MARCXML_RAD_ - MARCXML window selected")
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=True)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         if event_simple == "_EXPORT_PDF_RAD_":
+            logger.info("_EXPORT_PDF_RAD_ - PDF window selected")
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_LABEL_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=True)
         if event_simple == "_EXPORT_CONTLABS_RAD_":
+            logger.info("_EXPORT_CONTLABS_RAD_ - Container Labels window selected")
             window_simple[f'{"_EAD_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_XTF_LAYOUT_"}'].update(visible=False)
             window_simple[f'{"_MARC_LAYOUT_"}'].update(visible=False)
@@ -242,6 +261,7 @@ def run_gui(defaults):
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         # ------------- REPOSITORY SECTION -------------
         if event_simple == "_REPO_DEFAULT_":
+            logger.info("_REPO_DEFAULT_ - User saved repository as default")
             with open("defaults.json", "w") as DEFAULT:
                 defaults["repo_default"]["_REPO_NAME_"] = values_simple["_REPO_SELECT_"]
                 defaults["repo_default"]["_REPO_ID_"] = repositories[values_simple["_REPO_SELECT_"]]
@@ -249,39 +269,52 @@ def run_gui(defaults):
                 DEFAULT.close()
         # ------------- EAD SECTION -------------
         if event_simple == "_EXPORT_EAD_":
+            logger.info("_EXPORT_EAD_ - User initiated exporting EAD(s)")
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         args = (input_ids, defaults, cleanup_options, repositories, client, values_simple,
                                 window_simple,)
                         start_thread(get_eads, args, window_simple)
+                        logger.info("EAD_EXPORT_THREAD started")
                 else:
                     args = (input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,)
                     start_thread(get_eads, args, window_simple)
+                    logger.info("EAD_EXPORT_THREAD started")
         if event_simple == "_EXPORT_ALLEADS_":
+            logger.info("_EXPORT_ALLEADS_ - User initiated exporting ALL EADs")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         input_ids = resources
                         args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
                         start_thread(get_all_eads, args, window_simple)
+                        logger.info("EAD_EXPORT_THREAD started")
                 else:
                     repo_id = repositories[values_simple["_REPO_SELECT_"]]
                     input_ids = {repo_id: resources[repo_id]}
                     args = (input_ids, defaults, cleanup_options, repositories, client, window_simple,)
                     start_thread(get_all_eads, args, window_simple)
+                    logger.info("EAD_EXPORT_THREAD started")
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
+            logger.info("User selected - _EAD_OPTIONS_ OR Change EAD Export Options")
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
+            logger.info("User selected - Change EAD Cleanup Defaults OR Change Cleanup Defaults")
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_":
+            logger.info("Opening clean EAD exports directory")
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("clean_eads"))
                 open_file(filepath_eads)
@@ -289,6 +322,7 @@ def run_gui(defaults):
                 filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_eads)
         if event_simple == "_OPEN_RAW_EXPORTS_":
+            logger.info("Opening raw EAD exports directory")
             if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("source_eads"))
                 open_file(filepath_eads)
@@ -297,33 +331,43 @@ def run_gui(defaults):
                 open_file(filepath_eads)
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
+            logger.info("_EXPORT_MARCXML_ - User initiated exporting MARCXMLs")
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                         start_thread(get_marcxml, args, window_simple)
+                        logger.info("MARCXML_EXPORT_THREAD started")
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_marcxml, args, window_simple)
+                    logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_EXPORT_ALLMARCXMLS_":
+            logger.info("_EXPORT_ALLMARCXMLS_ - User initiated exporting ALL MARCXML(s)")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         input_ids = resources
                         args = (input_ids, defaults, repositories, client, window_simple,)
                         start_thread(get_all_marcxml, args, window_simple)
+                        logger.info("MARCXML_EXPORT_THREAD started")
                 else:
                     repo_id = repositories[values_simple["_REPO_SELECT_"]]
                     input_ids = {repo_id: resources[repo_id]}
                     args = (input_ids, defaults, repositories, client, window_simple,)
                     start_thread(get_all_marcxml, args, window_simple)
+                    logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_OPEN_MARC_DEST_":
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))

@@ -8,16 +8,8 @@ from scp import SCPClient, SCPException
 
 # source code found here: https://hackersandslackers.com/automate-ssh-scp-python-paramiko/
 
-logger.add(sys.stderr,
-           format="{time} {level} {message}",
-           filter="client",
-           level="INFO")
-logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
-           format="{time} {level} {message}",
-           filter="client",
-           level="ERROR")
 
-
+@logger.catch
 class RemoteClient:
     def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path):
         self.host = xtf_host
