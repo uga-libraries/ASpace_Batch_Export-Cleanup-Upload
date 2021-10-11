@@ -510,7 +510,7 @@ def run_gui(defaults):
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.4.2\n\n"  # TODO Change Version #
+                         "Version: 1.4.3\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
             ]
@@ -935,6 +935,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                         gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
+                export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
             print(resource_export.error + "\n")
     if export_all is False:
@@ -1206,6 +1208,8 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
+            export_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
@@ -1358,6 +1362,8 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
                 print(resource_export.error + "\n")
+                export_counter += 1
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
             print(resource_export.error)
     if export_all is False:
@@ -1521,6 +1527,8 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
                 print(resource_export.error + "\n")
         else:
             print(resource_export.error)
+            export_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
