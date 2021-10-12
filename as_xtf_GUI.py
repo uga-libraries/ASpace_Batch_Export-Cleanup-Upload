@@ -369,15 +369,15 @@ def run_gui(defaults):
                     start_thread(get_all_marcxml, args, window_simple)
                     logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_OPEN_MARC_DEST_":
+            logger.info("Opening MARCXML exports directory")
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
-                open_file(
-                    filepath_marcs)
+                open_file(filepath_marcs)
             else:
                 filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
-                open_file(
-                    filepath_marcs)
+                open_file(filepath_marcs)
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
+            logger.info("User selected - _MARCXML_OPTIONS_ OR Change MARCXML Export Options")
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
         if event_simple == "_EXPORT_PDF_":
