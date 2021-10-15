@@ -49,6 +49,7 @@ def run_gui(defaults):
     Returns:
         None
     """
+    logger.info(sg.ver)
     gc.disable()
     logger.info("Garbage Collect disabled")
     sg.theme('LightBlue2')
@@ -477,7 +478,7 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
         if event_simple == EXPORT_PROGRESS_THREAD:
             sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
-                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h', no_button=False)
+                                       values_simple["-EXPORT_PROGRESS-"][1], orientation='h', no_button=True)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
