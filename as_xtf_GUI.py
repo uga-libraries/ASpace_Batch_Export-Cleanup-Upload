@@ -51,7 +51,6 @@ def run_gui(defaults):
     """
     logger.info(sg.ver)
     gc.disable()
-    logger.info("Garbage Collect disabled")
     sg.theme('LightBlue2')
     logger.info("ArchivesSpace Login popup initiated")
     as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
@@ -225,7 +224,6 @@ def run_gui(defaults):
     logger.info("Initiate GUI window")
     while True:
         gc.collect()
-        logger.info("Garbace Collect initiated")
         event_simple, values_simple = window_simple.Read()
         if event_simple == 'Cancel' or event_simple is None or event_simple == "Exit":
             logger.info("User initiated closing program")
@@ -559,7 +557,8 @@ def run_gui(defaults):
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
                          "Version: 1.4.3-UGA\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
-                [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_")]
+                [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_"),
+                 sg.Button(" Check GUI Info ", key="_CHECK_PYPSG_")]
             ]
             window_about = sg.Window("About this program", layout_about)
             while window_about_active is True:
@@ -570,6 +569,8 @@ def run_gui(defaults):
                 if event_about == "_CHECK_GITHUB_":
                     webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
                                     new=2)
+                if event_about == "_CHECK_PYPSG_":
+                    sg.popup_scrolled(sg.get_versions(), non_blocking=True, keep_on_top=True)
                 if event_about == "_ABOUT_OK_":
                     window_about.close()
                     window_about_active = False
