@@ -531,7 +531,8 @@ def run_gui(defaults):
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
                 logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_SOURCE_DIR_"]}: {e}')
-        if event_simple == "Clear MARCXML Export Folder":  # TODO: need to finish adding logging here
+        if event_simple == "Clear MARCXML Export Folder":
+            logger.info(f'Clearing MARCXML Export folder: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
             raw_files = os.listdir(defaults["marc_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -540,9 +541,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_marcs".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
             except Exception as e:
                 print("No files in source_marcs folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["marc_export_default"]["_OUTPUT_DIR_"]}: {e}')
         if event_simple == "Clear Container Label Export Folder":
+            logger.info(f'Clearing Container Label Export folder: {defaults["labels_export_default"]}')
             raw_files = os.listdir(defaults["labels_export_default"])
             try:
                 file_count = 0
@@ -551,9 +555,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["labels_export_default"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_labels".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["labels_export_default"]}')
             except Exception as e:
                 print("No files in source_labels folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["labels_export_default"]}: {e}')
         if event_simple == "Clear PDF Export Folder":
+            logger.info(f'Clearing PDF Export folder: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
             raw_files = os.listdir(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -562,26 +569,37 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_pdfs".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
             except Exception as e:
                 print("No files in source_pdfs folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}: {e}')
         if event_simple == "Reset Defaults":
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
                                            "You will have to restart the program to see changes.")
             if reset_defaults == "Yes":
-                dsetup.reset_defaults()
+                logger.info("User initiated reseting defaults")
+                try:
+                    dsetup.reset_defaults()
+                except Exception as e:
+                    print(f'Error when resetting defaults: {e}')
+                    logger.error(f'Error when resetting defaults: {e}')
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
+            logger.info(f'User initiated changing ASpace login credentials within app')
             as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, \
                 xtf_version = get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password,
                                              as_ap=as_api, as_client=client, as_res=resources, as_repos=repositories,
                                              xtf_ver=xtf_version)
+            logger.info(f'ASpace version: {asp_version}')
         if event_simple == 'Change XTF Login Credentials':
+            logger.info(f'User initiated changing XTF login credentials within app')
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, \
                 close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
                                                 xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
                                                 xtf_lp=xtf_lazy_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
+            logger.info(f'User initiated About menu option')
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
@@ -597,18 +615,31 @@ def run_gui(defaults):
                     window_about.close()
                     window_about_active = False
                 if event_about == "_CHECK_GITHUB_":
-                    webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
-                                    new=2)
+                    try:
+                        webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
+                                        new=2)
+                    except Exception as e:
+                        print(f'Failed to open webbrowser: {e}')
+                        logger.error(f'Failed to open webbrowser: {e}')
                 if event_about == "_CHECK_PYPSG_":
-                    sg.popup_scrolled(sg.get_versions(), non_blocking=True, keep_on_top=True)
+                    try:
+                        sg.popup_scrolled(sg.get_versions(), non_blocking=True, keep_on_top=True)
+                    except Exception as e:
+                        print(f'Failed to open PySimpleGUI versions popup: {e}')
+                        logger.error(f'Failed to open PySimpleGUI versions popup: {e}')
                 if event_about == "_ABOUT_OK_":
                     window_about.close()
                     window_about_active = False
         if event_simple == "User Manual":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
-                            new=2)
+            try:
+                webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
+                                new=2)
+            except Exception as e:
+                print(f'Failed to open webbrowser: {e}')
+                logger.error(f'Failed to open webbrowser: {e}')
         # ------------- XTF SECTION -------------------
-        if event_simple == "_UPLOAD_":
+        if event_simple == "_UPLOAD_":  # TODO: need to finish adding logging here
+            logger.info(f'User initiated uploading files to XTF')
             window_upl_active = True
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
