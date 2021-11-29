@@ -659,14 +659,17 @@ def run_gui(defaults):
             while window_upl_active is True:
                 event_upl, values_upl = window_upl.Read()
                 if event_upl is None:
+                    logger.info(f'User cancelled upload process')
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
                     window_simple[f'{"_INDEX_"}'].update(disabled=False)
                     window_simple[f'{"_DELETE_"}'].update(disabled=False)
                     window_upl.close()
                     window_upl_active = False
                 if event_upl == "_XTF_OPTIONS_2_":
+                    logger.info(f'User selected XTF Options from Upload window: _XTF_OPTIONS_2_')
                     get_xtf_options(defaults)
                 if event_upl == "_UPLOAD_TO_XTF_":
+                    logger.info(f'User began upload of files to XTF: _UPLOAD_TO_XTF_; Files: {values_upl}')
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
                                                                                    xtf_indexer_path, xtf_lazy_path,
@@ -675,18 +678,23 @@ def run_gui(defaults):
                     window_upl.close()
                     window_upl_active = False
         if event_simple == "_DELETE_":
+            logger.info(f'User initiated deleting files from XTF')
             window_del_active = True
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
             window_simple[f'{"_DELETE_"}'].update(disabled=True)
-            print("Getting remote files, this may take a second...", flush=True, end="")
-            remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path, xtf_lazy_path)
+            try:
+                logger.info(f'Getting remotes files from XTF')
+                print("Getting remote files, this may take a second...", flush=True, end="")
+                remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
+                                                xtf_indexer_path, xtf_lazy_path)
+            except Exception as e:
+                logger.error(f'Error when getting files from XTF: {e}')
             print("Done")
             delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
                                       sg.Text(" " * 62)],
                                      [sg.Text("Options", font=("Roboto", 12))],
-                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS3_")]
+                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS_3_")]
                                      ]
             xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
                                  [sg.Listbox(remote_files, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
@@ -696,14 +704,17 @@ def run_gui(defaults):
             while window_del_active is True:
                 event_del, values_del = window_del.Read()
                 if event_del is None:
+                    logger.info(f'User cancelled deleting files from XTF')
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
                     window_simple[f'{"_INDEX_"}'].update(disabled=False)
                     window_simple[f'{"_DELETE_"}'].update(disabled=False)
                     window_del.close()
                     window_del_active = False
-                if event_del == "_XTF_OPTIONS3_":
+                if event_del == "_XTF_OPTIONS_3_":
+                    logger.info(f'User initiated getting XTF options from Delete: _XTF_OPTIONS_3_')
                     get_xtf_options(defaults)
                 if event_del == "_DELETE_XTF_":
+                    logger.info(f'User began delete of files from XTF: _DELETE_XTF_; Files: {values_del}')
                     xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
                                                                                     xtf_username, xtf_password,
                                                                                     xtf_remote_path, xtf_indexer_path,
@@ -713,6 +724,7 @@ def run_gui(defaults):
                     window_del.close()
                     window_del_active = False
         if event_simple == "_INDEX_":
+            logger.info(f'User initiated re-indexing: _INDEX_')
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
                                                                      xtf_remote_path, xtf_indexer_path,
                                                                      xtf_lazy_path, window_simple,))
@@ -721,6 +733,7 @@ def run_gui(defaults):
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
             window_simple[f'{"_DELETE_"}'].update(disabled=True)
         if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
+            logger.info(f'User initiated XTF options: _XTF_OPTIONS_ or Change XTF Options')
             get_xtf_options(defaults)
         # ---------------- XTF THREADS ----------------
         if event_simple in (XTF_INDEX_THREAD, XTF_UPLOAD_THREAD, XTF_DELETE_THREAD, XTF_GETFILES_THREAD):
@@ -811,6 +824,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                 except Exception as api_error:
                     sg.Popup("Your API credentials were entered incorrectly.\n"
                              "Please try again.\n\n" + api_error.__str__())
+                    logger.error(f'Error with validating API credentials: {api_error}')
                 else:
                     try:
                         connect_client.authorize()
@@ -824,6 +838,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                             error_message = str(e)
                         sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
                                  error_message)
+                        logger.error(f'Username and password or API URL failed: {error_message}')
                     else:
                         client = connect_client
                         as_username = values_log["_ASPACE_UNAME_"]
@@ -855,6 +870,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         window_asplog_active = False
                         correct_creds = True
             if event_log is None or event_log == 'Cancel':
+                logger.info(f'User cancelled ASpace login')
                 window_login.close()
                 window_asplog_active = False
                 correct_creds = True
