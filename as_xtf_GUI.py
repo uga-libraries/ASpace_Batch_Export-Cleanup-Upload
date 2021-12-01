@@ -816,6 +816,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         while window_asplog_active is True:
             event_log, values_log = window_login.Read()
             if event_log == "_SAVE_CLOSE_LOGIN_":
+                logger.info(f'User initiated ASpace login')
                 connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
                                               username=values_log["_ASPACE_UNAME_"],
                                               password=values_log["_ASPACE_PWORD_"])
@@ -824,7 +825,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                 except Exception as api_error:
                     sg.Popup("Your API credentials were entered incorrectly.\n"
                              "Please try again.\n\n" + api_error.__str__())
-                    logger.error(f'Error with validating API credentials: {api_error}')
+                    logger.error(f'Error with validating API credentials: {api_error};'
+                                 f' API: {values_log["_ASPACE_API_"]}')
                 else:
                     try:
                         connect_client.authorize()
@@ -838,7 +840,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                             error_message = str(e)
                         sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
                                  error_message)
-                        logger.error(f'Username and password or API URL failed: {error_message}')
+                        logger.error(f'Username and/or password failed: {error_message}')
                     else:
                         client = connect_client
                         as_username = values_log["_ASPACE_UNAME_"]
@@ -940,6 +942,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         while window_xtflog_active is True:
             event_xlog, values_xlog = window_xtfcred.Read()
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
+                logger.info(f'User initiated XTF Login')
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
                                               values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"],
@@ -968,8 +971,13 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 except Exception as e:
                     sg.Popup("Your username, password, or info were entered incorrectly. Please try again.\n\n" +
                              str(e))
+                    logger.error(f'XTF credentials failed.\nHostname: {values_xlog["_XTF_HOSTNAME_"]}'
+                                 f'\nRemote Path: {values_xlog["_XTF_REMPATH_"]}'
+                                 f'\nIndexer Path: {values_xlog["_XTF_INDPATH_"]}'
+                                 f'\nLazy Index Path: {values_xlog["_XTF_LAZYPATH_"]}')
                     window_xtflog_active = True
             if event_xlog is None or event_xlog == 'Cancel':
+                logger.info(f'User cancelled XTF login')
                 window_xtfcred.close()
                 window_xtflog_active = False
                 correct_creds = True
@@ -1020,9 +1028,11 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning EAD export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
                                            export_all=True)
         else:
+            logger.info(f'Beginning EAD export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
