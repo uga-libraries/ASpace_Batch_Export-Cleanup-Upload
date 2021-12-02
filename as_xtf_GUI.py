@@ -1037,6 +1037,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         resource_export.fetch_results()
         if resource_export.error is None:
             if resource_export.result is not None:
+                logger.info(f'Fetched results: {resource_export.result}')
                 print(resource_export.result)
             if export_all is False:
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
@@ -1046,45 +1047,55 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                                        numbered_cs=defaults["ead_export_default"]["_NUMBERED_CS_"],
                                        ead3=defaults["ead_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
+                logger.info(f'EAD export complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
+                        logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...")
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                             keep_raw_exports=True)
                         if valid:
+                            logger.info(f'EAD cleanup complete: {results}')
                             print("Done")
                             print(results)
                             export_counter += 1
                             if export_all is False:
                                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
+                            logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
                     else:
+                        logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...", end='', flush=True)
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"])
                         if valid:
+                            logger.info(f'EAD cleanup complete: {results}')
                             print("Done")
                             print(results)
                             export_counter += 1
                             if export_all is False:
                                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
+                            logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
                     if export_all is False:
                         gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'EAD export error: {resource_export.error}')
                 print(resource_export.error + "\n")
                 export_counter += 1
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
+            logger.info(f'EAD fetch results error: {resource_export.error}')
             print(resource_export.error + "\n")
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished EAD exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
@@ -1125,6 +1136,7 @@ def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished EAD exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
@@ -1171,26 +1183,33 @@ def get_ead_options(defaults):
                          [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_EAD_", bind_return_key=True)]]
         eadopt_window = sg.Window("EAD Options", eadopt_layout)
         while window_eadopt_active is True:
+            logger.info(f'User initiated EAD Options')
             event_eadopt, values_eadopt = eadopt_window.Read()
             if event_eadopt is None or event_eadopt == 'Cancel':
+                logger.info(f'User cancelled EAD options')
                 window_eadopt_active = False
                 correct_opts = True
                 eadopt_window.close()
             if event_eadopt == "_EADOPT_HELP_":
+                logger.info(f'User opened EAD Options Help button')
                 webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#e"
                                 "ad-export-options",
                                 new=2)
             if event_eadopt == "_SAVE_SETTINGS_EAD_":
                 if values_eadopt["_KEEP_RAW_"] is False and values_eadopt["_CLEAN_EADS_"] is False:
+                    logger.info(f'User selected EAD Options: _KEEP_RAW_ and _CLEAN_EADS_ - not allowed')
                     sg.Popup("WARNING!\nOne of the checkboxes from the following need to be checked:"
                              "\n\nKeep raw ASpace Exports\nClean EAD records on export")
                 else:
                     if os.path.isdir(values_eadopt["_SOURCE_DIR_"]) is False:
+                        logger.info(f'User input an invalid EAD _SOURCE_DIR_: {values_eadopt["_SOURCE_DIR_"]}')
                         sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
                     elif os.path.isdir(values_eadopt["_OUTPUT_DIR_"]) is False:
+                        logger.info(f'User input an invalid EAD _OUTPUT_DIR_: {values_eadopt["_OUTPUT_DIR_"]}')
                         sg.popup("WARNING!\nYour input for the cleanup output is invalid."
                                  "\nPlease try another directory")
                     else:
+                        logger.info(f'User selected EAD Options: {values_eadopt}')
                         with open("defaults.json", "w") as DEFAULT:
                             defaults["ead_export_default"]["_INCLUDE_UNPUB_"] = values_eadopt["_INCLUDE_UNPUB_"]
                             defaults["ead_export_default"]["_INCLUDE_DAOS_"] = values_eadopt["_INCLUDE_DAOS_"]
@@ -1261,8 +1280,10 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
     ]
     window_adv = sg.Window("Change Cleanup Defaults", layout_adv)
     while window_adv_active is True:
+        logger.info(f'User initiated EAD Cleanup Options')
         event_adv, values_adv = window_adv.Read()
         if event_adv == "_SAVE_CLEAN_DEF_":
+            logger.info(f'User selected cleanup options: {values_adv}')
             for option_key, option_value in values_adv.items():
                 if option_value is True:
                     if option_key in cleanup_defaults:
@@ -1287,10 +1308,12 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             window_adv.close()
             return cleanup_options
         if event_adv == "_CLEANUP_HELP_":
+            logger.info(f'User opened EAD Cleanup Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#clean"
                             "up-options",
                             new=2)
         if event_adv is None:
+            logger.info(f'User cancelled EAD Cleanup Options')
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
                                bool_val is True]
             window_adv.close()
