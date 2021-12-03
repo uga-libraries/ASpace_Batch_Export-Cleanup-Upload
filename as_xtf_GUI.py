@@ -638,7 +638,7 @@ def run_gui(defaults):
                 print(f'Failed to open webbrowser: {e}')
                 logger.error(f'Failed to open webbrowser: {e}')
         # ------------- XTF SECTION -------------------
-        if event_simple == "_UPLOAD_":  # TODO: need to finish adding logging here
+        if event_simple == "_UPLOAD_":
             logger.info(f'User initiated uploading files to XTF')
             window_upl_active = True
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
@@ -1356,9 +1356,11 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning MARCXML export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"], export_all=True)
         else:
+            logger.info(f'Beginning MARCXML export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
@@ -1372,8 +1374,10 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'MARCXML export error: {resource_export.error}')
                 print(resource_export.error + "\n")
         else:
+            logger.info(f'MARCXML export error: {resource_export.error}')
             print(resource_export.error)
             export_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
