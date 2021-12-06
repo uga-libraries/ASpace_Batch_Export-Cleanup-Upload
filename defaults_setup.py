@@ -1,9 +1,11 @@
 import json
 import os
 
+from as_xtf_GUI import logger
 from pathlib import Path
 
 
+@logger.catch
 def set_defaults_file():
     """
     Checks defaults.json file and if there is an error, creates a new defaults.json file and returns the data.
@@ -78,6 +80,7 @@ def set_defaults_file():
     return json_data
 
 
+@logger.catch
 def create_default_folders():
     """
     Checks for clean_eads, source_eads, source_labels, source_marcs, and source_pdfs within current working directory.
@@ -162,6 +165,7 @@ def create_default_folders():
         print("{} folder created\n".format(folder))
 
 
+@logger.catch
 def reset_defaults():
     """
     Deletes and recreates defaults.json file.

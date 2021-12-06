@@ -306,10 +306,8 @@ def run_gui(defaults):
                     start_thread(get_all_eads, args, window_simple)
                     logger.info("EAD_EXPORT_THREAD started")
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
-            logger.info("User selected - _EAD_OPTIONS_ OR Change EAD Export Options")
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
-            logger.info("User selected - Change EAD Cleanup Defaults OR Change Cleanup Defaults")
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_":
             logger.info(f'Opening clean EAD exports directory: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
@@ -375,7 +373,6 @@ def run_gui(defaults):
                 filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_marcs)
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
-            logger.info("User selected - _MARCXML_OPTIONS_ OR Change MARCXML Export Options")
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
         if event_simple == "_EXPORT_PDF_":
@@ -425,7 +422,6 @@ def run_gui(defaults):
                 filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_pdfs)
         if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":
-            logger.info("User selected - _PDF_OPTIONS_ OR Change PDF Export Options")
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
         if event_simple == "_EXPORT_LABEL_":
@@ -485,6 +481,7 @@ def run_gui(defaults):
                 filepath_labels = str(Path(defaults["labels_export_default"]))
                 open_file(filepath_labels)
         if event_simple == "_CONTOPT_HELP_":
+            logger.info(f'User opened CONTLABELS Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
                             "iner-labels-screen",
                             new=2)
@@ -690,39 +687,40 @@ def run_gui(defaults):
                                                 xtf_indexer_path, xtf_lazy_path)
             except Exception as e:
                 logger.error(f'Error when getting files from XTF: {e}')
-            print("Done")
-            delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
-                                      sg.Text(" " * 62)],
-                                     [sg.Text("Options", font=("Roboto", 12))],
-                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS_3_")]
-                                     ]
-            xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
-                                 [sg.Listbox(remote_files, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                                             key="_SELECT_FILES_")],
-                                 [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
-            window_del = sg.Window("Delete Files from XTF", xtf_delete_layout)
-            while window_del_active is True:
-                event_del, values_del = window_del.Read()
-                if event_del is None:
-                    logger.info(f'User cancelled deleting files from XTF')
-                    window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
-                    window_simple[f'{"_INDEX_"}'].update(disabled=False)
-                    window_simple[f'{"_DELETE_"}'].update(disabled=False)
-                    window_del.close()
-                    window_del_active = False
-                if event_del == "_XTF_OPTIONS_3_":
-                    logger.info(f'User initiated getting XTF options from Delete: _XTF_OPTIONS_3_')
-                    get_xtf_options(defaults)
-                if event_del == "_DELETE_XTF_":
-                    logger.info(f'User began delete of files from XTF: _DELETE_XTF_; Files: {values_del}')
-                    xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
-                                                                                    xtf_username, xtf_password,
-                                                                                    xtf_remote_path, xtf_indexer_path,
-                                                                                    xtf_lazy_path, values_del,
-                                                                                    window_simple,))
-                    xtfdel_thread.start()
-                    window_del.close()
-                    window_del_active = False
+            else:
+                print("Done")
+                delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
+                                          sg.Text(" " * 62)],
+                                         [sg.Text("Options", font=("Roboto", 12))],
+                                         [sg.Button(" XTF Options ", key="_XTF_OPTIONS_3_")]
+                                         ]
+                xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
+                                     [sg.Listbox(remote_files, size=(50, 20),
+                                                 select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE, key="_SELECT_FILES_")],
+                                     [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
+                window_del = sg.Window("Delete Files from XTF", xtf_delete_layout)
+                while window_del_active is True:
+                    event_del, values_del = window_del.Read()
+                    if event_del is None:
+                        logger.info(f'User cancelled deleting files from XTF')
+                        window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+                        window_simple[f'{"_INDEX_"}'].update(disabled=False)
+                        window_simple[f'{"_DELETE_"}'].update(disabled=False)
+                        window_del.close()
+                        window_del_active = False
+                    if event_del == "_XTF_OPTIONS_3_":
+                        logger.info(f'User initiated getting XTF options from Delete: _XTF_OPTIONS_3_')
+                        get_xtf_options(defaults)
+                    if event_del == "_DELETE_XTF_":
+                        logger.info(f'User began delete of files from XTF: _DELETE_XTF_; Files: {values_del}')
+                        xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
+                                                                                        xtf_username, xtf_password,
+                                                                                        xtf_remote_path,
+                                                                                        xtf_indexer_path, xtf_lazy_path,
+                                                                                        values_del, window_simple,))
+                        xtfdel_thread.start()
+                        window_del.close()
+                        window_del_active = False
         if event_simple == "_INDEX_":
             logger.info(f'User initiated re-indexing: _INDEX_')
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
@@ -2042,7 +2040,6 @@ def setup_files():
         elif "source_labels" in directories:
             continue
         else:
-            logger.info(f'One or more directories not found, building new: {directories}')
             dsetup.create_default_folders()
     try:
         json_data = dsetup.set_defaults_file()

@@ -1,7 +1,4 @@
-import sys
-from pathlib import Path
-
-from loguru import logger
+from as_xtf_GUI import logger
 from paramiko import SSHClient, AutoAddPolicy, SFTPClient
 from paramiko.ssh_exception import AuthenticationException
 from scp import SCPClient, SCPException
@@ -70,7 +67,7 @@ class RemoteClient:
             response = stdout.readlines()
             for line in response:
                 output_string += f'{line}'
-                logger.info(f'INPUT: {cmd} | OUTPUT: {line}')
+                logger.info(f'INPUT: {cmd} | OUTPUT: {line}')  # TODO: This generates a lot of lines in the log file
         return output_string
 
     def bulk_upload(self, files):
