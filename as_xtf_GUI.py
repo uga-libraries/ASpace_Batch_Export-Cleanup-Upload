@@ -1041,6 +1041,7 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 print(resource_export.result)
             if export_all is False:
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
@@ -1365,10 +1366,12 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
                                            output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_marcxml(
                 include_unpublished=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])
             if resource_export.error is None:
+                logger.info(f'MARCXML export complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
@@ -1383,6 +1386,7 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished MARCXML exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
@@ -1417,6 +1421,7 @@ def get_all_marcxml(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished MARCXML exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
@@ -1457,17 +1462,22 @@ def get_marc_options(defaults):
     window_marc = sg.Window("MARCXML Export Options", marc_layout)
     while window_marc_active is True:
         event_marc, values_marc = window_marc.Read()
+        logger.info(f'User initiated MARCXML Options')
         if event_marc is None or event_marc == 'Cancel':
+            logger.info(f'User cancelled MARCXML Options')
             window_marc_active = False
             window_marc.close()
         if event_marc == "_MARCOPT_HELP_":
+            logger.info(f'User opened MARCXML Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcx"
                             "ml-screen",
                             new=2)
         if event_marc == "_SAVE_SETTINGS_MARC_":
             if os.path.isdir(values_marc["_MARC_OUT_DIR_"]) is False:
+                logger.info(f'User input an invalid MARCXML _MARC_OUT_DIR_: {values_marc["_MARC_OUT_DIR_"]}')
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected MARCXML options: {values_marc}')
                 with open("defaults.json", "w") as defaults_marc:
                     defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
                     defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
@@ -1514,31 +1524,38 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning PDF export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"], export_all=True)
         else:
+            logger.info(f'Beginning PDF export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_pdf(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["pdf_export_default"]["_INCLUDE_DAOS_"],
                                        numbered_cs=defaults["pdf_export_default"]["_NUMBERED_CS_"],
                                        ead3=defaults["pdf_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
+                logger.info(f'Export PDF complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'PDF export error: {resource_export.error}')
                 print(resource_export.error + "\n")
                 export_counter += 1
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
+            logger.info(f'PDF export error: {resource_export.error}')
             print(resource_export.error)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished PDF exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
@@ -1573,6 +1590,7 @@ def get_all_pdfs(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished PDF exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
@@ -1620,17 +1638,22 @@ def get_pdf_options(defaults):
     window_pdf = sg.Window("PDF Export Options", pdf_layout)
     while window_pdf_active is True:
         event_pdf, values_pdf = window_pdf.Read()
+        logger.info(f'User initiated PDF Options')
         if event_pdf is None or event_pdf == 'Cancel':
+            logger.info(f'User cancelled PDF Options')
             window_pdf_active = False
             window_pdf.close()
         if event_pdf == "_PDFOPT_HELP_":
+            logger.info(f'User opened PDF Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#pdf-e"
                             "xport-options",
                             new=2)
         if event_pdf == "_SAVE_SETTINGS_PDF_":
             if os.path.isdir(values_pdf["_OUTPUT_DIR_"]) is False:
+                logger.info(f'User input an invalid PDF _OUTPUT_DIR_: {values_pdf["_OUTPUT_DIR_"]}')
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected PDF Options: {values_pdf}')
                 with open("defaults.json", "w") as defaults_pdf:
                     defaults["pdf_export_default"]["_INCLUDE_UNPUB_"] = values_pdf["_INCLUDE_UNPUB_"]
                     defaults["pdf_export_default"]["_INCLUDE_DAOS_"] = values_pdf["_INCLUDE_DAOS_"]
@@ -1680,28 +1703,35 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["labels_export_default"], export_all=True)
         else:
+            logger.info(f'Beginning CONTLABELS export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["labels_export_default"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_labels()
             if resource_export.error is None:
+                logger.info(f'Export CONTLABELS complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'CONTLABELS export error: {resource_export.error}')
                 print(resource_export.error + "\n")
         else:
+            logger.info(f'CONTLABELS export error: {resource_export.error}')
             print(resource_export.error)
             export_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished CONTLABELS exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
@@ -1736,6 +1766,7 @@ def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished CONTLABELS exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
