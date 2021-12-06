@@ -941,8 +941,8 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         window_xtfcred = sg.Window("XTF Login Credentials", layout_xtflog)
         while window_xtflog_active is True:
             event_xlog, values_xlog = window_xtfcred.Read()
+            logger.info(f'User initiated XTF Login credentials')
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
-                logger.info(f'User initiated XTF Login')
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
                                               values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"],
@@ -1789,16 +1789,21 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         None
     """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+    logger.info(f'Uploading files to XTF. Files: {values_upl["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
+                f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"], values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
+    logger.info(f'Uploading results: {upload_output}')
     print(upload_output)
     for file in xtf_files:
         update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
                                                                                     ["xtf_remote_path"],
                                                                                     Path(file).name)])
+        logger.info(f'Updated file permissions: {update_permissions}')
         print(update_permissions)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
+        logger.info(f'Re-indexing files...')
         index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
                   gui_window, xtf_files)
     else:
@@ -1825,6 +1830,8 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         None
     """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+    logger.info(f'Deleting files from XTF. Files: {values_del["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
+                f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Deleting files...")
     xtf_files = [str(defaults["xtf_default"]["xtf_remote_path"] + "/" + str(file)) for file in
                  values_del["_SELECT_FILES_"]]
@@ -1832,12 +1839,15 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         for file in xtf_files:
             print(file)
             cmds_output = remote.execute_commands(['rm {}'.format(file)])
+            logger.info(f'Deleted file from XTF: {cmds_output}')
             print(cmds_output)
         print("-" * 135)
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
+            logger.info(f'Re-indexing files...')
             index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
                       xtf_lazy_path, gui_window)
     except Exception as e:
+        logger.error(f'Deleting files from XTF error: {e}')
         print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
@@ -1860,6 +1870,7 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     Returns:
         None
     """
+    logger.info(f'Beginning XTF re-index...')
     print("Beginning Re-Index, this may take awhile...")
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     if xtf_files is None:
@@ -1867,20 +1878,25 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
             cmds_output = remote.execute_commands(
                 ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
                  '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
+            logger.info(f'Re-index XTF complete: {cmds_output}')
             print(cmds_output)
             print("-" * 135)
         except Exception as e:
+            logger.error(f'Re-index XTF error: {e}')
             print("An error occurred: " + str(e))
     else:
         try:
+            logger.info(f'Re-indexing XTF .lazy files: {defaults["xtf_default"]["xtf_indexer_path"]}')
             commands = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
             for file in xtf_files:
                 lazyfile = Path(file).name + ".lazy"
                 commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"], lazyfile))
             cmds_output = remote.execute_commands(commands)
+            logger.info(f'Re-index XTF complete: {cmds_output}')
             print(cmds_output)
             print("-" * 135)
         except Exception as e:
+            logger.error(f'Re-index XTF error: {e}')
             print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
@@ -1903,6 +1919,7 @@ def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     Returns:
         remote_files (list): a sorted list of all the files in the remote path directory
     """
+    logger.info(f'Getting remote files from XTF: {xtf_remote_path}')
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
@@ -1938,10 +1955,13 @@ def get_xtf_options(defaults):
     window_xtf_option = sg.Window("XTF Options", xtf_option_layout)
     while xtf_option_active is True:
         event_xtfopt, values_xtfopt = window_xtf_option.Read()
+        logger.info(f'User initiated XTF Options')
         if event_xtfopt is None or event_xtfopt == 'Cancel':
+            logger.info(f'User cancelled XTF Options')
             xtf_option_active = False
             window_xtf_option.close()
         if event_xtfopt == "_XTFOPT_HELP_":
+            logger.info(f'User opened XTF Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-f"
                             "rame",
                             new=2)
@@ -1949,8 +1969,10 @@ def get_xtf_options(defaults):
             get_xtf_log(defaults)
         if event_xtfopt == "_SAVE_SETTINGS_XTF_":
             if os.path.isdir(values_xtfopt["_XTF_SOURCE_"]) is False:
+                logger.info(f'User input an invalid PDF _OUTPUT_DIR_: {values_xtfopt["_XTF_SOURCE_"]}')
                 sg.popup("WARNING!\nYour input for the upload folder is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected XTF Options: {values_xtfopt}')
                 with open("defaults.json", "w") as defaults_xtf:
                     defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
                     defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
@@ -1970,6 +1992,7 @@ def open_file(filepath):
     Returns:
         None
     """
+    logger.info(f'Fetching filepath: {filepath}')
     if platform.system() == "Windows":
         os.startfile(filepath)
     elif platform.system() == "Darwin":
@@ -1992,6 +2015,7 @@ def fetch_local_files(local_file_dir, select_files):
     Returns:
         (list): contains filepaths for files to be uploaded to XTF
     """
+    logger.info(f'Fetching local files: {local_file_dir}, {select_files}')
     local_files = os.walk(local_file_dir)
     for root, dirs, files in local_files:
         return [str(Path(root, file)) for file in files if file in select_files]
@@ -2004,6 +2028,7 @@ def setup_files():
     Returns:
         json_data (dict): contains data from defaults.json for user's default settings
     """
+    logger.info(f'Checking setup files...')
     current_directory = os.getcwd()
     for root, directories, files in os.walk(current_directory):
         if "clean_eads" in directories:
@@ -2017,11 +2042,13 @@ def setup_files():
         elif "source_labels" in directories:
             continue
         else:
+            logger.info(f'One or more directories not found, building new: {directories}')
             dsetup.create_default_folders()
     try:
         json_data = dsetup.set_defaults_file()
         return json_data
     except Exception as defaults_error:
+        logger.error(f'Error checking defaults.json file: {defaults_error}')
         print(str(defaults_error) + "\nThere was an error checking the defaults.json file. "
                                     "Please delete your defaults.json file and run the program again")
 
@@ -2036,6 +2063,7 @@ def sort_list(input_list):
     Returns:
         A list sorted in human readable order
     """
+    logger.info(f'Sorting list...')
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(input_list, key=alphanum_key)
@@ -2053,6 +2081,7 @@ def start_thread(function, args, gui_window):
     Returns:
         None
     """
+    logger.info(f'Starting thread: {function}')
     ead_thread = threading.Thread(target=function, args=args)
     ead_thread.start()
     gui_window[f'{"_EXPORT_EAD_"}'].update(disabled=True)
