@@ -601,7 +601,7 @@ def run_gui(defaults):
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.4.4-UGA\n\n"  # TODO Change Version #
+                         "Version: 1.5.0-UGA\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_"),
                  sg.Button(" Check GUI Info ", key="_CHECK_PYPSG_")]
