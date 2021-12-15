@@ -5,6 +5,7 @@ import sys
 import webbrowser
 import json
 import re
+import time
 from loguru import logger
 from pathlib import Path
 
@@ -31,6 +32,7 @@ XTF_INDEX_THREAD = '-XTFIND_THREAD-'
 XTF_DELETE_THREAD = '-XTFDEL_THREAD-'
 XTF_GETFILES_THREAD = '-XTFGET_THREAD-'
 
+logger.remove()
 logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
            format="{time}-{level}: {message}")
 
@@ -49,13 +51,12 @@ def run_gui(defaults):
     Returns:
         None
     """
-    logger.info(sg.ver)
     gc.disable()
     sg.theme('LightBlue2')
     logger.info("ArchivesSpace Login popup initiated")
     as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
         get_aspace_log(defaults, xtf_checkbox=True)
-    logger.info("ArchivesSpace login successful")
+    logger.info(f'ArchivesSpace version: {asp_version}')
     if close_program_as is True:
         logger.info("User initiated closing program")
         sys.exit()
@@ -259,7 +260,7 @@ def run_gui(defaults):
             window_simple[f'{"_PDF_LAYOUT_"}'].update(visible=False)
         # ------------- REPOSITORY SECTION -------------
         if event_simple == "_REPO_DEFAULT_":
-            logger.info("_REPO_DEFAULT_ - User saved repository as default")
+            logger.info(f'_REPO_DEFAULT_ - User saved {values_simple["_REPO_SELECT_"]} as default')
             with open("defaults.json", "w") as DEFAULT:
                 defaults["repo_default"]["_REPO_NAME_"] = values_simple["_REPO_SELECT_"]
                 defaults["repo_default"]["_REPO_ID_"] = repositories[values_simple["_REPO_SELECT_"]]
@@ -267,7 +268,7 @@ def run_gui(defaults):
                 DEFAULT.close()
         # ------------- EAD SECTION -------------
         if event_simple == "_EXPORT_EAD_":
-            logger.info("_EXPORT_EAD_ - User initiated exporting EAD(s)")
+            logger.info(f'_EXPORT_EAD_ - User initiated exporting EAD(s):\n{values_simple["resource_id_input"]}')
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
@@ -306,13 +307,11 @@ def run_gui(defaults):
                     start_thread(get_all_eads, args, window_simple)
                     logger.info("EAD_EXPORT_THREAD started")
         if event_simple == "_EAD_OPTIONS_" or event_simple == "Change EAD Export Options":
-            logger.info("User selected - _EAD_OPTIONS_ OR Change EAD Export Options")
             get_ead_options(defaults)
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
-            logger.info("User selected - Change EAD Cleanup Defaults OR Change Cleanup Defaults")
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_":
-            logger.info("Opening clean EAD exports directory")
+            logger.info(f'Opening clean EAD exports directory: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
             if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("clean_eads"))
                 open_file(filepath_eads)
@@ -320,7 +319,7 @@ def run_gui(defaults):
                 filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_eads)
         if event_simple == "_OPEN_RAW_EXPORTS_":
-            logger.info("Opening raw EAD exports directory")
+            logger.info(f'Opening raw EAD exports directory: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
             if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
                 filepath_eads = str(Path.cwd().joinpath("source_eads"))
                 open_file(filepath_eads)
@@ -329,7 +328,7 @@ def run_gui(defaults):
                 open_file(filepath_eads)
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
-            logger.info("_EXPORT_MARCXML_ - User initiated exporting MARCXMLs")
+            logger.info(f'_EXPORT_MARCXML_ - User initiated exporting MARCXMLs:\n{values_simple["resource_id_input"]}')
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
@@ -367,7 +366,7 @@ def run_gui(defaults):
                     start_thread(get_all_marcxml, args, window_simple)
                     logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_OPEN_MARC_DEST_":
-            logger.info("Opening MARCXML exports directory")
+            logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
             if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                 filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
                 open_file(filepath_marcs)
@@ -375,38 +374,48 @@ def run_gui(defaults):
                 filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
                 open_file(filepath_marcs)
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
-            logger.info("User selected - _MARCXML_OPTIONS_ OR Change MARCXML Export Options")
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
         if event_simple == "_EXPORT_PDF_":
+            logger.info(f'_EXPORT_PDF_ - User initiated exporting PDFs:\n{values_simple["resource_id_input"]}')
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                         start_thread(get_pdfs, args, window_simple)
+                        logger.info("PDF_EXPORT_THREAD started")
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_pdfs, args, window_simple)
+                    logger.info("PDF_EXPORT_THREAD started")
         if event_simple == "_EXPORT_ALLPDFS_":
+            logger.info("_EXPORT_ALLMARCXMLS_ - User initiated exporting ALL PDF(s)")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         input_ids = resources
                         args = (input_ids, defaults, repositories, client, window_simple,)
                         start_thread(get_all_pdfs, args, window_simple)
+                        logger.info("PDF_EXPORT_THREAD started")
                 else:
                     repo_id = repositories[values_simple["_REPO_SELECT_"]]
                     input_ids = {repo_id: resources[repo_id]}
                     args = (input_ids, defaults, repositories, client, window_simple,)
                     start_thread(get_all_pdfs, args, window_simple)
+                    logger.info("PDF_EXPORT_THREAD started")
         if event_simple == "_OPEN_PDF_DEST_":
+            logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
             if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                 filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
                 open_file(filepath_pdfs)
@@ -417,42 +426,55 @@ def run_gui(defaults):
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
         if event_simple == "_EXPORT_LABEL_":
+            logger.info(f'_EXPORT_LABEL_ - User initiated exporting Container Labels:'
+                        f'\n{values_simple["resource_id_input"]}')
             input_ids = values_simple["resource_id_input"]
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                         start_thread(get_contlabels, args, window_simple)
+                        logger.info("CONTLABEL_EXPORT_THREAD started")
                 else:
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_contlabels, args, window_simple)
+                    logger.info("CONTLABEL_EXPORT_THREAD started")
         if event_simple == "_EXPORT_ALLCONTLABELS_":
+            logger.info("_EXPORT_ALLCONTLABELS_ - User initiated exporting ALL Container Labels")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
+                logger.warning("User did not select a repository")
             else:
                 if values_simple["_REPO_SELECT_"] == "Search Across Repositories (Sys Admin Only)":
                     sysadmin_popup = sg.PopupYesNo("WARNING!\nAre you an ArchivesSpace System Admin?\n")
                     if sysadmin_popup == "Yes":
+                        logger.info("User selected - Search Across Repositories (Sys Admin Only)")
                         input_ids = resources
                         args = (input_ids, defaults, repositories, client, window_simple,)
                         start_thread(get_all_contlabels, args, window_simple)
+                        logger.info("CONTLABEL_EXPORT_THREAD started")
                 else:
                     repo_id = repositories[values_simple["_REPO_SELECT_"]]
                     input_ids = {repo_id: resources[repo_id]}
                     args = (input_ids, defaults, repositories, client, window_simple,)
                     start_thread(get_all_contlabels, args, window_simple)
+                    logger.info("CONTLABEL_EXPORT_THREAD started")
         if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
             if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+                logger.warning("_OUTPUT_DIR_LABEL_INPUT_ - User selected invalid export output")
             else:
                 with open("defaults.json", "w") as defaults_labels:
                     defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
                     json.dump(defaults, defaults_labels)
                     defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
+            logger.info(f'Opening Container Labels exports directory: {defaults["labels_export_default"]}')
             if not defaults["labels_export_default"]:
                 filepath_labels = str(Path.cwd().joinpath("source_labels"))
                 open_file(filepath_labels)
@@ -460,6 +482,7 @@ def run_gui(defaults):
                 filepath_labels = str(Path(defaults["labels_export_default"]))
                 open_file(filepath_labels)
         if event_simple == "_CONTOPT_HELP_":
+            logger.info(f'User opened CONTLABELS Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
                             "iner-labels-screen",
                             new=2)
@@ -479,6 +502,7 @@ def run_gui(defaults):
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
+            logger.info(f'Clearing Cleaned EAD Export folder: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
             clean_files = os.listdir(defaults["ead_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -487,9 +511,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in clean_eads".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
             except Exception as e:
                 print("No files in clean_eads folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_OUTPUT_DIR_"]}: {e}')
         if event_simple == "Clear EAD Export Folder":
+            logger.info(f'Clearing Raw EAD Export folder: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
             raw_files = os.listdir(defaults["ead_export_default"]["_SOURCE_DIR_"])
             try:
                 file_count = 0
@@ -498,9 +525,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_eads".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
             except Exception as e:
                 print("No files in source_eads folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_SOURCE_DIR_"]}: {e}')
         if event_simple == "Clear MARCXML Export Folder":
+            logger.info(f'Clearing MARCXML Export folder: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
             raw_files = os.listdir(defaults["marc_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -509,9 +539,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_marcs".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
             except Exception as e:
                 print("No files in source_marcs folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["marc_export_default"]["_OUTPUT_DIR_"]}: {e}')
         if event_simple == "Clear Container Label Export Folder":
+            logger.info(f'Clearing Container Label Export folder: {defaults["labels_export_default"]}')
             raw_files = os.listdir(defaults["labels_export_default"])
             try:
                 file_count = 0
@@ -520,9 +553,12 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["labels_export_default"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_labels".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["labels_export_default"]}')
             except Exception as e:
                 print("No files in source_labels folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["labels_export_default"]}: {e}')
         if event_simple == "Clear PDF Export Folder":
+            logger.info(f'Clearing PDF Export folder: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
             raw_files = os.listdir(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
             try:
                 file_count = 0
@@ -531,29 +567,39 @@ def run_gui(defaults):
                     full_path = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"], file))
                     os.remove(full_path)
                 print("Deleted {} files in source_pdfs".format(str(file_count)))
+                logger.info(f'Deleted {file_count} files in {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
             except Exception as e:
                 print("No files in source_pdfs folder\n" + str(e))
+                logger.error(f'Tried deleting files from {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}: {e}')
         if event_simple == "Reset Defaults":
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
                                            "You will have to restart the program to see changes.")
             if reset_defaults == "Yes":
-                dsetup.reset_defaults()
+                logger.info("User initiated reseting defaults")
+                try:
+                    dsetup.reset_defaults()
+                except Exception as e:
+                    print(f'Error when resetting defaults: {e}')
+                    logger.error(f'Error when resetting defaults: {e}')
         # ------------------- EDIT -------------------
         if event_simple == "Change ASpace Login Credentials":
+            logger.info(f'User initiated changing ASpace login credentials within app')
             as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, \
                 xtf_version = get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password,
                                              as_ap=as_api, as_client=client, as_res=resources, as_repos=repositories,
                                              xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
+            logger.info(f'User initiated changing XTF login credentials within app')
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
                 get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
                             xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
+            logger.info(f'User initiated About menu option')
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.4.4\n\n"  # TODO Change Version #
+                         "Version: 1.5.0\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_"),
                  sg.Button(" Check GUI Info ", key="_CHECK_PYPSG_")]
@@ -565,18 +611,31 @@ def run_gui(defaults):
                     window_about.close()
                     window_about_active = False
                 if event_about == "_CHECK_GITHUB_":
-                    webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
-                                    new=2)
+                    try:
+                        webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases",
+                                        new=2)
+                    except Exception as e:
+                        print(f'Failed to open webbrowser: {e}')
+                        logger.error(f'Failed to open webbrowser: {e}')
                 if event_about == "_CHECK_PYPSG_":
-                    sg.popup_scrolled(sg.get_versions(), non_blocking=True, keep_on_top=True)
+                    try:
+                        sg.popup_scrolled(sg.get_versions(), non_blocking=True, keep_on_top=True)
+                    except Exception as e:
+                        print(f'Failed to open PySimpleGUI versions popup: {e}')
+                        logger.error(f'Failed to open PySimpleGUI versions popup: {e}')
                 if event_about == "_ABOUT_OK_":
                     window_about.close()
                     window_about_active = False
         if event_simple == "User Manual":
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
-                            new=2)
+            try:
+                webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual",
+                                new=2)
+            except Exception as e:
+                print(f'Failed to open webbrowser: {e}')
+                logger.error(f'Failed to open webbrowser: {e}')
         # ------------- XTF SECTION -------------------
         if event_simple == "_UPLOAD_":
+            logger.info(f'User initiated uploading files to XTF')
             window_upl_active = True
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -596,14 +655,17 @@ def run_gui(defaults):
             while window_upl_active is True:
                 event_upl, values_upl = window_upl.Read()
                 if event_upl is None:
+                    logger.info(f'User cancelled upload process')
                     window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
                     window_simple[f'{"_INDEX_"}'].update(disabled=False)
                     window_simple[f'{"_DELETE_"}'].update(disabled=False)
                     window_upl.close()
                     window_upl_active = False
                 if event_upl == "_XTF_OPTIONS_2_":
+                    logger.info(f'User selected XTF Options from Upload window: _XTF_OPTIONS_2_')
                     get_xtf_options(defaults)
                 if event_upl == "_UPLOAD_TO_XTF_":
+                    logger.info(f'User began upload of files to XTF: _UPLOAD_TO_XTF_; Files: {values_upl}')
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
                                                                                    xtf_indexer_path, values_upl,
@@ -612,43 +674,54 @@ def run_gui(defaults):
                     window_upl.close()
                     window_upl_active = False
         if event_simple == "_DELETE_":
+            logger.info(f'User initiated deleting files from XTF')
             window_del_active = True
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
             window_simple[f'{"_DELETE_"}'].update(disabled=True)
-            print("Getting remote files, this may take a second...", flush=True, end="")
-            remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                            xtf_indexer_path)
-            print("Done")
-            delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
-                                      sg.Text(" " * 62)],
-                                     [sg.Text("Options", font=("Roboto", 12))],
-                                     [sg.Button(" XTF Options ", key="_XTF_OPTIONS3_")]
-                                     ]
-            xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
-                                 [sg.Listbox(remote_files, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
-                                             key="_SELECT_FILES_")],
-                                 [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
-            window_del = sg.Window("Delete Files from XTF", xtf_delete_layout)
-            while window_del_active is True:
-                event_del, values_del = window_del.Read()
-                if event_del is None:
-                    window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
-                    window_simple[f'{"_INDEX_"}'].update(disabled=False)
-                    window_simple[f'{"_DELETE_"}'].update(disabled=False)
-                    window_del.close()
-                    window_del_active = False
-                if event_del == "_XTF_OPTIONS3_":
-                    get_xtf_options(defaults)
-                if event_del == "_DELETE_XTF_":
-                    xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
-                                                                                    xtf_username, xtf_password,
-                                                                                    xtf_remote_path, xtf_indexer_path,
-                                                                                    values_del, window_simple,))
-                    xtfdel_thread.start()
-                    window_del.close()
-                    window_del_active = False
+            try:
+                logger.info(f'Getting remotes files from XTF')
+                print("Getting remote files, this may take a second...", flush=True, end="")
+                remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
+                                                xtf_indexer_path)
+            except Exception as e:
+                logger.error(f'Error when getting files from XTF: {e}')
+            else:
+                print("Done")
+                delete_options_layout = [[sg.Button(" Delete from XTF ", key="_DELETE_XTF_", disabled=False),
+                                          sg.Text(" " * 62)],
+                                         [sg.Text("Options", font=("Roboto", 12))],
+                                         [sg.Button(" XTF Options ", key="_XTF_OPTIONS_3_")]
+                                         ]
+                xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
+                                     [sg.Listbox(remote_files, size=(50, 20),
+                                                 select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE, key="_SELECT_FILES_")],
+                                     [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
+                window_del = sg.Window("Delete Files from XTF", xtf_delete_layout)
+                while window_del_active is True:
+                    event_del, values_del = window_del.Read()
+                    if event_del is None:
+                        logger.info(f'User cancelled deleting files from XTF')
+                        window_simple[f'{"_UPLOAD_"}'].update(disabled=False)
+                        window_simple[f'{"_INDEX_"}'].update(disabled=False)
+                        window_simple[f'{"_DELETE_"}'].update(disabled=False)
+                        window_del.close()
+                        window_del_active = False
+                    if event_del == "_XTF_OPTIONS_3_":
+                        logger.info(f'User initiated getting XTF options from Delete: _XTF_OPTIONS_3_')
+                        get_xtf_options(defaults)
+                    if event_del == "_DELETE_XTF_":
+                        logger.info(f'User began delete of files from XTF: _DELETE_XTF_; Files: {values_del}')
+                        xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
+                                                                                        xtf_username, xtf_password,
+                                                                                        xtf_remote_path,
+                                                                                        xtf_indexer_path, values_del,
+                                                                                        window_simple,))
+                        xtfdel_thread.start()
+                        window_del.close()
+                        window_del_active = False
         if event_simple == "_INDEX_":
+            logger.info(f'User initiated re-indexing: _INDEX_')
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
                                                                      xtf_remote_path, xtf_indexer_path, window_simple,))
             xtfind_thread.start()
@@ -656,6 +729,7 @@ def run_gui(defaults):
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
             window_simple[f'{"_DELETE_"}'].update(disabled=True)
         if event_simple == "_XTF_OPTIONS_" or event_simple == "Change XTF Options":
+            logger.info(f'User initiated XTF options: _XTF_OPTIONS_ or Change XTF Options')
             get_xtf_options(defaults)
         # ---------------- XTF THREADS ----------------
         if event_simple in (XTF_INDEX_THREAD, XTF_UPLOAD_THREAD, XTF_DELETE_THREAD, XTF_GETFILES_THREAD):
@@ -738,6 +812,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         while window_asplog_active is True:
             event_log, values_log = window_login.Read()
             if event_log == "_SAVE_CLOSE_LOGIN_":
+                logger.info(f'User initiated ASpace login')
                 connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
                                               username=values_log["_ASPACE_UNAME_"],
                                               password=values_log["_ASPACE_PWORD_"])
@@ -746,6 +821,8 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                 except Exception as api_error:
                     sg.Popup("Your API credentials were entered incorrectly.\n"
                              "Please try again.\n\n" + api_error.__str__())
+                    logger.error(f'Error with validating API credentials: {api_error};'
+                                 f' API: {values_log["_ASPACE_API_"]}')
                 else:
                     try:
                         connect_client.authorize()
@@ -759,6 +836,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                             error_message = str(e)
                         sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
                                  error_message)
+                        logger.error(f'Username and/or password failed: {error_message}')
                     else:
                         client = connect_client
                         as_username = values_log["_ASPACE_UNAME_"]
@@ -767,6 +845,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         xtf_version = values_log["_USE_XTF_"]
                         asp_version = client.get("/version").content.decode().split(" ")[1].replace("(",
                                                                                                     "").replace(")", "")
+                        logger.info(f'ArchivesSpace Info: \nAPI: {values_log["_ASPACE_API_"]}\nVersion: {asp_version}')
                         with open("defaults.json",
                                   "w") as defaults_asp:  # If connection is successful, save ASpace API in defaults.json
                             defaults["as_api"] = as_api
@@ -790,6 +869,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         window_asplog_active = False
                         correct_creds = True
             if event_log is None or event_log == 'Cancel':
+                logger.info(f'User cancelled ASpace login')
                 window_login.close()
                 window_asplog_active = False
                 correct_creds = True
@@ -853,6 +933,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         window_xtfcred = sg.Window("XTF Login Credentials", layout_xtflog)
         while window_xtflog_active is True:
             event_xlog, values_xlog = window_xtfcred.Read()
+            logger.info(f'User initiated XTF Login credentials')
             if event_xlog == "_SAVE_CLOSE_LOGIN_":
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
@@ -867,6 +948,10 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_host = values_xlog["_XTF_HOSTNAME_"]
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
+                        xtf_lazy_path = values_xlog["_XTF_LAZYPATH_"]
+                        logger.info(f'XTF Info: \nHOSTNAME: {values_xlog["_XTF_HOSTNAME_"]}\n'
+                                    f'REMOTE_PATH: {values_xlog["_XTF_REMPATH_"]}\n'
+                                    f'INDEXER_PATH: {values_xlog["_XTF_INDPATH_"]}\n')
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
@@ -880,8 +965,12 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 except Exception as e:
                     sg.Popup("Your username, password, or info were entered incorrectly. Please try again.\n\n" +
                              str(e))
+                    logger.error(f'XTF credentials failed.\nHostname: {values_xlog["_XTF_HOSTNAME_"]}'
+                                 f'\nRemote Path: {values_xlog["_XTF_REMPATH_"]}'
+                                 f'\nIndexer Path: {values_xlog["_XTF_INDPATH_"]}')
                     window_xtflog_active = True
             if event_xlog is None or event_xlog == 'Cancel':
+                logger.info(f'User cancelled XTF login')
                 window_xtfcred.close()
                 window_xtflog_active = False
                 correct_creds = True
@@ -932,61 +1021,75 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning EAD export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
                                            export_all=True)
         else:
+            logger.info(f'Beginning EAD export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             if resource_export.result is not None:
+                logger.info(f'Fetched results: {resource_export.result}')
                 print(resource_export.result)
             if export_all is False:
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_ead(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["ead_export_default"]["_INCLUDE_DAOS_"],
                                        numbered_cs=defaults["ead_export_default"]["_NUMBERED_CS_"],
                                        ead3=defaults["ead_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
+                logger.info(f'EAD export complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
+                        logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...")
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                             keep_raw_exports=True)
                         if valid:
+                            logger.info(f'EAD cleanup complete: {results}')
                             print("Done")
                             print(results)
                             export_counter += 1
                             if export_all is False:
                                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
+                            logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
                     else:
+                        logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...", end='', flush=True)
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"])
                         if valid:
+                            logger.info(f'EAD cleanup complete: {results}')
                             print("Done")
                             print(results)
                             export_counter += 1
                             if export_all is False:
                                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                         else:
+                            logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
                 else:
                     export_counter += 1
                     if export_all is False:
                         gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'EAD export error: {resource_export.error}')
                 print(resource_export.error + "\n")
                 export_counter += 1
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
+            logger.info(f'EAD fetch results error: {resource_export.error}')
             print(resource_export.error + "\n")
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished EAD exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
@@ -1027,6 +1130,7 @@ def get_all_eads(input_ids, defaults, cleanup_options, repositories, client, gui
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished EAD exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-EAD_THREAD-', (threading.current_thread().name,))
 
@@ -1073,26 +1177,33 @@ def get_ead_options(defaults):
                          [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_EAD_", bind_return_key=True)]]
         eadopt_window = sg.Window("EAD Options", eadopt_layout)
         while window_eadopt_active is True:
+            logger.info(f'User initiated EAD Options')
             event_eadopt, values_eadopt = eadopt_window.Read()
             if event_eadopt is None or event_eadopt == 'Cancel':
+                logger.info(f'User cancelled EAD options')
                 window_eadopt_active = False
                 correct_opts = True
                 eadopt_window.close()
             if event_eadopt == "_EADOPT_HELP_":
+                logger.info(f'User opened EAD Options Help button')
                 webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#e"
                                 "ad-export-options",
                                 new=2)
             if event_eadopt == "_SAVE_SETTINGS_EAD_":
                 if values_eadopt["_KEEP_RAW_"] is False and values_eadopt["_CLEAN_EADS_"] is False:
+                    logger.info(f'User selected EAD Options: _KEEP_RAW_ and _CLEAN_EADS_ - not allowed')
                     sg.Popup("WARNING!\nOne of the checkboxes from the following need to be checked:"
                              "\n\nKeep raw ASpace Exports\nClean EAD records on export")
                 else:
                     if os.path.isdir(values_eadopt["_SOURCE_DIR_"]) is False:
+                        logger.info(f'User input an invalid EAD _SOURCE_DIR_: {values_eadopt["_SOURCE_DIR_"]}')
                         sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
                     elif os.path.isdir(values_eadopt["_OUTPUT_DIR_"]) is False:
+                        logger.info(f'User input an invalid EAD _OUTPUT_DIR_: {values_eadopt["_OUTPUT_DIR_"]}')
                         sg.popup("WARNING!\nYour input for the cleanup output is invalid."
                                  "\nPlease try another directory")
                     else:
+                        logger.info(f'User selected EAD Options: {values_eadopt}')
                         with open("defaults.json", "w") as DEFAULT:
                             defaults["ead_export_default"]["_INCLUDE_UNPUB_"] = values_eadopt["_INCLUDE_UNPUB_"]
                             defaults["ead_export_default"]["_INCLUDE_DAOS_"] = values_eadopt["_INCLUDE_DAOS_"]
@@ -1163,8 +1274,10 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
     ]
     window_adv = sg.Window("Change Cleanup Defaults", layout_adv)
     while window_adv_active is True:
+        logger.info(f'User initiated EAD Cleanup Options')
         event_adv, values_adv = window_adv.Read()
         if event_adv == "_SAVE_CLEAN_DEF_":
+            logger.info(f'User selected cleanup options: {values_adv}')
             for option_key, option_value in values_adv.items():
                 if option_value is True:
                     if option_key in cleanup_defaults:
@@ -1189,10 +1302,12 @@ def get_cleanup_defaults(cleanup_defaults, defaults):
             window_adv.close()
             return cleanup_options
         if event_adv == "_CLEANUP_HELP_":
+            logger.info(f'User opened EAD Cleanup Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#clean"
                             "up-options",
                             new=2)
         if event_adv is None:
+            logger.info(f'User cancelled EAD Cleanup Options')
             cleanup_options = [option for option, bool_val in defaults["ead_cleanup_defaults"].items() if
                                bool_val is True]
             window_adv.close()
@@ -1235,29 +1350,36 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning MARCXML export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"], export_all=True)
         else:
+            logger.info(f'Beginning MARCXML export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_marcxml(
                 include_unpublished=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])
             if resource_export.error is None:
+                logger.info(f'MARCXML export complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'MARCXML export error: {resource_export.error}')
                 print(resource_export.error + "\n")
         else:
+            logger.info(f'MARCXML export error: {resource_export.error}')
             print(resource_export.error)
             export_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished MARCXML exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
@@ -1292,6 +1414,7 @@ def get_all_marcxml(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished MARCXML exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-MARCXML_THREAD-', (threading.current_thread().name,))
 
@@ -1332,17 +1455,22 @@ def get_marc_options(defaults):
     window_marc = sg.Window("MARCXML Export Options", marc_layout)
     while window_marc_active is True:
         event_marc, values_marc = window_marc.Read()
+        logger.info(f'User initiated MARCXML Options')
         if event_marc is None or event_marc == 'Cancel':
+            logger.info(f'User cancelled MARCXML Options')
             window_marc_active = False
             window_marc.close()
         if event_marc == "_MARCOPT_HELP_":
+            logger.info(f'User opened MARCXML Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcx"
                             "ml-screen",
                             new=2)
         if event_marc == "_SAVE_SETTINGS_MARC_":
             if os.path.isdir(values_marc["_MARC_OUT_DIR_"]) is False:
+                logger.info(f'User input an invalid MARCXML _MARC_OUT_DIR_: {values_marc["_MARC_OUT_DIR_"]}')
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected MARCXML options: {values_marc}')
                 with open("defaults.json", "w") as defaults_marc:
                     defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
                     defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
@@ -1389,31 +1517,38 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning PDF export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"], export_all=True)
         else:
+            logger.info(f'Beginning PDF export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_pdf(include_unpublished=defaults["ead_export_default"]["_INCLUDE_UNPUB_"],
                                        include_daos=defaults["pdf_export_default"]["_INCLUDE_DAOS_"],
                                        numbered_cs=defaults["pdf_export_default"]["_NUMBERED_CS_"],
                                        ead3=defaults["pdf_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
+                logger.info(f'Export PDF complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'PDF export error: {resource_export.error}')
                 print(resource_export.error + "\n")
                 export_counter += 1
                 gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
         else:
+            logger.info(f'PDF export error: {resource_export.error}')
             print(resource_export.error)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished PDF exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
@@ -1448,6 +1583,7 @@ def get_all_pdfs(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished PDF exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-PDF_THREAD-', (threading.current_thread().name,))
 
@@ -1495,17 +1631,22 @@ def get_pdf_options(defaults):
     window_pdf = sg.Window("PDF Export Options", pdf_layout)
     while window_pdf_active is True:
         event_pdf, values_pdf = window_pdf.Read()
+        logger.info(f'User initiated PDF Options')
         if event_pdf is None or event_pdf == 'Cancel':
+            logger.info(f'User cancelled PDF Options')
             window_pdf_active = False
             window_pdf.close()
         if event_pdf == "_PDFOPT_HELP_":
+            logger.info(f'User opened PDF Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#pdf-e"
                             "xport-options",
                             new=2)
         if event_pdf == "_SAVE_SETTINGS_PDF_":
             if os.path.isdir(values_pdf["_OUTPUT_DIR_"]) is False:
+                logger.info(f'User input an invalid PDF _OUTPUT_DIR_: {values_pdf["_OUTPUT_DIR_"]}')
                 sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected PDF Options: {values_pdf}')
                 with open("defaults.json", "w") as defaults_pdf:
                     defaults["pdf_export_default"]["_INCLUDE_UNPUB_"] = values_pdf["_INCLUDE_UNPUB_"]
                     defaults["pdf_export_default"]["_INCLUDE_DAOS_"] = values_pdf["_INCLUDE_DAOS_"]
@@ -1555,28 +1696,35 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             resources = [user_input.strip() for user_input in input_ids.splitlines()]
     for input_id in resources:
         if export_all is True:
+            logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["labels_export_default"], export_all=True)
         else:
+            logger.info(f'Beginning CONTLABELS export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
                                            output_dir=defaults["labels_export_default"])
         resource_export.fetch_results()
         if resource_export.error is None:
+            logger.info(f'Exporting: {input_id}')
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_labels()
             if resource_export.error is None:
+                logger.info(f'Export CONTLABELS complete: {resource_export.result}')
                 print(resource_export.result + "\n")
                 export_counter += 1
                 if export_all is False:
                     gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
+                logger.info(f'CONTLABELS export error: {resource_export.error}')
                 print(resource_export.error + "\n")
         else:
+            logger.info(f'CONTLABELS export error: {resource_export.error}')
             print(resource_export.error)
             export_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
+        logger.info(f'Finished CONTLABELS exports: {export_counter}')
         print("\n" + "-" * 55 + "Finished {} exports".format(str(export_counter)) + "-" * trailing_line + "\n")
         gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
@@ -1611,6 +1759,7 @@ def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
             export_all_counter += 1
             gui_window.write_event_value('-EXPORT_PROGRESS-', (export_all_counter, all_resources_counter))
     trailing_line = 76 - len(f'Finished {str(export_all_counter)} exports') - (len(str(export_all_counter)) - 1)
+    logger.info(f'Finished CONTLABELS exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
@@ -1632,20 +1781,30 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         None
     """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    logger.info(f'Uploading files to XTF. Files: {values_upl["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
+                f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Uploading files...")
     xtf_files = fetch_local_files(defaults["xtf_default"]["xtf_local_path"], values_upl["_SELECT_FILES_"])
     upload_output = remote.bulk_upload(xtf_files)
+    logger.info(f'Uploading results: {upload_output}')
     print(upload_output)
+    for file in xtf_files:
+        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
+                                                                                    ["xtf_remote_path"],
+                                                                                    Path(file).name)])
+        logger.info(f'Updated file permissions: {update_permissions}')
+        print(update_permissions)
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
+        logger.info(f'Re-indexing files...')
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,  gui_window)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
-                     gui_window):
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+                     values_del, gui_window):
     """
     Delete files from XTF.
     Args:
@@ -1661,6 +1820,8 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         None
     """
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    logger.info(f'Deleting files from XTF. Files: {values_del["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
+                f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Deleting files...")
     xtf_files = [str(defaults["xtf_default"]["xtf_remote_path"] + "/" + str(file)) for file in
                  values_del["_SELECT_FILES_"]]
@@ -1668,11 +1829,15 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         for file in xtf_files:
             print(file)
             cmds_output = remote.execute_commands(['rm {}'.format(file)])
+            logger.info(f'Deleted file from XTF: {cmds_output}')
             print(cmds_output)
         print("-" * 135)
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
-            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window)
+            logger.info(f'Re-indexing files...')
+            index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                      gui_window)
     except Exception as e:
+        logger.error(f'Deleting files from XTF error: {e}')
         print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
@@ -1692,11 +1857,13 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     Returns:
         None
     """
+    logger.info(f'Beginning XTF re-index...')
     print("Beginning Re-Index, this may take awhile...")
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     try:
         cmds_output = remote.execute_commands(
             ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
+        logger.info(f'Re-index XTF complete: {cmds_output}')
         print(cmds_output)
         print("-" * 135)
     except Exception as e:
@@ -1719,6 +1886,7 @@ def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     Returns:
         remote_files (list): a sorted list of all the files in the remote path directory
     """
+    logger.info(f'Getting remote files from XTF: {xtf_remote_path}')
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
@@ -1754,10 +1922,13 @@ def get_xtf_options(defaults):
     window_xtf_option = sg.Window("XTF Options", xtf_option_layout)
     while xtf_option_active is True:
         event_xtfopt, values_xtfopt = window_xtf_option.Read()
+        logger.info(f'User initiated XTF Options')
         if event_xtfopt is None or event_xtfopt == 'Cancel':
+            logger.info(f'User cancelled XTF Options')
             xtf_option_active = False
             window_xtf_option.close()
         if event_xtfopt == "_XTFOPT_HELP_":
+            logger.info(f'User opened XTF Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-f"
                             "rame",
                             new=2)
@@ -1765,8 +1936,10 @@ def get_xtf_options(defaults):
             get_xtf_log(defaults)
         if event_xtfopt == "_SAVE_SETTINGS_XTF_":
             if os.path.isdir(values_xtfopt["_XTF_SOURCE_"]) is False:
+                logger.info(f'User input an invalid PDF _OUTPUT_DIR_: {values_xtfopt["_XTF_SOURCE_"]}')
                 sg.popup("WARNING!\nYour input for the upload folder is invalid.\nPlease try another directory")
             else:
+                logger.info(f'User selected XTF Options: {values_xtfopt}')
                 with open("defaults.json", "w") as defaults_xtf:
                     defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
                     defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
@@ -1786,6 +1959,7 @@ def open_file(filepath):
     Returns:
         None
     """
+    logger.info(f'Fetching filepath: {filepath}')
     if platform.system() == "Windows":
         os.startfile(filepath)
     elif platform.system() == "Darwin":
@@ -1808,6 +1982,7 @@ def fetch_local_files(local_file_dir, select_files):
     Returns:
         (list): contains filepaths for files to be uploaded to XTF
     """
+    logger.info(f'Fetching local files: {local_file_dir}, {select_files}')
     local_files = os.walk(local_file_dir)
     for root, dirs, files in local_files:
         return [str(Path(root, file)) for file in files if file in select_files]
@@ -1820,6 +1995,7 @@ def setup_files():
     Returns:
         json_data (dict): contains data from defaults.json for user's default settings
     """
+    logger.info(f'Checking setup files...')
     current_directory = os.getcwd()
     for root, directories, files in os.walk(current_directory):
         if "clean_eads" in directories:
@@ -1838,6 +2014,7 @@ def setup_files():
         json_data = dsetup.set_defaults_file()
         return json_data
     except Exception as defaults_error:
+        logger.error(f'Error checking defaults.json file: {defaults_error}')
         print(str(defaults_error) + "\nThere was an error checking the defaults.json file. "
                                     "Please delete your defaults.json file and run the program again")
 
@@ -1852,6 +2029,7 @@ def sort_list(input_list):
     Returns:
         A list sorted in human readable order
     """
+    logger.info(f'Sorting list...')
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
     return sorted(input_list, key=alphanum_key)
@@ -1869,6 +2047,7 @@ def start_thread(function, args, gui_window):
     Returns:
         None
     """
+    logger.info(f'Starting thread: {function}')
     ead_thread = threading.Thread(target=function, args=args)
     ead_thread.start()
     gui_window[f'{"_EXPORT_EAD_"}'].update(disabled=True)
@@ -1881,6 +2060,20 @@ def start_thread(function, args, gui_window):
     gui_window[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=True)
 
 
+def delete_log_files():
+    if os.path.isdir(Path(os.getcwd(), "logs")) is True:
+        logsdir = str(Path(os.getcwd(), "logs"))
+        for file in os.listdir(logsdir):
+            logfile = Path(logsdir, file)
+            file_time = os.path.getmtime(logfile)
+            current_time = time.time()
+            delete_time = current_time - 2630000  # This is for 1 month.
+            if file_time <= delete_time:  # If a file is more than 2 months old, delete
+                os.remove(logfile)
+
+
 # sg.theme_previewer()
 if __name__ == "__main__":
+    logger.info(f'Version Info:\n{sg.get_versions()}')
+    delete_log_files()
     run_gui(setup_files())

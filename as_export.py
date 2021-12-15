@@ -1,12 +1,14 @@
 import json
 import re
 
+from as_xtf_GUI import logger
 from pathlib import Path
 
 id_field_regex = re.compile(r"(^id_+\d)")
 id_combined_regex = re.compile(r'[\W_]+', re.UNICODE)
 
 
+@logger.catch
 class ASExport:
     """
     Interacts with the ASpace API to search for and retrieve records.
