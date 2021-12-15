@@ -456,13 +456,3 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
     else:
         results += "\nKeeping raw ASpace exports in {}\n".format(fileparent)
         return True, results
-    # filestem = Path(filepath).stem
-    # try:
-    #     xslt = etree.parse(str(Path(os.getcwd(), "to_csv.xsl")))
-    #     transform = etree.XSLT(xslt)
-    #     newdom = transform(tree)
-    #     csv_path = str(Path(os.getcwd(), '{}.tsv'.format(filestem)))
-    #     newdom.write_output(csv_path)
-    # except Exception as e:
-    #     error = e
-    #     print(e)

@@ -5,6 +5,7 @@ import sys
 import webbrowser
 import json
 import re
+import time
 from loguru import logger
 from pathlib import Path
 
@@ -31,6 +32,7 @@ XTF_INDEX_THREAD = '-XTFIND_THREAD-'
 XTF_DELETE_THREAD = '-XTFDEL_THREAD-'
 XTF_GETFILES_THREAD = '-XTFGET_THREAD-'
 
+logger.remove()
 logger.add(str(Path('logs', 'log_{time:YYYY-MM-DD}.log')),
            format="{time}-{level}: {message}")
 
@@ -587,7 +589,6 @@ def run_gui(defaults):
                 xtf_version = get_aspace_log(defaults, xtf_checkbox=False, as_un=as_username, as_pw=as_password,
                                              as_ap=as_api, as_client=client, as_res=resources, as_repos=repositories,
                                              xtf_ver=xtf_version)
-            logger.info(f'ASpace version: {asp_version}')
         if event_simple == 'Change XTF Login Credentials':
             logger.info(f'User initiated changing XTF login credentials within app')
             xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, \
@@ -847,6 +848,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                         xtf_version = values_log["_USE_XTF_"]
                         asp_version = client.get("/version").content.decode().split(" ")[1].replace("(",
                                                                                                     "").replace(")", "")
+                        logger.info(f'ArchivesSpace Info: \nAPI: {values_log["_ASPACE_API_"]}\nVersion: {asp_version}')
                         with open("defaults.json",
                                   "w") as defaults_asp:  # If connection is successful, save ASpace API in defaults.json
                             defaults["as_api"] = as_api
@@ -955,6 +957,10 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
                         xtf_lazy_path = values_xlog["_XTF_LAZYPATH_"]
+                        logger.info(f'XTF Info: \nHOSTNAME: {values_xlog["_XTF_HOSTNAME_"]}\n'
+                                    f'REMOTE_PATH: {values_xlog["_XTF_REMPATH_"]}\n'
+                                    f'INDEXER_PATH: {values_xlog["_XTF_INDPATH_"]}\n'
+                                    f'LAZY_INDEX_PATH: {values_xlog["_XTF_LAZYPATH_"]}')
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
@@ -2091,7 +2097,20 @@ def start_thread(function, args, gui_window):
     gui_window[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=True)
 
 
+def delete_log_files():
+    if os.path.isdir(Path(os.getcwd(), "logs")) is True:
+        logsdir = str(Path(os.getcwd(), "logs"))
+        for file in os.listdir(logsdir):
+            logfile = Path(logsdir, file)
+            file_time = os.path.getmtime(logfile)
+            current_time = time.time()
+            delete_time = current_time - 2630000  # This is for 1 month.
+            if file_time <= delete_time:  # If a file is more than 2 months old, delete
+                os.remove(logfile)
+
+
 # sg.theme_previewer()
 if __name__ == "__main__":
     logger.info(f'Version Info:\n{sg.get_versions()}')
+    delete_log_files()
     run_gui(setup_files())
