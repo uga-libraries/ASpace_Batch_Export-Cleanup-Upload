@@ -948,7 +948,6 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_host = values_xlog["_XTF_HOSTNAME_"]
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
-                        xtf_lazy_path = values_xlog["_XTF_LAZYPATH_"]
                         logger.info(f'XTF Info: \nHOSTNAME: {values_xlog["_XTF_HOSTNAME_"]}\n'
                                     f'REMOTE_PATH: {values_xlog["_XTF_REMPATH_"]}\n'
                                     f'INDEXER_PATH: {values_xlog["_XTF_INDPATH_"]}\n')
@@ -1803,8 +1802,8 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
-                     values_del, gui_window):
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
+                     gui_window):
     """
     Delete files from XTF.
     Args:
