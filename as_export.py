@@ -70,9 +70,7 @@ class ASExport:
             else:
                 search_resources = self.client.get_paged('/search', params={"q": 'four_part_id:' + self.input_id,
                                                                             "type": ['resource']})
-            search_results = []
-            for result in search_resources:
-                search_results.append(result)
+            search_results = [result for result in search_resources]
         else:
             search_results = [{"json": json.dumps(self.client.get(f'/repositories/{str(self.repo_id)}/resources/{str(self.input_id)}').json())}]
             combined_user_id = ""

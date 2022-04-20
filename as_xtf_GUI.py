@@ -1086,6 +1086,8 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         else:
             logger.info(f'EAD fetch results error: {resource_export.error}')
             print(resource_export.error + "\n")
+            export_counter += 1
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         logger.info(f'Finished EAD exports: {export_counter}')
