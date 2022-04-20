@@ -18,3 +18,5 @@ Windows_Installer
 Mac Installer
 ASpace_Batch_Exporter.spec
 .gitignore
+as_xtf_master_setup.iss
+as_xtf_uga_version_setup.iss
