@@ -28,6 +28,6 @@ jobs:
     # Runs a single command using the runners shell
     - name: Install python
   #    run: echo "Hello ${{ github.event.inputs.name }}"
-      run: apt update && apt install python3  && echo $(python3 --version)
+      run: sudo apt update && sudo apt install python3  && echo $(python3 --version)
       
       
