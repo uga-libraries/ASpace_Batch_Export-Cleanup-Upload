@@ -36,7 +36,7 @@ jobs:
     - name: Install build dependencies
       run: choco install -y git
 #    - name: Build pyinstaller bootloader
-#      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python setup.py install
+#      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python ./waf all ; cd .. ; pip3 install wheel ; python -m pip install -r requirements.txt ; python setup.py install
     - name: Install cx_freeze
       run: python -m pip install --upgrade cx_Freeze
     - name: Package?
