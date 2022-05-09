@@ -32,18 +32,23 @@ jobs:
       run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python3 setup.py install ; pyinstaller --version
     - name: Package?
       run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
-    - name: Try to make files available as artifacts
-        uses: actions/upload-artifact@v3
-        with:
+    - name: Try to make files available as artifacts - spec
+      uses: actions/upload-artifact@v3
+      with:
           name: specfile
-          path: |
-            ASpace_Batch_Exporter1.5.0.spec
+          path: ASpace_Batch_Exporter1.5.0.spec
+    - name: Try to make files available as artifacts - build_dir
+      uses: actions/upload-artifact@v3
+      with:
           name: build_dir
-          path: |
-            build
+          path: build
+    - name: Try to make files available as artifacts - dist_dir
+      uses: actions/upload-artifact@v3
+      with:
           name: dist_dir
-          path: |
-            dist
+          path: dist
+    - name: Try to make files available as artifacts - spec
+      uses: actions/upload-artifact@v3
+      with:
           name: pycache_dir
-          path: |
-            __pycache__
+          path: __pycache__
