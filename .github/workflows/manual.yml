@@ -16,6 +16,10 @@ on:
         description: 'Python version to use'
         default: '3.10'
         required: true
+      pyinstaller_args:
+        description: 'Args for pyinstaller, e.g. -wF'
+        default: '-wF'
+        required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -38,7 +42,7 @@ jobs:
     - name: Build pyinstaller bootloader
       run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python setup.py install
     - name: Package?
-      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
+      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller ${{ github.event.inputs.pyinstaller_args }} as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
     - name: Try to make files available as artifacts - spec
       uses: actions/upload-artifact@v3
       with:
