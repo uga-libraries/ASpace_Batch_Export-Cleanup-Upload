@@ -27,8 +27,8 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Install dependencies and build pyinstaller bootloader
-      run: choco install -y python3 visualstudio2019-workload-vctools git ; python3 --version
+      run: choco install -y python3 visualstudio2019-workload-vctools git ; python --version ; python3 --version;
     - name: Build pyinstaller bootloader 
-      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; pyinstaller --version
+      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; cd .. ; python3 setup.py ; pyinstaller --version
     - name: Package?
       run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
