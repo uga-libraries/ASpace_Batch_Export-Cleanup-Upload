@@ -27,28 +27,4 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Install dependencies and build pyinstaller bootloader
-      run: choco install -y python3 visualstudio2019-workload-vctools git ; python3 --version
-    - name: Build pyinstaller bootloader 
-      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python3 setup.py install ; pyinstaller --version
-    - name: Package?
-      run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
-    - name: Try to make files available as artifacts - spec
-      uses: actions/upload-artifact@v3
-      with:
-          name: specfile
-          path: ASpace_Batch_Export-Cleanup-Upload/ASpace_Batch_Exporter1.5.0.spec
-    - name: Try to make files available as artifacts - build_dir
-      uses: actions/upload-artifact@v3
-      with:
-          name: build_dir
-          path: ASpace_Batch_Export-Cleanup-Upload/build
-    - name: Try to make files available as artifacts - dist_dir
-      uses: actions/upload-artifact@v3
-      with:
-          name: dist_dir
-          path: ASpace_Batch_Export-Cleanup-Upload/dist
-    - name: Try to make files available as artifacts - spec
-      uses: actions/upload-artifact@v3
-      with:
-          name: pycache_dir
-          path: ASpace_Batch_Export-Cleanup-Upload/__pycache__
+      run: choco install -y python3 git ; python3 --version ; choco list --local-only --exact python3 --trace
