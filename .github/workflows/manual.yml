@@ -39,8 +39,10 @@ jobs:
       run: python --version
     - name: Install build dependencies
       run: choco install -y visualstudio2019-workload-vctools git
-    - name: Build pyinstaller bootloader
-      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python setup.py install
+#    - name: Build pyinstaller bootloader
+#      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python setup.py install
+    - name: Install cx_freeze
+      run: python -m pip install --upgrade cx_Freeze 
     - name: Package?
       run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller ${{ github.event.inputs.pyinstaller_args }} as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
     - name: Try to make files available as artifacts - spec
