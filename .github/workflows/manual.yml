@@ -28,6 +28,6 @@ jobs:
     # Runs a single command using the runners shell
     - name: Install python
   #    run: echo "Hello ${{ github.event.inputs.name }}"
-      run: python3 --version && sudo git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git && cd pyinstaller/bootloader && python3 ./waf all
+      run: python3 --version && sudo git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git && cd pyinstaller/bootloader && sudo python3 ./waf all
       
       
