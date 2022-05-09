@@ -31,7 +31,9 @@ jobs:
     - name: Build pyinstaller bootloader 
       run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; cd .. ; pip3 install wheel ; pip3 install -r requirements.txt ; python3 setup.py install ; pyinstaller --version
     - name: Package?
-      run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
+      run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean ; pwd
+    - name: Where am I?
+      run: pwd
     - name: Try to make files available as artifacts - spec
       uses: actions/upload-artifact@v3
       with:
