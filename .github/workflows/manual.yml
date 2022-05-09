@@ -27,4 +27,4 @@ jobs:
     steps:
     # Runs a single command using the runners shell
     - name: Install dependencies and build pyinstaller bootloader
-      run: choco install -y python3 git ; python3 --version ; choco list --local-only --exact python3 --trace ; dir C:\ProgramData\chocolatey\lib\python3\ ; which python3
+      run: choco install -y python3 --params "/InstallDir:C:\your\install\path" ; python3 --version ; choco list --local-only --exact python3 --trace ; dir C:\ProgramData\chocolatey\lib\python3\ ; cat C:\ProgramData\chocolatey\.chocolatey\python3.3.10.4\.registry
