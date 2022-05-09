@@ -6,15 +6,15 @@ name: Manual workflow
 # or API.
 on:
   workflow_dispatch:
-    # Inputs the workflow accepts.
+    # Inputs the workflow accepts. - maybe use this to specify something like Python version?
     inputs:
       name:
         # Friendly description to be shown in the UI instead of 'name'
-        description: 'Person to greet'
+        description: 'Python Version'
         # Default value if no value is explicitly provided
-        default: 'World'
+        default: '3.8.10'
         # Input has to be provided for the workflow to run
-        required: true
+        required: false
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -26,5 +26,8 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Send greeting
-      run: echo "Hello ${{ github.event.inputs.name }}"
+    - name: Install python
+  #    run: echo "Hello ${{ github.event.inputs.name }}"
+      run: apt update && apt install python3  && echo $(python3 --version)
+      
+      
