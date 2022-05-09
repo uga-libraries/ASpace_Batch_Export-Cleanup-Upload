@@ -26,10 +26,7 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     # Runs a single command using the runners shell
-    - name: Install dependencies
-      run: choco install -y python3 visualstudio2019-workload-vctools git ; python3 --version
-      
-    - name Build pyinstaller bootloader
-      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all
+    - name: Install dependencies and build pyinstaller bootloader
+      run: choco install -y python3 visualstudio2019-workload-vctools git ; python3 --version ; git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all
       
       
