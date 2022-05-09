@@ -32,7 +32,7 @@ jobs:
         architecture: 'x64'
     # Runs a single command using the runners shell
     - name: Check Python Version
-      run: python --version
+      run: python --version ; pip --version
     - name: Install build dependencies
       run: choco install -y git
 #    - name: Build pyinstaller bootloader
@@ -40,7 +40,7 @@ jobs:
     - name: Install cx_freeze
       run: python -m pip install --upgrade cx_Freeze
     - name: Package?
-      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; python -m pip install -f requirements.txt ; python cx_freeze.py build
+      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -f requirements.txt ; python cx_freeze.py build
     - name: Where are we?
       run: dir * ; dir ASpace_Batch_Export-Cleanup-Upload
     - name: Try to make files available as artifacts - spec
