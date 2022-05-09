@@ -8,13 +8,13 @@ on:
   workflow_dispatch:
     # Inputs the workflow accepts. - maybe use this to specify something like Python version?
     inputs:
-      name:
+      version:
         # Friendly description to be shown in the UI instead of 'name'
-        description: 'Placeholder'
+        description: 'Version to build'
         # Default value if no value is explicitly provided
-        default: 'Ignore Me'
+        default: ''
         # Input has to be provided for the workflow to run
-        required: false
+        required: true
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -29,6 +29,6 @@ jobs:
     - name: Install dependencies and build pyinstaller bootloader
       run: choco install -y python3 visualstudio2019-workload-vctools git ; python3 --version
     - name: Build pyinstaller bootloader 
-      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all
-      
-      
+      run: git clone -b v5.0.1 https://github.com/pyinstaller/pyinstaller.git ; cd pyinstaller/bootloader ; python3 ./waf all ; pyinstaller --version
+    - name: Package?
+      run: git clone -b ${{ github.event.inputs.version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pyinstaller -wF as_xtf_GUI.py -n ASpace_Batch_Exporter${{ github.event.inputs.version }} --icon=thumbnail.ico --clean
