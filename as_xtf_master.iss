@@ -11,7 +11,7 @@
 #define MyAppAssocKey StringChange(MyAppAssocName, " ", "") + MyAppAssocExt
 #define OutputBaseFilename "asbatch-vRELEASEVERSIONNUMBERNODOTS"
 #define LicenseLocation "D:\a\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\LICENSE.txt"
-#define EXESource "D:\a\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\build\exe.win-amd64-PYTHONVERSION\"
+#define EXESource "D:\a\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\ASpace_Batch_Export-Cleanup-Upload\build\exe.win-amd64-PYTHONVERSION"
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
@@ -43,7 +43,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "{#EXESource}"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "{#EXESource}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Registry]
