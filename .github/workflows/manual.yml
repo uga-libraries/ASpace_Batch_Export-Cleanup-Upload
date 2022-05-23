@@ -35,10 +35,8 @@ jobs:
     # Runs a single command using the runners shell
     - name: Check Python Version
       run: python --version ; pip --version
-    - name: Extract branch name
-      run: echo "::set-env name=BRANCH_NAME::$(echo ${GITHUB_REF#refs/heads/} | sed 's/\//_/g')"
     - name: Test branch name
-      run: echo "${BRANCH_NAME}"
+      run: echo "${GITHUB_REF_NAME}"
     - name: Install build dependencies
       run: choco install -y git wget sed
     - name: Install cx_freeze
@@ -46,9 +44,9 @@ jobs:
     - name: Install innosetup
       run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT
     - name: Build executables
-      run: git clone -b ${BRANCH_NAME} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build
+      run: git clone -b ${GITHUB_REF_NAME} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build
     - name: Bundle package with innosetup
-      run:  sed -i 's/RELEASEVERSIONNUMBERNODOTS/{{ github.event.inputs.software_version_without_dots }}/g' as_xtf_${BRANCH_NAME}.iss ; sed -i 's/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/' as_xtf_${BRANCH_NAME}.iss ; sed -i 's/PYTHONVERSION/${{ github.event.inputs.python_version }}/' as_xtf_${BRANCH_NAME}.iss ; iscc as_xtf_${BRANCH_NAME}.iss
+      run:  sed -i 's/RELEASEVERSIONNUMBERNODOTS/{{ github.event.inputs.software_version_without_dots }}/g' as_xtf_${GITHUB_REF_NAME}.iss ; sed -i 's/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/' as_xtf_${GITHUB_REF_NAME}.iss ; sed -i 's/PYTHONVERSION/${{ github.event.inputs.python_version }}/' as_xtf_${GITHUB_REF_NAME}.iss ; iscc as_xtf_${GITHUB_REF_NAME}.iss
     - name: Try to make files available as artifacts - build_dir
       uses: actions/upload-artifact@v3
       with:
