@@ -36,4 +36,4 @@ jobs:
     - name: Install build dependencies
       run: choco install -y git wget 
     - name: Package installer
-      run: wget https://jrsoftware.org/download.php/is.exe?site=1 -o innosetup.exe ; innosetup.exe /SILENT
+      run: wget https://jrsoftware.org/download.php/is.exe?site=1 -o innosetup.exe ; .\innosetup.exe /SILENT
