@@ -9,8 +9,10 @@ on:
     # Inputs the workflow accepts. - maybe use this to specify something like Python version?
     inputs:
       software_version:
-        description: 'Version to build'
-        default: 'master'
+        description: 'Release version number - e.g. 1.5.1'
+        required: true
+      software_version_without_dots:
+        description: 'Same as above but no dots - e.g. 150'
         required: true
       python_version:
         description: 'Python version to use'
@@ -38,9 +40,11 @@ jobs:
     - name: Install cx_freeze
       run: python -m pip install --upgrade cx_Freeze
     - name: Install innosetup
-      run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT ; sed --help
-    - name: Build installer
-      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build ; dir
+      run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT
+    - name: Build executables
+      run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build
+    - name: Bundle package with innosetup
+      run:  sed -i 's/RELEASEVERSIONNUMBERNODOTS/{{ github.event.inputs.software_version_without_dots }}/g' as_xtf_${GITHUB_REF##*/}.iss ; sed -i 's/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/' as_xtf_${GITHUB_REF##*/}.iss ; iscc as_xtf_${GITHUB_REF##*/}.iss
     - name: Try to make files available as artifacts - build_dir
       uses: actions/upload-artifact@v3
       with:
