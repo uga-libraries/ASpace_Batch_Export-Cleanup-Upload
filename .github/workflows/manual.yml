@@ -34,11 +34,11 @@ jobs:
     - name: Check Python Version
       run: python --version ; pip --version
     - name: Install build dependencies
-      run: choco install -y git wget 
+      run: choco install -y git wget sed
     - name: Install cx_freeze
       run: python -m pip install --upgrade cx_Freeze
     - name: Install innosetup
-      run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT
+      run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT ; sed --help
     - name: Build installer
       run: git clone -b ${{ github.event.inputs.software_version }} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build ; dir
     - name: Try to make files available as artifacts - build_dir
