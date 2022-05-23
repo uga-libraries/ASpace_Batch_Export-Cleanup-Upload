@@ -46,7 +46,7 @@ jobs:
     - name: Build executables
       run: git clone -b ${env:GITHUB_REF_NAME} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; python cx_freeze.py build
     - name: Bundle package with innosetup
-      run: cd ASpace_Batch_Export-Cleanup-Upload ; sed -i "s/RELEASEVERSIONNUMBERNODOTS/${{ github.event.inputs.software_version_without_dots }}/g" as_xtf_${env:GITHUB_REF_NAME}.iss ; sed -i "s/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/" as_xtf_${env:GITHUB_REF_NAME}.iss ; sed -i "s/PYTHONVERSION/${{ github.event.inputs.python_version }}/" as_xtf_${env:GITHUB_REF_NAME}.iss ; iscc as_xtf_${env:GITHUB_REF_NAME}.iss ; dir ; dir build ; dir Output
+      run: cd ASpace_Batch_Export-Cleanup-Upload ; sed -i "s/RELEASEVERSIONNUMBERNODOTS/${{ github.event.inputs.software_version_without_dots }}/g" as_xtf_${env:GITHUB_REF_NAME}.iss ; sed -i "s/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/" as_xtf_${env:GITHUB_REF_NAME}.iss ; sed -i "s/PYTHONVERSION/${{ github.event.inputs.python_version }}/" as_xtf_${env:GITHUB_REF_NAME}.iss ; iscc as_xtf_${env:GITHUB_REF_NAME}.iss ; dir ; dir build\exe.win-amd64-${{ github.event.inputs.python_version }}\ ; dir Output
     - name: Try to make files available as artifacts - build_dir
       uses: actions/upload-artifact@v3
       with:
