@@ -52,4 +52,9 @@ jobs:
       with:
           name: build_dir
           path: ASpace_Batch_Export-Cleanup-Upload/build
+    - name: Try to make files available as artifacts - output_dir
+      uses: actions/upload-artifact@v3
+      with:
+          name: output_dir
+          path: ASpace_Batch_Export-Cleanup-Upload/Output
 
