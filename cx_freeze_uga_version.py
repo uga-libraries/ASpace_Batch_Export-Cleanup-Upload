@@ -15,5 +15,5 @@ setup(
     version="0.1",
     description="Aspace Batch Export",
     options={"build_exe": build_exe_options},
-    executables=[Executable("as_xtf_GUI.py", base=base, targetName="ASpace_Batch_Export_vRELEASEVERSIONNUMBERNODOTS-UGA.exe")],
+    executables=[Executable("as_xtf_GUI.py", base=base, targetName="ASpace_Batch_Export_vRELEASEVERSIONNUMBERNODOTS-UGA.exe", icon="thumbnail.ico")],
 )
