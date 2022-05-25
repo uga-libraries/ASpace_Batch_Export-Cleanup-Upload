@@ -497,6 +497,25 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_ALLCONTLABELS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
+            # The following 2 if's - can I reference event from inside another event?
+            if event_simple == MARCXML_EXPORT_THREAD:
+                if defaults["marc_export_default"]["_KEEP_RAW_"] is True:
+                    logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
+                    if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
+                        filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
+                        open_file(filepath_marcs)
+                    else:
+                        filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
+                        open_file(filepath_marcs)
+            if event_simple == PDF_EXPORT_THREAD:
+                if defaults["pdf_export_default"]["_KEEP_RAW_"] is True:
+                    logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
+                    if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
+                        filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
+                        open_file(filepath_pdfs)
+                    else:
+                        filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
+                        open_file(filepath_pdfs)
         if event_simple == EXPORT_PROGRESS_THREAD:
             sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
                                        values_simple["-EXPORT_PROGRESS-"][1], orientation='h', no_button=True)
@@ -601,7 +620,7 @@ def run_gui(defaults):
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.5.1-UGA\n\n"  # TODO Change Version #
+                         "Version: 1.6.0\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_"),
                  sg.Button(" Check GUI Info ", key="_CHECK_PYPSG_")]
@@ -1634,7 +1653,7 @@ def get_pdf_options(defaults):
                                default=defaults["pdf_export_default"]["_NUMBERED_CS_"])],
                   [sg.Checkbox("Convert to EAD3", key="_USE_EAD3_",
                                default=defaults["pdf_export_default"]["_USE_EAD3_"])],
-                  [sg.Checkbox("Open ASpace Exports on Export", key="_KEEP_RAW_",
+                  [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
                                default=defaults["pdf_export_default"]["_KEEP_RAW_"])],
                   [sg.FolderBrowse(" Set output folder: ",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
@@ -1802,12 +1821,14 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     upload_output = remote.bulk_upload(xtf_files)
     logger.info(f'Uploading results: {upload_output}')
     print(upload_output)
-    for file in xtf_files:
-        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
-                                                                                    ["xtf_remote_path"],
-                                                                                    Path(file).name)])
-        logger.info(f'Updated file permissions: {update_permissions}')
-        print(update_permissions)
+    if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+        for file in xtf_files:
+            update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
+                                                                                        ["xtf_remote_path"],
+                                                                                        Path(file).name)])
+            if update_permissions:
+                logger.error(f'Updated file permissions error: {update_permissions}')
+                print(f'Updated file permissions error: {update_permissions}')
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
         logger.info(f'Re-indexing files...')
         index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
@@ -1881,9 +1902,12 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
     remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     if xtf_files is None:
         try:
-            cmds_output = remote.execute_commands(
-                ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"]),
-                 '/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"])])
+            index_cmds = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
+            if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+                logger.info(f'Updating permissions for all .lazy files in '
+                            f'{defaults["xtf_default"]["xtf_lazyindex_path"]}')
+                index_cmds.append('/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"]))
+            cmds_output = remote.execute_commands(index_cmds)
             logger.info(f'Re-index XTF complete: {cmds_output}')
             print(cmds_output)
             print("-" * 135)
@@ -1892,11 +1916,13 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
             print("An error occurred: " + str(e))
     else:
         try:
-            logger.info(f'Re-indexing XTF .lazy files: {defaults["xtf_default"]["xtf_indexer_path"]}')
             commands = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
-            for file in xtf_files:
-                lazyfile = Path(file).name + ".lazy"
-                commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"], lazyfile))
+            if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+                logger.info(f'Updating permissions for .lazy files: {defaults["xtf_default"]["xtf_indexer_path"]}')
+                for file in xtf_files:
+                    lazyfile = Path(file).name + ".lazy"
+                    commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"],
+                                                                  lazyfile))
             cmds_output = remote.execute_commands(commands)
             logger.info(f'Re-index XTF complete: {cmds_output}')
             print(cmds_output)
@@ -1952,6 +1978,9 @@ def get_xtf_options(defaults):
                                   key="_XTFOPT_HELP_")],
                          [sg.Checkbox("Re-index changed records after upload/delete", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
+                         [sg.Checkbox("Update .xml and .lazy files permissions to RW-RW-R (0664)",
+                                      key="_UPDATE_PERMISSIONS_",
+                                      default=defaults["xtf_default"]["_UPDATE_PERMISSIONS_"])],
                          [sg.FolderBrowse(button_text=" Select source folder: ",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
                           sg.InputText(default_text=defaults["xtf_default"]["xtf_local_path"], key="_XTF_SOURCE_")],
@@ -1982,6 +2011,7 @@ def get_xtf_options(defaults):
                 with open("defaults.json", "w") as defaults_xtf:
                     defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
                     defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
+                    defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] = values_xtfopt["_UPDATE_PERMISSIONS_"]
                     json.dump(defaults, defaults_xtf)
                     defaults_xtf.close()
                 xtf_option_active = False
@@ -2107,7 +2137,7 @@ def delete_log_files():
             file_time = os.path.getmtime(logfile)
             current_time = time.time()
             delete_time = current_time - 2630000  # This is for 1 month.
-            if file_time <= delete_time:  # If a file is more than 2 months old, delete
+            if file_time <= delete_time:  # If a file is more than 1 month old, delete
                 os.remove(logfile)
 
 
