@@ -62,7 +62,7 @@ class RemoteClient:
             response = stdout.readlines()
             for line in response:
                 output_string += f'{line}'
-                logger.info(f'INPUT: {cmd} | OUTPUT: {line}')  # TODO: This generates a lot of lines in the log file
+                # logger.info(f'INPUT: {cmd} | OUTPUT: {line}')  # This generates a lot of lines in the log file
         return output_string
 
     def bulk_upload(self, files):
