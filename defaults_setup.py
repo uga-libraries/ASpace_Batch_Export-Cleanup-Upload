@@ -45,8 +45,8 @@ def set_defaults_file():
                 if default not in defaults_keys:
                     raise Exception
             DEFAULTS.close()
-    except Exception as xtf_error:
-        print(xtf_error)
+    except Exception as defaults_error:
+        print(defaults_error)
         print("Generating new defaults file...", end='', flush=True)
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
@@ -56,7 +56,7 @@ def set_defaults_file():
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
                                                "_USE_EAD3_": False, "_KEEP_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
-                        "labels_export_default": source_labels,
+                        "labels_export_default": {"_OUTPUT_DIR_": source_labels},
                         "ead_cleanup_defaults": {"_ADD_EADID_": True, "_DEL_NOTES_": True, "_CLN_EXTENTS_": True,
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_LANGTRAIL_": True,
                                                  "_DEL_CONTAIN_": True, "_ADD_PHYSLOC_": True, "_DEL_ATIDS_": True,

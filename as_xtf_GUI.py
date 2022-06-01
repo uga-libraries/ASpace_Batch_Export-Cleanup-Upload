@@ -168,8 +168,8 @@ def run_gui(defaults):
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_",
                                    tooltip=' Open folder where container label files are stored ')],
                         [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
-                                         initial_folder=defaults["labels_export_default"]),
-                         sg.InputText(defaults["labels_export_default"], key="_OUTPUT_DIR_LABEL_INPUT_",
+                                         initial_folder=defaults["labels_export_default"]["_OUTPUT_DIR_"]),
+                         sg.InputText(defaults["labels_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_LABEL_INPUT_",
                                       enable_events=True)],
                         [sg.Text(" " * 140)]
                         ]
@@ -312,21 +312,9 @@ def run_gui(defaults):
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_":
-            logger.info(f'Opening clean EAD exports directory: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
-                filepath_eads = str(Path.cwd().joinpath("clean_eads"))
-                open_file(filepath_eads)
-            else:
-                filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_eads)
+            open_folder(defaults, "clean_eads", "ead_export_default", "_OUTPUT_DIR_")
         if event_simple == "_OPEN_RAW_EXPORTS_":
-            logger.info(f'Opening raw EAD exports directory: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
-                filepath_eads = str(Path.cwd().joinpath("source_eads"))
-                open_file(filepath_eads)
-            else:
-                filepath_eads = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"]))
-                open_file(filepath_eads)
+            open_folder(defaults, "source_eads", "ead_export_default", "_SOURCE_DIR_")
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
             logger.info(f'_EXPORT_MARCXML_ - User initiated exporting MARCXMLs:\n{values_simple["resource_id_input"]}')
@@ -367,13 +355,7 @@ def run_gui(defaults):
                     start_thread(get_all_marcxml, args, window_simple)
                     logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_OPEN_MARC_DEST_":
-            logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
-                filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
-                open_file(filepath_marcs)
-            else:
-                filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_marcs)
+            open_folder(defaults, "source_marcs", "marc_export_default", "_OUTPUT_DIR_")
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
@@ -416,13 +398,7 @@ def run_gui(defaults):
                     start_thread(get_all_pdfs, args, window_simple)
                     logger.info("PDF_EXPORT_THREAD started")
         if event_simple == "_OPEN_PDF_DEST_":
-            logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
-                filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
-                open_file(filepath_pdfs)
-            else:
-                filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_pdfs)
+            open_folder(defaults, "source_pdfs", "pdf_export_default", "_OUTPUT_DIR_")
         if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
@@ -471,17 +447,11 @@ def run_gui(defaults):
                 logger.warning("_OUTPUT_DIR_LABEL_INPUT_ - User selected invalid export output")
             else:
                 with open("defaults.json", "w") as defaults_labels:
-                    defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
+                    defaults["labels_export_default"]["_OUTPUT_DIR_"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
                     json.dump(defaults, defaults_labels)
                     defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
-            logger.info(f'Opening Container Labels exports directory: {defaults["labels_export_default"]}')
-            if not defaults["labels_export_default"]:
-                filepath_labels = str(Path.cwd().joinpath("source_labels"))
-                open_file(filepath_labels)
-            else:
-                filepath_labels = str(Path(defaults["labels_export_default"]))
-                open_file(filepath_labels)
+            open_folder(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
         if event_simple == "_CONTOPT_HELP_":
             logger.info(f'User opened CONTLABELS Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
@@ -522,75 +492,15 @@ def run_gui(defaults):
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
-            logger.info(f'Clearing Cleaned EAD Export folder: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            clean_files = os.listdir(defaults["ead_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in clean_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in clean_eads".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in clean_eads folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "clean_eads", "ead_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear EAD Export Folder":
-            logger.info(f'Clearing Raw EAD Export folder: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            raw_files = os.listdir(defaults["ead_export_default"]["_SOURCE_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_eads".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            except Exception as e:
-                print("No files in source_eads folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_SOURCE_DIR_"]}: {e}')
+            clear_exports(defaults, "source_eads", "ead_export_default", "_SOURCE_DIR_")
         if event_simple == "Clear MARCXML Export Folder":
-            logger.info(f'Clearing MARCXML Export folder: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            raw_files = os.listdir(defaults["marc_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_marcs".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in source_marcs folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["marc_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "source_marcs", "marc_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear Container Label Export Folder":
-            logger.info(f'Clearing Container Label Export folder: {defaults["labels_export_default"]}')
-            raw_files = os.listdir(defaults["labels_export_default"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["labels_export_default"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_labels".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["labels_export_default"]}')
-            except Exception as e:
-                print("No files in source_labels folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["labels_export_default"]}: {e}')
+            clear_exports(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear PDF Export Folder":
-            logger.info(f'Clearing PDF Export folder: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            raw_files = os.listdir(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_pdfs".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in source_pdfs folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "source_pdfs", "pdf_export_default", "_OUTPUT_DIR_")
         if event_simple == "Reset Defaults":
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
                                            "You will have to restart the program to see changes.")
@@ -1730,11 +1640,11 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         if export_all is True:
             logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"], export_all=True)
+                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"], export_all=True)
         else:
             logger.info(f'Beginning CONTLABELS export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"])
+                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             logger.info(f'Exporting: {input_id}')
@@ -2037,6 +1947,63 @@ def open_file(filepath):
         subprocess.Popen(["xdg-open", filepath])
 
 
+def open_folder(defaults, record_type, record_key, folder_path):
+    """
+    Takes user input to open specified directory for exported files.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        record_type (str): if no value in folder_path key, then use default path, ex. clean_eads
+        record_key (str): the record type found in the defaults.json file, ex. ead_export_default
+        folder_path (str): the key to the folder path found in the defaults.json file, ex. _OUTPUT_DIR_
+
+    Returns:
+        None
+    """
+    logger.info(f'Opening {record_type} directory: {defaults[record_key][folder_path]}')
+    try:
+        if not defaults[record_key][folder_path]:
+            filepath_eads = str(Path.cwd().joinpath(record_type))
+            open_file(filepath_eads)
+        else:
+            filepath_eads = str(Path(defaults[record_key][folder_path]))
+            open_file(filepath_eads)
+    except Exception as openfdr_error:
+        print(f'Error opening {record_type} directory: {openfdr_error}')
+        logger.error(f'Error opening {record_type} directory: {openfdr_error}')
+
+
+def clear_exports(defaults, record_type, record_key, folder_path):
+    """
+    Takes user input to open specified directory for exported files.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        record_type (str): if no value in folder_path key, then use default path, ex. clean_eads
+        record_key (str): the record type found in the defaults.json file, ex. ead_export_default
+        folder_path (str): the key to the folder path found in the defaults.json file, ex. _OUTPUT_DIR_
+
+    Returns:
+        None
+    """
+    logger.info(f'Clearing {record_type} directory: {defaults[record_key][folder_path]}')
+    clean_files = os.listdir(defaults[record_key][folder_path])
+    try:
+        if len(clean_files) > 0:
+            file_count = 0
+            for file in clean_files:
+                file_count += 1
+                full_path = str(Path(defaults[record_key][folder_path], file))
+                os.remove(full_path)
+            print(f'Deleted {str(file_count)} files in clean_eads')
+            logger.info(f'Deleted {file_count} files in {defaults[record_key][folder_path]}')
+        else:
+            print(f'No files in {record_type} folder\n')
+    except Exception as e:
+        print(f'Error deleting files from {record_type} directory\n' + str(e))
+        logger.error(f'Error deleting files from {defaults[record_key][folder_path]} directory: {e}')
+
+
 def fetch_local_files(local_file_dir, select_files):
     """
     Upload local files to remote host.
@@ -2130,6 +2097,12 @@ def start_thread(function, args, gui_window):
 
 
 def delete_log_files():
+    """
+    Deletes log file(s) found in logs folder if file(s) are older than 1 month.
+
+    Returns:
+        None
+    """
     if os.path.isdir(Path(os.getcwd(), "logs")) is True:
         logsdir = str(Path(os.getcwd(), "logs"))
         for file in os.listdir(logsdir):
