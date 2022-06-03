@@ -1,0 +1,53 @@
+# This is a basic workflow that is manually triggered
+
+name: Build dist exe
+
+# Controls when the action will run. Workflow runs when manually triggered using the UI
+# or API.
+on:
+  workflow_dispatch:
+    # Inputs the workflow accepts. - maybe use this to specify something like Python version?
+    inputs:
+      software_version:
+        description: 'Release version number - e.g. 1.5.1'
+        required: true
+      software_version_without_dots:
+        description: 'Same as above but no dots - e.g. 150'
+        required: true
+      python_version:
+        description: 'Python version to use'
+        default: '3.10'
+        required: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # single job called 'build' for entire run
+  build:
+    # The type of runner that the job will run on
+    runs-on: windows-2019
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{ github.event.inputs.python_version }}
+        architecture: 'x64'
+    # Runs a single command using the runners shell
+    - name: Check Python Version
+      run: python --version ; pip --version
+    - name: Install build dependencies
+      run: choco install -y git wget sed
+    - name: Install cx_freeze
+      run: python -m pip install --upgrade cx_Freeze
+    - name: Install innosetup
+      run: wget "https://jrsoftware.org/download.php/is.exe?site=1" -o wget_output -O innosetup.exe ; .\innosetup.exe /SILENT
+    - name: Build executables
+      run: git clone -b ${env:GITHUB_REF_NAME} https://github.com/kco-uga/ASpace_Batch_Export-Cleanup-Upload.git ; cd ASpace_Batch_Export-Cleanup-Upload ; pip install -r requirements.txt ; sed -i "s/DEVELOPMENT/${{ github.event.inputs.software_version }}/g" as_xtf_GUI.py ; python cx_freeze.py build
+    - name: Bundle package with innosetup
+      run: cd ASpace_Batch_Export-Cleanup-Upload ; Rename-Item -Path "build\exe.win-amd64-${{ github.event.inputs.python_version }}\ASpace_Batch_Export_vRELEASEVERSIONNUMBERNODOTS.exe" -NewName "ASpace_Batch_Export_v${{ github.event.inputs.software_version_without_dots }}.exe"  ; sed -i "s/RELEASEVERSIONNUMBERNODOTS/${{ github.event.inputs.software_version_without_dots }}/g" as_xtf.iss ; sed -i "s/RELEASEVERSIONNUMBER/${{ github.event.inputs.software_version }}/" as_xtf.iss ; sed -i "s/PYTHONVERSION/${{ github.event.inputs.python_version }}/" as_xtf.iss ; iscc as_xtf.iss
+    - name: Try to make files available as artifacts - output_dir
+      uses: actions/upload-artifact@v3
+      with:
+          name: output_dir
+          path: ASpace_Batch_Export-Cleanup-Upload/Output
+
