@@ -69,8 +69,8 @@ def run_gui(defaults):
     rid_box_len = 36
     if xtf_version is True:
         logger.info("XTF Login popup initiated")
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-            get_xtf_log(defaults, login=True)
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, close_program_xtf \
+            = get_xtf_log(defaults, login=True)
         if close_program_xtf is True:
             logger.info("User initiated closing program")
             sys.exit()
@@ -81,7 +81,8 @@ def run_gui(defaults):
     else:
         xtf_login_menu_button = '!Change XTF Login Credentials'
         xtf_opt_button = '!Change XTF Options'
-        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path = "", "", "", "", ""
+        xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path = "", "", "", \
+                                                                                                     "", "", ""
     cleanup_defaults = ["_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_",
                         "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_",
                         "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_"]
@@ -167,8 +168,8 @@ def run_gui(defaults):
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_",
                                    tooltip=' Open folder where container label files are stored ')],
                         [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
-                                         initial_folder=defaults["labels_export_default"]),
-                         sg.InputText(defaults["labels_export_default"], key="_OUTPUT_DIR_LABEL_INPUT_",
+                                         initial_folder=defaults["labels_export_default"]["_OUTPUT_DIR_"]),
+                         sg.InputText(defaults["labels_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_LABEL_INPUT_",
                                       enable_events=True)],
                         [sg.Text(" " * 140)]
                         ]
@@ -311,21 +312,9 @@ def run_gui(defaults):
         if event_simple == "Change EAD Cleanup Defaults" or event_simple == "Change Cleanup Defaults":
             cleanup_options = get_cleanup_defaults(cleanup_defaults, defaults)
         if event_simple == "_OPEN_CLEAN_B_":
-            logger.info(f'Opening clean EAD exports directory: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["ead_export_default"]["_OUTPUT_DIR_"]:
-                filepath_eads = str(Path.cwd().joinpath("clean_eads"))
-                open_file(filepath_eads)
-            else:
-                filepath_eads = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_eads)
+            open_folder(defaults, "clean_eads", "ead_export_default", "_OUTPUT_DIR_")
         if event_simple == "_OPEN_RAW_EXPORTS_":
-            logger.info(f'Opening raw EAD exports directory: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            if not defaults["ead_export_default"]["_SOURCE_DIR_"]:
-                filepath_eads = str(Path.cwd().joinpath("source_eads"))
-                open_file(filepath_eads)
-            else:
-                filepath_eads = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"]))
-                open_file(filepath_eads)
+            open_folder(defaults, "source_eads", "ead_export_default", "_SOURCE_DIR_")
         # ------------- MARCXML SECTION -------------
         if event_simple == "_EXPORT_MARCXML_":
             logger.info(f'_EXPORT_MARCXML_ - User initiated exporting MARCXMLs:\n{values_simple["resource_id_input"]}')
@@ -366,13 +355,7 @@ def run_gui(defaults):
                     start_thread(get_all_marcxml, args, window_simple)
                     logger.info("MARCXML_EXPORT_THREAD started")
         if event_simple == "_OPEN_MARC_DEST_":
-            logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
-                filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
-                open_file(filepath_marcs)
-            else:
-                filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_marcs)
+            open_folder(defaults, "source_marcs", "marc_export_default", "_OUTPUT_DIR_")
         if event_simple == "_MARCXML_OPTIONS_" or event_simple == "Change MARCXML Export Options":
             get_marc_options(defaults)
         # ------------- PDF SECTION -------------
@@ -415,13 +398,7 @@ def run_gui(defaults):
                     start_thread(get_all_pdfs, args, window_simple)
                     logger.info("PDF_EXPORT_THREAD started")
         if event_simple == "_OPEN_PDF_DEST_":
-            logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
-                filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
-                open_file(filepath_pdfs)
-            else:
-                filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
-                open_file(filepath_pdfs)
+            open_folder(defaults, "source_pdfs", "pdf_export_default", "_OUTPUT_DIR_")
         if event_simple == "_PDF_OPTIONS_" or event_simple == "Change PDF Export Options":
             get_pdf_options(defaults)
         # ------------- CONTAINER LABEL SECTION -------------
@@ -470,17 +447,11 @@ def run_gui(defaults):
                 logger.warning("_OUTPUT_DIR_LABEL_INPUT_ - User selected invalid export output")
             else:
                 with open("defaults.json", "w") as defaults_labels:
-                    defaults["labels_export_default"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
+                    defaults["labels_export_default"]["_OUTPUT_DIR_"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
                     json.dump(defaults, defaults_labels)
                     defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
-            logger.info(f'Opening Container Labels exports directory: {defaults["labels_export_default"]}')
-            if not defaults["labels_export_default"]:
-                filepath_labels = str(Path.cwd().joinpath("source_labels"))
-                open_file(filepath_labels)
-            else:
-                filepath_labels = str(Path(defaults["labels_export_default"]))
-                open_file(filepath_labels)
+            open_folder(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
         if event_simple == "_CONTOPT_HELP_":
             logger.info(f'User opened CONTLABELS Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
@@ -496,81 +467,40 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_ALLCONTLABELS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
+            # The following 2 if's - can I reference event from inside another event?
+            if event_simple == MARCXML_EXPORT_THREAD:
+                if defaults["marc_export_default"]["_KEEP_RAW_"] is True:
+                    logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
+                    if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
+                        filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
+                        open_file(filepath_marcs)
+                    else:
+                        filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
+                        open_file(filepath_marcs)
+            if event_simple == PDF_EXPORT_THREAD:
+                if defaults["pdf_export_default"]["_KEEP_RAW_"] is True:
+                    logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
+                    if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
+                        filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
+                        open_file(filepath_pdfs)
+                    else:
+                        filepath_pdfs = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"]))
+                        open_file(filepath_pdfs)
         if event_simple == EXPORT_PROGRESS_THREAD:
             sg.one_line_progress_meter("Export progress", values_simple["-EXPORT_PROGRESS-"][0],
                                        values_simple["-EXPORT_PROGRESS-"][1], orientation='h', no_button=True)
         # ------------- MENU OPTIONS SECTION -------------
         # ------------------- FILE -------------------
         if event_simple == "Clear Cleaned EAD Export Folder":
-            logger.info(f'Clearing Cleaned EAD Export folder: {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            clean_files = os.listdir(defaults["ead_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in clean_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["ead_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in clean_eads".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in clean_eads folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "clean_eads", "ead_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear EAD Export Folder":
-            logger.info(f'Clearing Raw EAD Export folder: {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            raw_files = os.listdir(defaults["ead_export_default"]["_SOURCE_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["ead_export_default"]["_SOURCE_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_eads".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["ead_export_default"]["_SOURCE_DIR_"]}')
-            except Exception as e:
-                print("No files in source_eads folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["ead_export_default"]["_SOURCE_DIR_"]}: {e}')
+            clear_exports(defaults, "source_eads", "ead_export_default", "_SOURCE_DIR_")
         if event_simple == "Clear MARCXML Export Folder":
-            logger.info(f'Clearing MARCXML Export folder: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            raw_files = os.listdir(defaults["marc_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_marcs".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in source_marcs folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["marc_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "source_marcs", "marc_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear Container Label Export Folder":
-            logger.info(f'Clearing Container Label Export folder: {defaults["labels_export_default"]}')
-            raw_files = os.listdir(defaults["labels_export_default"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["labels_export_default"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_labels".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["labels_export_default"]}')
-            except Exception as e:
-                print("No files in source_labels folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["labels_export_default"]}: {e}')
+            clear_exports(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
         if event_simple == "Clear PDF Export Folder":
-            logger.info(f'Clearing PDF Export folder: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            raw_files = os.listdir(defaults["pdf_export_default"]["_OUTPUT_DIR_"])
-            try:
-                file_count = 0
-                for file in raw_files:
-                    file_count += 1
-                    full_path = str(Path(defaults["pdf_export_default"]["_OUTPUT_DIR_"], file))
-                    os.remove(full_path)
-                print("Deleted {} files in source_pdfs".format(str(file_count)))
-                logger.info(f'Deleted {file_count} files in {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
-            except Exception as e:
-                print("No files in source_pdfs folder\n" + str(e))
-                logger.error(f'Tried deleting files from {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}: {e}')
+            clear_exports(defaults, "source_pdfs", "pdf_export_default", "_OUTPUT_DIR_")
         if event_simple == "Reset Defaults":
             reset_defaults = sg.PopupYesNo("You are about to reset your configurations. Are you sure? \n"
                                            "You will have to restart the program to see changes.")
@@ -590,16 +520,17 @@ def run_gui(defaults):
                                              xtf_ver=xtf_version)
         if event_simple == 'Change XTF Login Credentials':
             logger.info(f'User initiated changing XTF login credentials within app')
-            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, close_program_xtf = \
-                get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
-                            xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path)
+            xtf_username, xtf_password, xtf_hostname, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, \
+                close_program_xtf = get_xtf_log(defaults, login=False, xtf_un=xtf_username, xtf_pw=xtf_password,
+                                                xtf_ht=xtf_hostname, xtf_rp=xtf_remote_path, xtf_ip=xtf_indexer_path,
+                                                xtf_lp=xtf_lazy_path)
         # ------------------- HELP -------------------
         if event_simple == "About":
             logger.info(f'User initiated About menu option')
             window_about_active = True
             layout_about = [
                 [sg.Text("Created by Corey Schmidt for the University of Georgia Libraries\n\n"
-                         "Version: 1.5.1\n\n"  # TODO Change Version #
+                         "Version: 1.6.0\n\n"  # TODO Change Version #
                          "To check for the latest versions, check the Github\n", font=("Roboto", 12))],
                 [sg.OK(bind_return_key=True, key="_ABOUT_OK_"), sg.Button(" Check Github ", key="_CHECK_GITHUB_"),
                  sg.Button(" Check GUI Info ", key="_CHECK_PYPSG_")]
@@ -668,8 +599,8 @@ def run_gui(defaults):
                     logger.info(f'User began upload of files to XTF: _UPLOAD_TO_XTF_; Files: {values_upl}')
                     xtfup_thread = threading.Thread(target=upload_files_xtf, args=(defaults, xtf_hostname, xtf_username,
                                                                                    xtf_password, xtf_remote_path,
-                                                                                   xtf_indexer_path, values_upl,
-                                                                                   window_simple,))
+                                                                                   xtf_indexer_path, xtf_lazy_path,
+                                                                                   values_upl, window_simple,))
                     xtfup_thread.start()
                     window_upl.close()
                     window_upl_active = False
@@ -683,7 +614,7 @@ def run_gui(defaults):
                 logger.info(f'Getting remotes files from XTF')
                 print("Getting remote files, this may take a second...", flush=True, end="")
                 remote_files = get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path,
-                                                xtf_indexer_path)
+                                                xtf_indexer_path, xtf_lazy_path)
             except Exception as e:
                 logger.error(f'Error when getting files from XTF: {e}')
             else:
@@ -715,15 +646,16 @@ def run_gui(defaults):
                         xtfdel_thread = threading.Thread(target=delete_files_xtf, args=(defaults, xtf_hostname,
                                                                                         xtf_username, xtf_password,
                                                                                         xtf_remote_path,
-                                                                                        xtf_indexer_path, values_del,
-                                                                                        window_simple,))
+                                                                                        xtf_indexer_path, xtf_lazy_path,
+                                                                                        values_del, window_simple,))
                         xtfdel_thread.start()
                         window_del.close()
                         window_del_active = False
         if event_simple == "_INDEX_":
             logger.info(f'User initiated re-indexing: _INDEX_')
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
-                                                                     xtf_remote_path, xtf_indexer_path, window_simple,))
+                                                                     xtf_remote_path, xtf_indexer_path,
+                                                                     xtf_lazy_path, window_simple,))
             xtfind_thread.start()
             window_simple[f'{"_UPLOAD_"}'].update(disabled=True)
             window_simple[f'{"_INDEX_"}'].update(disabled=True)
@@ -879,7 +811,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
     return as_username, as_password, as_api, close_program, client, asp_version, repositories, resource_ids, xtf_version
 
 
-def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None):
+def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None, xtf_lp=None):
     """
     Gets a user's XTF credentials.
 
@@ -894,6 +826,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_ht (object, optional): the host URL for the XTF instance
         xtf_rp (object, optional): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_ip (object, optional): the path (file) where the website indexer is located
+        xtf_lp (object, optional): the path (folder) where xml.lazy files are stored - for permissions updates
 
     Returns:
         xtf_username (str): user's XTF username
@@ -901,6 +834,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
+        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
     xtf_username = xtf_un
@@ -908,6 +842,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
     xtf_host = xtf_ht
     xtf_remote_path = xtf_rp
     xtf_indexer_path = xtf_ip
+    xtf_lazy_path = xtf_lp
     if login is True:
         save_button_xtf = " Save and Continue "
     else:
@@ -920,12 +855,14 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                        [sg.Text("XTF password:", font=("Roboto", 11))],
                        [sg.Text("XTF Hostname:", font=("Roboto", 11))],
                        [sg.Text("XTF Remote Path:", font=("Roboto", 11))],
-                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))]]
+                       [sg.Text("XTF Indexer Path:", font=("Roboto", 11))],
+                       [sg.Text("XTF Lazy Index Path:", font=("Roboto", 11))]]
         xtflog_col2 = [[sg.InputText(focus=True, key="_XTF_UNAME_")],
                        [sg.InputText(password_char='*', key="_XTF_PWORD_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_host"], key="_XTF_HOSTNAME_")],
                        [sg.InputText(defaults["xtf_default"]["xtf_remote_path"], key="_XTF_REMPATH_")],
-                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")]]
+                       [sg.InputText(defaults["xtf_default"]["xtf_indexer_path"], key="_XTF_INDPATH_")],
+                       [sg.InputText(defaults["xtf_default"]["xtf_lazyindex_path"], key="_XTF_LAZYPATH_")]]
         layout_xtflog = [
             [sg.Column(xtflog_col1), sg.Column(xtflog_col2)],
             [sg.Button(save_button_xtf, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
@@ -938,7 +875,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 try:
                     remote = xup.RemoteClient(values_xlog["_XTF_HOSTNAME_"], values_xlog["_XTF_UNAME_"],
                                               values_xlog["_XTF_PWORD_"], values_xlog["_XTF_REMPATH_"],
-                                              values_xlog["_XTF_INDPATH_"])
+                                              values_xlog["_XTF_INDPATH_"], values_xlog["_XTF_LAZYPATH_"])
                     remote.client = remote.connect_remote()
                     if remote.scp is None:
                         raise Exception(remote.client)
@@ -948,14 +885,17 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                         xtf_host = values_xlog["_XTF_HOSTNAME_"]
                         xtf_remote_path = values_xlog["_XTF_REMPATH_"]
                         xtf_indexer_path = values_xlog["_XTF_INDPATH_"]
+                        xtf_lazy_path = values_xlog["_XTF_LAZYPATH_"]
                         logger.info(f'XTF Info: \nHOSTNAME: {values_xlog["_XTF_HOSTNAME_"]}\n'
                                     f'REMOTE_PATH: {values_xlog["_XTF_REMPATH_"]}\n'
-                                    f'INDEXER_PATH: {values_xlog["_XTF_INDPATH_"]}\n')
+                                    f'INDEXER_PATH: {values_xlog["_XTF_INDPATH_"]}\n'
+                                    f'LAZY_INDEX_PATH: {values_xlog["_XTF_LAZYPATH_"]}')
                         with open("defaults.json",
                                   "w") as defaults_xtf:
                             defaults["xtf_default"]["xtf_host"] = values_xlog["_XTF_HOSTNAME_"]
                             defaults["xtf_default"]["xtf_remote_path"] = values_xlog["_XTF_REMPATH_"]
                             defaults["xtf_default"]["xtf_indexer_path"] = values_xlog["_XTF_INDPATH_"]
+                            defaults["xtf_default"]["xtf_lazyindex_path"] = values_xlog["_XTF_LAZYPATH_"]
                             json.dump(defaults, defaults_xtf)
                             defaults_xtf.close()
                         window_xtflog_active = False
@@ -966,7 +906,8 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                              str(e))
                     logger.error(f'XTF credentials failed.\nHostname: {values_xlog["_XTF_HOSTNAME_"]}'
                                  f'\nRemote Path: {values_xlog["_XTF_REMPATH_"]}'
-                                 f'\nIndexer Path: {values_xlog["_XTF_INDPATH_"]}')
+                                 f'\nIndexer Path: {values_xlog["_XTF_INDPATH_"]}'
+                                 f'\nLazy Index Path: {values_xlog["_XTF_LAZYPATH_"]}')
                     window_xtflog_active = True
             if event_xlog is None or event_xlog == 'Cancel':
                 logger.info(f'User cancelled XTF login')
@@ -976,7 +917,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
                 close_program = True
                 break
         window_xtfcred.close()
-    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, close_program
+    return xtf_username, xtf_password, xtf_host, xtf_remote_path, xtf_indexer_path, xtf_lazy_path, close_program
 
 
 def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_simple, gui_window, export_all=False):
@@ -1622,7 +1563,7 @@ def get_pdf_options(defaults):
                                default=defaults["pdf_export_default"]["_NUMBERED_CS_"])],
                   [sg.Checkbox("Convert to EAD3", key="_USE_EAD3_",
                                default=defaults["pdf_export_default"]["_USE_EAD3_"])],
-                  [sg.Checkbox("Open ASpace Exports on Export", key="_KEEP_RAW_",
+                  [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
                                default=defaults["pdf_export_default"]["_KEEP_RAW_"])],
                   [sg.FolderBrowse(" Set output folder: ",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
@@ -1699,11 +1640,12 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         if export_all is True:
             logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"], export_all=True)
+                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"],
+                                           export_all=True)
         else:
             logger.info(f'Beginning CONTLABELS export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"])
+                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             logger.info(f'Exporting: {input_id}')
@@ -1765,8 +1707,8 @@ def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
 
 
-def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_upl,
-                     gui_window):
+def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                     xtf_lazy_path, values_upl, gui_window):
     """
     Uploads files to XTF.
     Args:
@@ -1776,12 +1718,13 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_upl (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     logger.info(f'Uploading files to XTF. Files: {values_upl["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
                 f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Uploading files...")
@@ -1789,23 +1732,26 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     upload_output = remote.bulk_upload(xtf_files)
     logger.info(f'Uploading results: {upload_output}')
     print(upload_output)
-    for file in xtf_files:
-        update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
-                                                                                    ["xtf_remote_path"],
-                                                                                    Path(file).name)])
-        logger.info(f'Updated file permissions: {update_permissions}')
-        print(update_permissions)
+    if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+        for file in xtf_files:
+            update_permissions = remote.execute_commands(['/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]
+                                                                                        ["xtf_remote_path"],
+                                                                                        Path(file).name)])
+            if update_permissions:
+                logger.error(f'Updated file permissions error: {update_permissions}')
+                print(f'Updated file permissions error: {update_permissions}')
     if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
         logger.info(f'Re-indexing files...')
-        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,  gui_window)
+        index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+                  gui_window, xtf_files)
     else:
         print("-" * 135)
     remote.disconnect()
     gui_window.write_event_value('-XTFUP_THREAD-', (threading.current_thread().name,))
 
 
-def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, values_del,
-                     gui_window):
+def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+                     values_del, gui_window):
     """
     Delete files from XTF.
     Args:
@@ -1815,12 +1761,13 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
         values_del (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
     Returns:
         None
     """
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     logger.info(f'Deleting files from XTF. Files: {values_del["_SELECT_FILES_"]}, Remote Path: {xtf_remote_path}, '
                 f'Local path: {defaults["xtf_default"]["xtf_local_path"]}')
     print("Deleting files...")
@@ -1836,7 +1783,7 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         if defaults["xtf_default"]["_REINDEX_AUTO_"] is True:
             logger.info(f'Re-indexing files...')
             index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
-                      gui_window)
+                      xtf_lazy_path, gui_window)
     except Exception as e:
         logger.error(f'Deleting files from XTF error: {e}')
         print("An error occurred: " + str(e))
@@ -1844,7 +1791,8 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
     gui_window.write_event_value('-XTFDEL_THREAD-', (threading.current_thread().name,))
 
 
-def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, gui_window):
+def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path,
+              gui_window, xtf_files=None):
     """
     Runs a re-index of all changed or new files in XTF. It is not a clean re-index.
     Args:
@@ -1854,26 +1802,51 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        xtf_lazy_path (str): the path (folder) where the lazy files are generated from an index, used to set permissions
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+        xtf_files (list, optional): the list of file paths of files that were uploaded
     Returns:
         None
     """
     logger.info(f'Beginning XTF re-index...')
     print("Beginning Re-Index, this may take awhile...")
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
-    try:
-        cmds_output = remote.execute_commands(
-            ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])])
-        logger.info(f'Re-index XTF complete: {cmds_output}')
-        print(cmds_output)
-        print("-" * 135)
-    except Exception as e:
-        print("An error occurred: " + str(e))
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
+    if xtf_files is None:
+        try:
+            index_cmds = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
+            if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+                logger.info(f'Updating permissions for all .lazy files in '
+                            f'{defaults["xtf_default"]["xtf_lazyindex_path"]}')
+                index_cmds.append('/bin/chmod 664 {}/*'.format(defaults["xtf_default"]["xtf_lazyindex_path"]))
+            cmds_output = remote.execute_commands(index_cmds)
+            logger.info(f'Re-index XTF complete: {cmds_output}')
+            print(cmds_output)
+            print("-" * 135)
+        except Exception as e:
+            logger.error(f'Re-index XTF error: {e}')
+            print("An error occurred: " + str(e))
+    else:
+        try:
+            commands = ['{} -index default'.format(defaults["xtf_default"]["xtf_indexer_path"])]
+            if defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] is True:
+                logger.info(f'Updating permissions for .lazy files: {defaults["xtf_default"]["xtf_indexer_path"]}')
+                for file in xtf_files:
+                    lazyfile = Path(file).name + ".lazy"
+                    commands.append('/bin/chmod 664 {}/{}'.format(defaults["xtf_default"]["xtf_lazyindex_path"],
+                                                                  lazyfile))
+            cmds_output = remote.execute_commands(commands)
+            logger.info(f'Re-index XTF complete: {cmds_output}')
+            print(cmds_output)
+            print("-" * 135)
+        except Exception as e:
+            logger.error(f'Re-index XTF error: {e}')
+            print("An error occurred: " + str(e))
     remote.disconnect()
     gui_window.write_event_value('-XTFIND_THREAD-', (threading.current_thread().name,))
 
 
-def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path):
+def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
+                     xtf_lazy_path):
     """
     Gets all of the files in the remote path directory currently on the XTF server.
 
@@ -1884,11 +1857,13 @@ def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
+        xtf_lazy_path (str): the path (folder) where the lazy files are generated from an index, used to set permissions
+
     Returns:
         remote_files (list): a sorted list of all the files in the remote path directory
     """
     logger.info(f'Getting remote files from XTF: {xtf_remote_path}')
-    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path)
+    remote = xup.RemoteClient(xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path)
     remote_files = sort_list(remote.execute_commands(
         ['ls {}'.format(defaults["xtf_default"]["xtf_remote_path"])]).splitlines())
     remote.disconnect()
@@ -1914,6 +1889,9 @@ def get_xtf_options(defaults):
                                   key="_XTFOPT_HELP_")],
                          [sg.Checkbox("Re-index changed records after upload/delete", key="_REINDEX_AUTO_",
                                       default=defaults["xtf_default"]["_REINDEX_AUTO_"])],
+                         [sg.Checkbox("Update .xml and .lazy files permissions to RW-RW-R (0664)",
+                                      key="_UPDATE_PERMISSIONS_",
+                                      default=defaults["xtf_default"]["_UPDATE_PERMISSIONS_"])],
                          [sg.FolderBrowse(button_text=" Select source folder: ",
                                           initial_folder=defaults["xtf_default"]["xtf_local_path"]),
                           sg.InputText(default_text=defaults["xtf_default"]["xtf_local_path"], key="_XTF_SOURCE_")],
@@ -1944,6 +1922,7 @@ def get_xtf_options(defaults):
                 with open("defaults.json", "w") as defaults_xtf:
                     defaults["xtf_default"]["_REINDEX_AUTO_"] = values_xtfopt["_REINDEX_AUTO_"]
                     defaults["xtf_default"]["xtf_local_path"] = values_xtfopt["_XTF_SOURCE_"]
+                    defaults["xtf_default"]["_UPDATE_PERMISSIONS_"] = values_xtfopt["_UPDATE_PERMISSIONS_"]
                     json.dump(defaults, defaults_xtf)
                     defaults_xtf.close()
                 xtf_option_active = False
@@ -1967,6 +1946,63 @@ def open_file(filepath):
         subprocess.Popen(["open", filepath])
     else:
         subprocess.Popen(["xdg-open", filepath])
+
+
+def open_folder(defaults, record_type, record_key, folder_path):
+    """
+    Takes user input to open specified directory for exported files.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        record_type (str): if no value in folder_path key, then use default path, ex. clean_eads
+        record_key (str): the record type found in the defaults.json file, ex. ead_export_default
+        folder_path (str): the key to the folder path found in the defaults.json file, ex. _OUTPUT_DIR_
+
+    Returns:
+        None
+    """
+    logger.info(f'Opening {record_type} directory: {defaults[record_key][folder_path]}')
+    try:
+        if not defaults[record_key][folder_path]:
+            filepath_eads = str(Path.cwd().joinpath(record_type))
+            open_file(filepath_eads)
+        else:
+            filepath_eads = str(Path(defaults[record_key][folder_path]))
+            open_file(filepath_eads)
+    except Exception as openfdr_error:
+        print(f'Error opening {record_type} directory: {openfdr_error}')
+        logger.error(f'Error opening {record_type} directory: {openfdr_error}')
+
+
+def clear_exports(defaults, record_type, record_key, folder_path):
+    """
+    Takes user input to open specified directory for exported files.
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+        record_type (str): if no value in folder_path key, then use default path, ex. clean_eads
+        record_key (str): the record type found in the defaults.json file, ex. ead_export_default
+        folder_path (str): the key to the folder path found in the defaults.json file, ex. _OUTPUT_DIR_
+
+    Returns:
+        None
+    """
+    logger.info(f'Clearing {record_type} directory: {defaults[record_key][folder_path]}')
+    clean_files = os.listdir(defaults[record_key][folder_path])
+    try:
+        if len(clean_files) > 0:
+            file_count = 0
+            for file in clean_files:
+                file_count += 1
+                full_path = str(Path(defaults[record_key][folder_path], file))
+                os.remove(full_path)
+            print(f'Deleted {str(file_count)} files in clean_eads')
+            logger.info(f'Deleted {file_count} files in {defaults[record_key][folder_path]}')
+        else:
+            print(f'No files in {record_type} folder\n')
+    except Exception as e:
+        print(f'Error deleting files from {record_type} directory\n' + str(e))
+        logger.error(f'Error deleting files from {defaults[record_key][folder_path]} directory: {e}')
 
 
 def fetch_local_files(local_file_dir, select_files):
@@ -2062,6 +2098,12 @@ def start_thread(function, args, gui_window):
 
 
 def delete_log_files():
+    """
+    Deletes log file(s) found in logs folder if file(s) are older than 1 month.
+
+    Returns:
+        None
+    """
     if os.path.isdir(Path(os.getcwd(), "logs")) is True:
         logsdir = str(Path(os.getcwd(), "logs"))
         for file in os.listdir(logsdir):
@@ -2069,7 +2111,7 @@ def delete_log_files():
             file_time = os.path.getmtime(logfile)
             current_time = time.time()
             delete_time = current_time - 2630000  # This is for 1 month.
-            if file_time <= delete_time:  # If a file is more than 2 months old, delete
+            if file_time <= delete_time:  # If a file is more than 1 month old, delete
                 os.remove(logfile)
 
 

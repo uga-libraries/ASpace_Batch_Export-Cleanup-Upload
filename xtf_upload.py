@@ -8,12 +8,13 @@ from scp import SCPClient, SCPException
 
 @logger.catch
 class RemoteClient:
-    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path):
+    def __init__(self, xtf_host, xtf_username, xtf_password, xtf_remote_path, xtf_index_path, xtf_lazy_path):
         self.host = xtf_host
         self.user = xtf_username
         self.password = xtf_password
         self.remote_path = xtf_remote_path
         self.index_path = xtf_index_path
+        self.lazy_path = xtf_lazy_path
         self.client = None
         self.scp = None
 
@@ -62,7 +63,7 @@ class RemoteClient:
             response = stdout.readlines()
             for line in response:
                 output_string += f'{line}'
-                logger.info(f'INPUT: {cmd} | OUTPUT: {line}')  # TODO: This generates a lot of lines in the log file
+                # logger.info(f'INPUT: {cmd} | OUTPUT: {line}')  # This generates a lot of lines in the log file
         return output_string
 
     def bulk_upload(self, files):
