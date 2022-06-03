@@ -1,14 +1,3 @@
-_**NOTE:**_ Rising Anti-Virus has [falsely identified](https://www.virustotal.com/gui/file/4518335cb262931cacf5089f601fd4d2a2b5edd01c78e0906898f120aeaedc71) 
-the latest version, 
-[Antares 1.5.0](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases/tag/1.5.0), 
-as a Trojan. We've contacted Rising to report this as a false-positive, but don't expect our ticket to be resolved since
-[Rising's English website](http://mailcenter.rising.com.cn/filecheck_en/) hasn't been updated since 2014. As a result, 
-we are uploading both the Windows Installer (asbatch-150.exe) and the application file 
-(ASpace_Batch_Exporter_v150.3.exe) which is 
-[not flagged](https://www.virustotal.com/gui/file/2f472b50550432d99bbae11a61e143d478972813cc9b1e54da190c675c7514e2). 
-If you have any issues, please feel free to post them to the 
-[Issues page](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/issues).
-
 # ArchivesSpace Batching
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
@@ -104,8 +93,8 @@ more information.
 
 ### Special Thanks to:
 * Adriane Hanson - Head of Digital Stewardship at the University of Georgia Libraries
-* Shawn Kiewel - Application Analyst Specialist at the University of Georgia Libraries
-* Kevin Cottrell - GALILEO/Library Infrastructure Systems Architect at the University of Georgia Libraries
 * ArchivesSpace community
+* Kevin Cottrell - GALILEO/Library Infrastructure Systems Architect at the University of Georgia Libraries
 * PySimpleGUI
+* Shawn Kiewel
 * Tyler Brockmeyer
