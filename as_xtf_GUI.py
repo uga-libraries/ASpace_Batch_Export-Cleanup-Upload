@@ -1640,7 +1640,8 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
         if export_all is True:
             logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"], export_all=True)
+                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"],
+                                           export_all=True)
         else:
             logger.info(f'Beginning CONTLABELS export: {resources}')
             resource_export = asx.ASExport(input_id, repo_id, client,
