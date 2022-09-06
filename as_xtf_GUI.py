@@ -1000,6 +1000,9 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                         else:
                             logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
+                            export_counter += 1
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                     else:
                         logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...", end='', flush=True)
@@ -1015,6 +1018,9 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                         else:
                             logger.info(f'XML validation error: {results}')
                             print("XML validation error\n" + results)
+                            export_counter += 1
+                            if export_all is False:
+                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
                 else:
                     export_counter += 1
                     if export_all is False:

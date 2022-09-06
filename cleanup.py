@@ -7,6 +7,7 @@ from pathlib import Path
 from lxml import etree
 
 extent_regex = re.compile(r"(^\W)")
+unitdate_regex = re.compile(r"\bunitdate\b")
 barcode_regex = re.compile(r"\[(.*?)\]")
 atid_regex = re.compile(r"Archivists Toolkit Database")
 archon_regex = re.compile(r"Archon Instance")
@@ -121,7 +122,7 @@ class EADRecord:
         count_ud = 0
         count_appr = 0
         for child in self.root.findall(".//*"):
-            if "unitdate" in child.tag:
+            if unitdate_regex.search(child.tag):
                 count_ud += 1
                 unitdate_text = child.text.split()
                 for date in unitdate_text:
