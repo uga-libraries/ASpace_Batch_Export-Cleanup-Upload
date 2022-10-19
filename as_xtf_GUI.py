@@ -467,7 +467,7 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_ALLCONTLABELS_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_PDF_"}'].update(disabled=False)
             window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
-            # The following 2 if's - can I reference event from inside another event?
+            # The following 2 ifs - can I reference event from inside another event?
             if event_simple == MARCXML_EXPORT_THREAD:
                 if defaults["marc_export_default"]["_KEEP_RAW_"] is True:
                     logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
@@ -702,7 +702,7 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
         client (ASnake.client object): the ArchivesSpace ASnake client for accessing and connecting to the API
         asp_version (str): the current version of ArchivesSpace
         repositories (dict): contains info on all the repositories for an ArchivesSpace instance, including name as the key and id # as it's value
-        resource_ids (dict): contains info on all the resources for each repository for an ArchivesSpace instance, including repository # as the key and a list of resource #s as strings as it's value
+        resource_ids (dict): contains info on all the resources for each repository for an ArchivesSpace instance, including repository # as the key and a list of resource #s as strings as its value
         xtf_version (bool): user indicated value whether they want to display xtf features in the GUI
     """
     as_username = as_un
@@ -784,15 +784,13 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
                             defaults["xtf_default"]["xtf_version"] = xtf_version
                             json.dump(defaults, defaults_asp)
                             defaults_asp.close()
-                        # Get repositories info
-                        if len(repositories) == 1:
+                        if len(repositories) == 1:  # Get repositories info
                             repo_results = client.get('/repositories')
                             repo_results_dec = json.loads(repo_results.content.decode())
                             for result in repo_results_dec:
                                 uri_components = result["uri"].split("/")
                                 repositories[result["name"]] = int(uri_components[-1])
-                            # Get resource ids
-                            for repository in repo_results.json():
+                            for repository in repo_results.json():  # Get resource ids
                                 resources = client.get(f"{repository['uri']}/resources", params={"all_ids":
                                                                                                  True}).json()
                                 uri_components = repository["uri"].split("/")
@@ -834,7 +832,7 @@ def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf
         xtf_host (str): the host URL for the XTF instance
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_indexer_path (str): the path (file) where the website indexer is located
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
+        xtf_lazy_path (str): the path (folder) where the xml .lazy files are stored - used to update permissions
         close_program (bool): if a user exits the popup, this will return true and end run_gui()
     """
     xtf_username = xtf_un
@@ -986,55 +984,29 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
                 if defaults["ead_export_default"]["_CLEAN_EADS_"] is True:
                     if defaults["ead_export_default"]["_KEEP_RAW_"] is True:
                         logger.info(f'EAD cleaning up record {resource_export.filepath}')
-                        print("Cleaning up EAD record...")
+                        print("Cleaning up EAD record...", end='', flush=True)
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"],
                                                             keep_raw_exports=True)
-                        if valid:
-                            logger.info(f'EAD cleanup complete: {results}')
-                            print("Done")
-                            print(results)
-                            export_counter += 1
-                            if export_all is False:
-                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
-                        else:
-                            logger.info(f'XML validation error: {results}')
-                            print("XML validation error\n" + results)
-                            export_counter += 1
-                            if export_all is False:
-                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                        export_counter = update_export_progress('EAD cleanup complete', results, resources,
+                                                                export_counter, export_all, gui_window, valid)
                     else:
                         logger.info(f'EAD cleaning up record {resource_export.filepath}')
                         print("Cleaning up EAD record...", end='', flush=True)
                         valid, results = clean.cleanup_eads(resource_export.filepath, cleanup_options,
                                                             defaults["ead_export_default"]["_OUTPUT_DIR_"])
-                        if valid:
-                            logger.info(f'EAD cleanup complete: {results}')
-                            print("Done")
-                            print(results)
-                            export_counter += 1
-                            if export_all is False:
-                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
-                        else:
-                            logger.info(f'XML validation error: {results}')
-                            print("XML validation error\n" + results)
-                            export_counter += 1
-                            if export_all is False:
-                                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                        export_counter = update_export_progress('EAD cleanup complete', results, resources,
+                                                                export_counter, export_all, gui_window, valid)
                 else:
                     export_counter += 1
                     if export_all is False:
                         gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
             else:
-                logger.info(f'EAD export error: {resource_export.error}')
-                print(resource_export.error + "\n")
-                export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                export_counter = export_error(resource_export, 'EAD export error', export_counter, resources,
+                                              gui_window)
         else:
-            logger.info(f'EAD fetch results error: {resource_export.error}')
-            print(resource_export.error + "\n")
-            export_counter += 1
-            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            export_counter = export_error(resource_export, 'EAD fetch results error', export_counter, resources,
+                                          gui_window)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         logger.info(f'Finished EAD exports: {export_counter}')
@@ -1312,19 +1284,14 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
             resource_export.export_marcxml(
                 include_unpublished=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])
             if resource_export.error is None:
-                logger.info(f'MARCXML export complete: {resource_export.result}')
-                print(resource_export.result + "\n")
-                export_counter += 1
-                if export_all is False:
-                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                export_counter = update_export_progress('MARCXML export complete', resource_export.result, resources,
+                                                        export_counter, export_all, gui_window)
             else:
-                logger.info(f'MARCXML export error: {resource_export.error}')
-                print(resource_export.error + "\n")
+                export_counter = export_error(resource_export, 'MARCXML export error', export_counter, resources,
+                                              gui_window)
         else:
-            logger.info(f'MARCXML export error: {resource_export.error}')
-            print(resource_export.error)
-            export_counter += 1
-            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            export_counter = export_error(resource_export, 'MARCXML export error', export_counter, resources,
+                                          gui_window)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         logger.info(f'Finished MARCXML exports: {export_counter}')
@@ -1481,19 +1448,13 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
                                        numbered_cs=defaults["pdf_export_default"]["_NUMBERED_CS_"],
                                        ead3=defaults["pdf_export_default"]["_USE_EAD3_"])
             if resource_export.error is None:
-                logger.info(f'Export PDF complete: {resource_export.result}')
-                print(resource_export.result + "\n")
-                export_counter += 1
-                if export_all is False:
-                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                export_counter = update_export_progress('Export PDF complete', resource_export.result, resources,
+                                                        export_counter, export_all, gui_window)
             else:
-                logger.info(f'PDF export error: {resource_export.error}')
-                print(resource_export.error + "\n")
-                export_counter += 1
-                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                export_counter = export_error(resource_export, 'PDF export error', export_counter, resources,
+                                              gui_window)
         else:
-            logger.info(f'PDF export error: {resource_export.error}')
-            print(resource_export.error)
+            export_counter = export_error(resource_export, 'PDF export error', export_counter, resources, gui_window)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         logger.info(f'Finished PDF exports: {export_counter}')
@@ -1658,19 +1619,14 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
             print("Exporting {}...".format(input_id), end='', flush=True)
             resource_export.export_labels()
             if resource_export.error is None:
-                logger.info(f'Export CONTLABELS complete: {resource_export.result}')
-                print(resource_export.result + "\n")
-                export_counter += 1
-                if export_all is False:
-                    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+                export_counter = update_export_progress('Export CONTLABLES complete', resource_export.result, resources,
+                                                        export_counter, export_all, gui_window)
             else:
-                logger.info(f'CONTLABELS export error: {resource_export.error}')
-                print(resource_export.error + "\n")
+                export_counter = export_error(resource_export, 'CONTLABELS export error', export_counter, resources,
+                                              gui_window)
         else:
-            logger.info(f'CONTLABELS export error: {resource_export.error}')
-            print(resource_export.error)
-            export_counter += 1
-            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+            export_counter = export_error(resource_export, 'CONTLABELS export error', export_counter, resources,
+                                          gui_window)
     if export_all is False:
         trailing_line = 76 - len(f'Finished {str(export_counter)} exports') - (len(str(export_counter)) - 1)
         logger.info(f'Finished CONTLABELS exports: {export_counter}')
@@ -1724,7 +1680,7 @@ def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
+        xtf_lazy_path (str): the path (folder) where the xml .lazy files are stored - used to update permissions
         values_upl (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
     Returns:
@@ -1767,7 +1723,7 @@ def delete_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_rem
         xtf_password (str): user's XTF password
         xtf_remote_path (str): the path (folder) where a user wants their data to be stored on the XTF host
         xtf_index_path (str): the path (file) where the textIndexer for XTF is - used to run the index
-        xtf_lazy_path (str): the path (folder) where the xml.lazy files are stored - used to update permissions
+        xtf_lazy_path (str): the path (folder) where the xml .lazy files are stored - used to update permissions
         values_del (dict): the GUI values a user chose when selecting files to upload to XTF
         gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
     Returns:
@@ -1854,7 +1810,7 @@ def index_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_pat
 def get_remote_files(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,
                      xtf_lazy_path):
     """
-    Gets all of the files in the remote path directory currently on the XTF server.
+    Gets all the files in the remote path directory currently on the XTF server.
 
     Args:
         defaults (dict): contains the data from defaults.json file, all data the user has specified as default
@@ -2064,13 +2020,13 @@ def setup_files():
 
 def sort_list(input_list):
     """
-    Sorts a list in human readable order. Source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
+    Sorts a list in human-readable order. Source: https://blog.codinghorror.com/sorting-for-humans-natural-sort-order/
 
     Args:
         input_list (list): a list to be sorted
 
     Returns:
-        A list sorted in human readable order
+        A list sorted in human-readable order
     """
     logger.info(f'Sorting list...')
     convert = lambda text: int(text) if text.isdigit() else text.lower()
@@ -2119,6 +2075,66 @@ def delete_log_files():
             delete_time = current_time - 2630000  # This is for 1 month.
             if file_time <= delete_time:  # If a file is more than 1 month old, delete
                 os.remove(logfile)
+
+
+def update_export_progress(export_message, results, resources, export_counter, export_all, gui_window, validity=None):
+    """
+    Checks validity of XML files, otherwise updates export progress bar
+
+    Args:
+        export_message (str): message to be displayed in the GUI
+        results (str): message of all cleanup functions completed if EAD, otherwise export completion result
+        resources (list): resources being exported
+        export_counter (int): number to keep track of exports completed
+        export_all (bool): if export_all is true, refer to export all function for counter and updating progress
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+        validity (bool): if checking validity of EAD cleanup, checks whether XML is valid (True) or not (False)
+
+    Returns
+        export_counter (int): number to keep track of exports completed
+    """
+    if validity is not None:
+        if validity is True:
+            logger.info(f'{export_message}: {results}')
+            print("Done")
+            print(results)
+            export_counter += 1
+            if export_all is False:
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+        else:
+            logger.info(f'XML Validation Error: {results}')
+            print("XML Validation Error\n" + results)
+            export_counter += 1
+            if export_all is False:
+                gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+    else:
+        logger.info(f'{export_message}: {results}')
+        print(results + "\n")
+        export_counter += 1
+        if export_all is False:
+            gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+    return export_counter
+
+
+def export_error(resource_export, error_message, export_counter, resources, gui_window):
+    """
+    Prints export error message and updates progress bar
+
+    Args:
+        resource_export: class instance of ASExport
+        error_message (str): message to be displayed in the GUI
+        export_counter (int): number to keep track of exports completed
+        resources (list): resources being exported
+        gui_window (PySimpleGUI object): the GUI window used by PySimpleGUI. Used to return an event
+
+    Returns
+        export_counter (int): number to keep track of exports completed
+    """
+    logger.info(f'{error_message}: {resource_export.error}')
+    print(resource_export.error + "\n")
+    export_counter += 1
+    gui_window.write_event_value('-EXPORT_PROGRESS-', (export_counter, len(resources)))
+    return export_counter
 
 
 # sg.theme_previewer()
