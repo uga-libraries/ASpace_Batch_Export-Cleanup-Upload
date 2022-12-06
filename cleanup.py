@@ -446,11 +446,12 @@ def cleanup_eads(filepath, custom_clean, output_dir="clean_eads", keep_raw_expor
         CLEANED_EAD.close()
     for file in os.listdir(fileparent):
         source_filepath = str(Path(fileparent, file))
-        file_time = os.path.getmtime(source_filepath)
-        current_time = time.time()
-        delete_time = current_time - 5356800  # This is for 2 months.
-        if file_time <= delete_time:  # If a file is more than 2 months old, delete
-            os.remove(source_filepath)
+        if not os.path.isdir(source_filepath) and Path(source_filepath).suffix == ".xml":
+            file_time = os.path.getmtime(source_filepath)
+            current_time = time.time()
+            delete_time = current_time - 5356800  # This is for 2 months.
+            if file_time <= delete_time:  # If a file is more than 2 months old, delete
+                os.remove(source_filepath)
     if keep_raw_exports is False:  # prevents program from rerunning cleanup on cleaned files
         os.remove(filepath)
         return True, results

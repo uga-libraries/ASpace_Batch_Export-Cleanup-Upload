@@ -221,7 +221,7 @@ def run_gui(defaults):
     layout_simple = [[sg.Menu(menu_def)],
                      [sg.Column(simple_layout_col1), sg.Column(simple_layout_col2)]
                      ]
-    window_simple = sg.Window("ArchivesSpace Batch Export-Cleanup-Upload Program", layout_simple)
+    window_simple = sg.Window("ArchivesSpace Batch Export-Cleanup-Upload Program", layout_simple, resizable=True)
     logger.info("Initiate GUI window")
     while True:
         gc.collect()
@@ -1957,7 +1957,11 @@ def clear_exports(defaults, record_type, record_key, folder_path):
             for file in clean_files:
                 file_count += 1
                 full_path = str(Path(defaults[record_key][folder_path], file))
-                os.remove(full_path)
+                if not os.path.isdir(full_path):
+                    os.remove(full_path)
+                else:
+                    print(f'Could not remove item: {file}')
+                    logger.info(f'Could not remove item: {file} from {clean_files}')
             print(f'Deleted {str(file_count)} files in clean_eads')
             logger.info(f'Deleted {file_count} files in {defaults[record_key][folder_path]}')
         else:
