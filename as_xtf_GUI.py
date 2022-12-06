@@ -1960,9 +1960,10 @@ def clear_exports(defaults, record_type, record_key, folder_path):
                 if not os.path.isdir(full_path):
                     os.remove(full_path)
                 else:
-                    print(f'Could not remove item: {file}')
-                    logger.info(f'Could not remove item: {file} from {clean_files}')
-            print(f'Deleted {str(file_count)} files in clean_eads')
+                    file_count -= 1
+                    print(f'Could not remove item: {file} from {record_type}')
+                    logger.info(f'Could not remove item: {file} from {record_type}')
+            print(f'Deleted {str(file_count)} files in {record_type}')
             logger.info(f'Deleted {file_count} files in {defaults[record_key][folder_path]}')
         else:
             print(f'No files in {record_type} folder\n')
