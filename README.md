@@ -1,8 +1,8 @@
 # ArchivesSpace Batching
 
-This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF form. 
-Additionally, it can run exported EAD records through a series of cleanup processes. Lastly, a user can
-enable the XTF version to upload .xml or .pdf files to their instance of XTF, a finding aid website hosting platform.
+This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF. Additionally, it 
+can run exported EAD records through a series of cleanup processes. Lastly, a user can choose to connect to an 
+XTF-based finding aid website server to upload .xml or .pdf files to their instance of XTF.
 
 ![EAD_Export_Demo](https://user-images.githubusercontent.com/62658840/129760524-5895c29c-1b82-4572-9b68-6952a6710b0e.gif)
 
@@ -29,10 +29,10 @@ through the program and its features can be found on the Wiki page.
 #### Prerequisites
 1. Install Python 3 on your computer. You can install python using the following link:
 https://www.python.org/downloads/
-2. Packages as specified in requirements.txt
+2. Install packages as specified in requirements.txt
 3. Your ArchivesSpace Instance's API URL (8089), your username and password
-4. (OPTIONAL) XTF hostname URL, XTF remote path for EAD files, and XTF indexer path to re-index new and/or changed 
-files.
+4. (OPTIONAL) XTF hostname URL, XTF remote path for EAD files, XTF indexer path to re-index new and/or changed files, 
+5. and XTF lazy index path to update the .lazy files with appropriate permissions for rw-rw-r.
 
 #### Installing
 1. Clone/Download or Fork the Master branch
@@ -60,7 +60,7 @@ For Hargrett and Russell Libraries, input the following to generate different re
 * HCTC001
 * HCTC021
 * UA97-121
-* UA00-024
+* UA20-004
 * hmap1640b55
 * hmap1792a7
 
@@ -74,7 +74,7 @@ You can also try using the following, which will generate more than 1 result in 
 ArchivesSpace API
 * [Paramiko](https://github.com/paramiko/paramiko) - SSH and client library
 * [lxml](https://github.com/lxml/lxml) - Used for parsing and modifying .xml files
-* [PyInstaller](https://github.com/pyinstaller/pyinstaller) - Generated the executable file
+* [cx_Freeze](https://cx-freeze.readthedocs.io/en/latest/) - Generated the executable file
 * [Inno](https://jrsoftware.org/isinfo.php) - Generated Windows installer
 
 ## Contributing
@@ -84,7 +84,7 @@ See the CONTRIBUTING.md for more information.
 Trying our best to adhere to [SemVer](https://semver.org/).
 
 ## Authors
-* Corey Schmidt - ArchivesSpace Project Manager at the University of Georgia Libraries
+* Corey Schmidt - Project Management Librarian/Archivist at the University of Georgia Libraries
 
 ## License Information
 
