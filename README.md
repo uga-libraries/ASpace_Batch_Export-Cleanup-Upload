@@ -32,7 +32,7 @@ https://www.python.org/downloads/
 2. Install packages as specified in requirements.txt
 3. Your ArchivesSpace Instance's API URL (8089), your username and password
 4. (OPTIONAL) XTF hostname URL, XTF remote path for EAD files, XTF indexer path to re-index new and/or changed files, 
-5. and XTF lazy index path to update the .lazy files with appropriate permissions for rw-rw-r.
+and XTF lazy index path to update the .lazy files with appropriate permissions for rw-rw-r.
 
 #### Installing
 1. Clone/Download or Fork the Master branch
