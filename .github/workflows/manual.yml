@@ -32,12 +32,6 @@ jobs:
       with:
         python-version: ${{ github.event.inputs.python_version }}
         architecture: 'x64'
-    # Runs a single command using the runners shell
-    - name: Checkout latest branch
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        ref: master
     - name: Check Python Version
       run: python --version ; pip --version
     - name: Install build dependencies
