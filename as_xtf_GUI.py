@@ -1378,7 +1378,7 @@ def get_marc_options(defaults):
         if event_marc == "_MARCOPT_HELP_":
             logger.info(f'User opened MARCXML Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#marcx"
-                            "ml-screen",
+                            "ml-export-options",
                             new=2)
         if event_marc == "_SAVE_SETTINGS_MARC_":
             if os.path.isdir(values_marc["_MARC_OUT_DIR_"]) is False:
@@ -1870,8 +1870,8 @@ def get_xtf_options(defaults):
             window_xtf_option.close()
         if event_xtfopt == "_XTFOPT_HELP_":
             logger.info(f'User opened XTF Options Help button')
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-f"
-                            "rame",
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#xtf-o"
+                            "ptions",
                             new=2)
         if event_xtfopt == "_XTFOPT_CREDS_":
             get_xtf_log(defaults)
