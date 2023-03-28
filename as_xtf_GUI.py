@@ -578,7 +578,9 @@ def run_gui(defaults):
                                      [sg.Text("Options", font=("Roboto", 12))],
                                      [sg.Button(" XTF Options ", key="_XTF_OPTIONS_2_")]
                                      ]
-            xtf_upload_layout = [[sg.Text("Files to Upload:", font=("Roboto", 14))],
+            xtf_upload_layout = [[sg.Text("Files to Upload:", font=("Roboto", 14)),
+                                  sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                                          key="_XTFUPL_HELP_")],
                                  [sg.Listbox(files_list, size=(50, 20), select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE,
                                              key="_SELECT_FILES_")],
                                  [sg.Frame("XTF Upload", upload_options_layout, font=("Roboto", 14))]]
@@ -604,6 +606,11 @@ def run_gui(defaults):
                     xtfup_thread.start()
                     window_upl.close()
                     window_upl_active = False
+                if event_upl == "_XTFUPL_HELP_":
+                    logger.info(f'User opened XTF Options Help button')
+                    webbrowser.open(
+                        "https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#upload",
+                        new=2)
         if event_simple == "_DELETE_":
             logger.info(f'User initiated deleting files from XTF')
             window_del_active = True
@@ -624,7 +631,9 @@ def run_gui(defaults):
                                          [sg.Text("Options", font=("Roboto", 12))],
                                          [sg.Button(" XTF Options ", key="_XTF_OPTIONS_3_")]
                                          ]
-                xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14))],
+                xtf_delete_layout = [[sg.Text("Files to Delete:", font=("Roboto", 14)),
+                                      sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                                              key="_XTFDEL_HELP_")],
                                      [sg.Listbox(remote_files, size=(50, 20),
                                                  select_mode=sg.LISTBOX_SELECT_MODE_MULTIPLE, key="_SELECT_FILES_")],
                                      [sg.Frame("XTF Upload", delete_options_layout, font=("Roboto", 14))]]
@@ -651,6 +660,11 @@ def run_gui(defaults):
                         xtfdel_thread.start()
                         window_del.close()
                         window_del_active = False
+                    if event_del == "_XTFDEL_HELP_":
+                        logger.info(f'User opened XTF Options Help button')
+                        webbrowser.open(
+                            "https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#delet"
+                            "e", new=2)
         if event_simple == "_INDEX_":
             logger.info(f'User initiated re-indexing: _INDEX_')
             xtfind_thread = threading.Thread(target=index_xtf, args=(defaults, xtf_hostname, xtf_username, xtf_password,
