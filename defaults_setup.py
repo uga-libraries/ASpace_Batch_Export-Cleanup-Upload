@@ -51,6 +51,7 @@ def set_defaults_file():
             DEFAULTS.close()
     except Exception as defaults_error:
         print(defaults_error)
+        logger.error(f'Generating new defaults file due to error: {defaults_error}')
         print("Generating new defaults file...", end='', flush=True)
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
@@ -87,6 +88,7 @@ def set_defaults_file():
 
 
 @logger.catch
+# TODO: add logging to create_default_folders
 def create_default_folders():
     """
     Checks for clean_eads, source_eads, source_labels, source_marcs, and source_pdfs within current working directory.
