@@ -14,7 +14,6 @@ archon_regex = re.compile(r"Archon Instance")
 dao_regex = re.compile(r"(\bdao\b)")
 
 
-@logger.catch
 class EADRecord:
     """
     Modify an EAD.xml file for web display and EAD2002 compliance.

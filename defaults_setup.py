@@ -14,7 +14,7 @@ def set_defaults_file():
     https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#set_default_file
 
     Returns:
-        json_data (dict): contains all the data for default behavior for the GUI
+        defaults_data (dict): contains all the data for default behavior for the GUI
     """
     create_default_folders()
     clean_eads = str(Path(os.getcwd(), "clean_eads"))
@@ -31,16 +31,20 @@ def set_defaults_file():
                    "xtf_remote_path", "xtf_local_path", "xtf_indexer_path", "xtf_lazyindex_path", "_REINDEX_AUTO_",
                    "_UPDATE_PERMISSIONS_"]
     defaults_keys = []
+    filepath_keys = ["_OUTPUT_DIR_", "_SOURCE_DIR_", "xtf_local_path"]
     try:
         with open("defaults.json", "r") as DEFAULTS:
-            json_data = json.load(DEFAULTS)
-            for key, value in json_data.items():
-                if key not in defaults_keys:
-                    defaults_keys.append(key)
-                if isinstance(value, dict):
-                    for value_key in value.keys():
-                        if value_key not in defaults_keys:
-                            defaults_keys.append(value_key)
+            defaults_data = json.load(DEFAULTS)
+            for default, setting in defaults_data.items():
+                if default not in defaults_keys:
+                    defaults_keys.append(default)
+                if isinstance(setting, dict):
+                    for setting_key, setting_value in setting.items():
+                        if setting_key not in defaults_keys:
+                            defaults_keys.append(setting_key)
+                        if setting_key in filepath_keys:
+                            if os.path.exists(setting_value) is False:
+                                raise Exception
             for default in xtf_default:
                 if default not in defaults_keys:
                     raise Exception
@@ -77,9 +81,9 @@ def set_defaults_file():
             DEFAULTS.close()
             print("Done")
         with open("defaults.json", "r") as DEFAULTS:
-            json_data = json.load(DEFAULTS)
+            defaults_data = json.load(DEFAULTS)
             DEFAULTS.close()
-    return json_data
+    return defaults_data
 
 
 @logger.catch
