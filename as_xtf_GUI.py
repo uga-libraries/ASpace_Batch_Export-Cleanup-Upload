@@ -288,6 +288,7 @@ def run_gui(defaults):
                     start_thread(get_eads, args, window_simple)
                     logger.info("EAD_EXPORT_THREAD started")
         if event_simple == "_EXPORT_ALLEADS_":
+            sg.Popup("WARNING!\nYou are about to export ALL the EADS in this repository")
             logger.info("_EXPORT_ALLEADS_ - User initiated exporting ALL EADs")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
