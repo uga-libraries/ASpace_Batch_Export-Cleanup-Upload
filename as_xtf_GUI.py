@@ -287,7 +287,7 @@ def run_gui(defaults):
                     args = (input_ids, defaults, cleanup_options, repositories, client, values_simple, window_simple,)
                     start_thread(get_eads, args, window_simple)
                     logger.info("EAD_EXPORT_THREAD started")
-        if event_simple == "_EXPORT_ALLEADS_":
+        if event_simple == "_EXPORT_ALLEADS_":  # TODO: change to PopupYesNo - exiting out of popup continues the export
             sg.Popup("WARNING!\nYou are about to export ALL the EADS in this repository")
             logger.info("_EXPORT_ALLEADS_ - User initiated exporting ALL EADs")
             if not values_simple["_REPO_SELECT_"]:
@@ -335,7 +335,7 @@ def run_gui(defaults):
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_marcxml, args, window_simple)
                     logger.info("MARCXML_EXPORT_THREAD started")
-        if event_simple == "_EXPORT_ALLMARCXMLS_":
+        if event_simple == "_EXPORT_ALLMARCXMLS_": # TODO: change to PopupYesNo - exiting out of popup continues the export
             logger.info("_EXPORT_ALLMARCXMLS_ - User initiated exporting ALL MARCXML(s)")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
@@ -378,7 +378,7 @@ def run_gui(defaults):
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_pdfs, args, window_simple)
                     logger.info("PDF_EXPORT_THREAD started")
-        if event_simple == "_EXPORT_ALLPDFS_":
+        if event_simple == "_EXPORT_ALLPDFS_": # TODO: change to PopupYesNo - exiting out of popup continues the export
             logger.info("_EXPORT_ALLMARCXMLS_ - User initiated exporting ALL PDF(s)")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
@@ -422,7 +422,7 @@ def run_gui(defaults):
                     args = (input_ids, defaults, repositories, client, values_simple, window_simple,)
                     start_thread(get_contlabels, args, window_simple)
                     logger.info("CONTLABEL_EXPORT_THREAD started")
-        if event_simple == "_EXPORT_ALLCONTLABELS_":
+        if event_simple == "_EXPORT_ALLCONTLABELS_": # TODO: change to PopupYesNo - exiting out of popup continues the export
             logger.info("_EXPORT_ALLCONTLABELS_ - User initiated exporting ALL Container Labels")
             if not values_simple["_REPO_SELECT_"]:
                 sg.Popup("WARNING!\nPlease select a repository")
