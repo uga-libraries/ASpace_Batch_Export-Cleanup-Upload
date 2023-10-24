@@ -105,9 +105,11 @@ class ASExport:
                         user_id_index += 1
                     else:
                         raise Exception
-                except Exception:
+                except Exception as id_mismatch:
                     non_match_results[combined_aspace_id[:-1]] = json_info["title"]
                     user_id_index += 1
+                    logger.error(f'An error occurred when trying to match the user ID with the ArchivesSpace ID:\n'
+                                 f'{id_mismatch}')  # TODO: not sure if this should be logger or self.error
             if non_match_results and not match_results:  # if non_match_results contains non-matches, return error
                 self.error = "{} results were found, but the resource identifier did not match. " \
                              "Have you entered the resource id correctly?".format(result_count) + \
