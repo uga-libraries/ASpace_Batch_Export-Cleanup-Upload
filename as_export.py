@@ -95,21 +95,20 @@ class ASExport:
                     combined_user_id = combined_aspace_id_clean
                     self.filepath = str(Path(self.output_directory, combined_aspace_id_clean))
                 user_id_index = 0
-                try:
-                    if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
+                if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
+                    try:
                         aspace_id = combined_aspace_id[:-1]
                         resource_full_uri = json_info["uri"].split("/")
                         self.resource_id = resource_full_uri[-1]
                         self.resource_repo = resource_full_uri[2]
                         match_results[aspace_id] = json_info["title"]
                         user_id_index += 1
-                    else:
-                        raise Exception
-                except Exception as id_mismatch:
+                    except ValueError as parse_error:
+                        self.error = (f'There was an error parsing ArchivesSpace ID, URI, or Title:'
+                                      f'\nERROR: {parse_error}')
+                else:
                     non_match_results[combined_aspace_id[:-1]] = json_info["title"]
                     user_id_index += 1
-                    logger.error(f'An error occurred when trying to match the user ID with the ArchivesSpace ID:\n'
-                                 f'{id_mismatch}')  # TODO: not sure if this should be logger or self.error
             if non_match_results and not match_results:  # if non_match_results contains non-matches, return error
                 self.error = "{} results were found, but the resource identifier did not match. " \
                              "Have you entered the resource id correctly?".format(result_count) + \
