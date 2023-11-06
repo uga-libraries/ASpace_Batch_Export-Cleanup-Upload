@@ -27,9 +27,12 @@ class ASExport:
         if type(input_id) is str and "/" in self.input_id:
             self.filename = self.input_id.replace("/", "")
             """str: the name assigned to the exported file, takes input_id and removes any "/"s"""
+        elif repo_id == 2 and type(input_id) is str and "-" in self.input_id:
+            self.filename = self.input_id.replace("-", "")
+            """str: the name assigned to the exported file, takes input_id and removes any "-"s"""
         else:
             self.filename = self.input_id
-            """str: the name assigned to the exported file, takes input_id and removes any "/"s"""
+            """str: the name assigned to the exported file"""
         self.repo_id = repo_id
         """int: contains the number for which a repository is assigned via the ArchivesSpace instance"""
         self.resource_id = None
