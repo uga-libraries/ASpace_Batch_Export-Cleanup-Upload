@@ -27,7 +27,7 @@ class ASExport:
         if type(input_id) is str and "/" in self.input_id:
             self.filename = self.input_id.replace("/", "")
             """str: the name assigned to the exported file, takes input_id and removes any "/"s"""
-        elif repo_id == 2 and type(input_id) is str and "-" in self.input_id:
+        elif repo_id == 2 and type(input_id) is str and "-" in self.input_id:  # TODO: this is NOT going to work with repo_id - need to generalize it for public use
             self.filename = self.input_id.replace("-", "")
             """str: the name assigned to the exported file, takes input_id and removes any "-"s"""
         else:
@@ -37,7 +37,7 @@ class ASExport:
         """int: contains the number for which a repository is assigned via the ArchivesSpace instance"""
         self.resource_id = None
         """int: ArchivesSpace's assigned resource identifier found in the resource URI"""
-        self.resource_repo = None
+        self.resource_repo = None  # TODO: try removing this parameter and use repo_id instead - they should be the same
         """int: ArchivesSpace's assigned respository identifier also found in a resource's URI"""
         self.client = client
         """ASnake.client object: client object from ASnake.client to allow to connect to the ASpace API"""
