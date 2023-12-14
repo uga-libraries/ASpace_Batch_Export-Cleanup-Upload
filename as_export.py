@@ -12,7 +12,7 @@ class ASExport:
     """
     Interacts with the ASpace API to search for and retrieve records.
     """
-    def __init__(self, input_id, repo_id, client, output_dir, export_all=False):
+    def __init__(self, input_id, repo_id, client, output_dir, rmv_anc, export_all=False):
         """
         Must contain resource identifier, repository identifier, ASnake client, and output directory.
 
@@ -22,23 +22,18 @@ class ASExport:
             client (ASnake.client object): a client object from ASnake.client to allow to connect to the ASpace API
             output_dir (str): filepath containing the folder a user wants files to be exported to
         """
-        self.input_id = input_id  #:
+        self.input_id = input_id  # TODO: Replace using the user input as filename and use the ID from ASpace (not number, but user supplied in ASpace
         """str: user generated resource identifier"""
-        if type(input_id) is str and "/" in self.input_id:
-            self.filename = self.input_id.replace("/", "")
-            """str: the name assigned to the exported file, takes input_id and removes any "/"s"""
-        elif repo_id == 2 and type(input_id) is str and "-" in self.input_id:  # TODO: this is NOT going to work with repo_id - need to generalize it for public use
-            self.filename = self.input_id.replace("-", "")
-            """str: the name assigned to the exported file, takes input_id and removes any "-"s"""
-        else:
-            self.filename = self.input_id
-            """str: the name assigned to the exported file"""
+        self.filename = None
+        """str: the name assigned to the exported file"""
+        self.remove_alphanums = rmv_anc
+        """bool: user option to remove all non-alphanumeric characters from the exported filename"""
         self.repo_id = repo_id
-        """int: contains the number for which a repository is assigned via the ArchivesSpace instance"""
+        """int: repository ID number selected by a user from the GUI - Search Across will not work"""
         self.resource_id = None
         """int: ArchivesSpace's assigned resource identifier found in the resource URI"""
-        self.resource_repo = None  # TODO: try removing this parameter and use repo_id instead - they should be the same
-        """int: ArchivesSpace's assigned respository identifier also found in a resource's URI"""
+        self.resource_repo = None
+        """int: ArchivesSpace's assigned respository identifier found in a resource's URI"""
         self.client = client
         """ASnake.client object: client object from ASnake.client to allow to connect to the ASpace API"""
         self.error = None
@@ -46,7 +41,7 @@ class ASExport:
         self.result = None
         """str: value is none unless an operation completes or multiple results are returned and is then populated 
         with a string detailing the result(s)"""
-        self.filepath = str(Path(output_dir, str(self.filename)))
+        self.filepath = None
         """str: filepath where records will be exported to"""
         self.output_directory = output_dir
         """str: location of the output directory for the file"""
@@ -80,7 +75,7 @@ class ASExport:
             self.error = "No results were found. Have you entered the correct repository and/or resource ID?\n" \
                          "Results: " + str(search_results) + \
                          "\nUser Input: {}\n".format(self.input_id) + "-" * 135
-        else:
+        else:  # TODO: break this into different method called parse_result or something
             # after searching for them, get their URI
             result_count = len(search_results)
             aspace_id = ""
@@ -100,6 +95,11 @@ class ASExport:
                 user_id_index = 0
                 if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
                     try:
+                        if self.remove_alphanums is True:  # TODO: confirm this exports RBRL112JRR not closed one and doesn't change the filename to add CLOSED
+                            self.filename = combined_aspace_id_clean
+                        else:
+                            self.filename = combined_aspace_id[:-1]
+                        self.filepath = str(Path(self.output_directory, str(self.filename)))
                         aspace_id = combined_aspace_id[:-1]
                         resource_full_uri = json_info["uri"].split("/")
                         self.resource_id = resource_full_uri[-1]
@@ -122,7 +122,7 @@ class ASExport:
                 self.error += "-" * 135
             if non_match_results and match_results:
                 self.result = "Returning {}...\nOther results:\n\n".format(aspace_id)
-                for ident, title in non_match_results.items():
+                for ident, title in non_match_results.items():  # TODO: add match_results to self.results - above code is grabbing the 2nd result and exporting the filename of RBRL112JRRCLOSED
                     self.result += "Resource ID: {:15} {}{:<5} Title: {} \n\n".format(ident, "|", "", title)
                 self.result += "-" * 135
 

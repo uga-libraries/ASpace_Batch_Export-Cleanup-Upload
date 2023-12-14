@@ -107,6 +107,8 @@ def run_gui(defaults):
                   '---',
                   'Change MARCXML Export Options',
                   '---',
+                  'Change Container Labels Export Options',
+                  '---',
                   'Change PDF Export Options',
                   '---',
                   xtf_login_menu_button,
@@ -165,12 +167,10 @@ def run_gui(defaults):
                         [sg.Text("Options", font=("Roboto", 13)),
                          sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
                                  key="_CONTOPT_HELP_")],
+                        [sg.Button(" Labels Export Options ", key="_LABELS_OPTIONS_",
+                                   tooltip=' Choose how you would like to export container labels ')],
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_",
                                    tooltip=' Open folder where container label files are stored ')],
-                        [sg.FolderBrowse(" Choose Output Folder: ", key="_OUTPUT_DIR_LABEL_",
-                                         initial_folder=defaults["labels_export_default"]["_OUTPUT_DIR_"]),
-                         sg.InputText(defaults["labels_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_LABEL_INPUT_",
-                                      enable_events=True)],
                         [sg.Text(" " * 140)]
                         ]
     pdf_layout = [[sg.Text("WARNING:", font=("Roboto", 18), text_color="Red", visible=asp_pdf_api),
@@ -186,7 +186,8 @@ def run_gui(defaults):
                   [sg.Button(" PDF Export Options ", key="_PDF_OPTIONS_",
                              tooltip=' Choose how you would like to export resources '),
                    sg.Button(button_text=" Open Output ", key="_OPEN_PDF_DEST_",
-                             tooltip=' Open folder where PDF(s) are stored ')]
+                             tooltip=' Open folder where PDF(s) are stored ')],
+                  [sg.Text(" " * 140)]
                   ]
     simple_layout_col1 = [[sg.Text("Enter Resource Identifiers here:", font=("Roboto", 12))],
                           [sg.Multiline(key="resource_id_input", size=(35, rid_box_len), focus=True,
@@ -453,17 +454,10 @@ def run_gui(defaults):
                         args = (input_ids, defaults, repositories, client, window_simple,)
                         start_thread(get_all_contlabels, args, window_simple)
                         logger.info("CONTLABEL_EXPORT_THREAD started")
-        if event_simple == "_OUTPUT_DIR_LABEL_INPUT_":
-            if os.path.isdir(values_simple["_OUTPUT_DIR_LABEL_INPUT_"]) is False:
-                sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
-                logger.warning("_OUTPUT_DIR_LABEL_INPUT_ - User selected invalid export output")
-            else:
-                with open("defaults.json", "w") as defaults_labels:
-                    defaults["labels_export_default"]["_OUTPUT_DIR_"] = values_simple["_OUTPUT_DIR_LABEL_INPUT_"]
-                    json.dump(defaults, defaults_labels)
-                    defaults_labels.close()
         if event_simple == "_OPEN_LABEL_DEST_":
             open_folder(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
+        if event_simple == "_LABELS_OPTIONS_" or event_simple == "Change Container Labels Export Options":
+            get_contlabel_options(defaults)
         if event_simple == "_CONTOPT_HELP_":
             logger.info(f'User opened CONTLABELS Options Help button')
             webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
@@ -987,10 +981,11 @@ def get_eads(input_ids, defaults, cleanup_options, repositories, client, values_
         if export_all is True:
             logger.info(f'Beginning EAD export: EXPORT_ALL')
             resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
-                                           export_all=True)
+                                           defaults["ead_export_default"]["_RMV_NANC_"], export_all=True)
         else:
             logger.info(f'Beginning EAD export: {resources}')
-            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"])
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["ead_export_default"]["_SOURCE_DIR_"],
+                                           defaults["ead_export_default"]["_RMV_NANC_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             if resource_export.result is not None:
@@ -1085,6 +1080,18 @@ def get_ead_options(defaults):
     """
     Write the options selected to the defaults.json file.
 
+    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+
+        1. Include unpublished components (default is false)
+        2. Include digital objects (default is true)
+        3. Use numbered container levels (default is true)
+        4. Convert to EAD3 (default is false)
+        5. Remove all non-alphanumeric characters from exported files' filenames (default is true)
+        6. Keep raw (unchanged) EAD.XML exports from ArchivesSpace files (default is false)
+        7. Set raw (unchanged) EAD.XML output folder
+        8. Keep cleaned (changed) EAD.XML exports from ArchivesSpace files (default is true)
+        9. Set cleaned (changed) EAD.XML output folder
+
     For an in-depth review on how this code is structured, see the wiki:
     https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_ead_options
 
@@ -1108,6 +1115,8 @@ def get_ead_options(defaults):
                                       default=defaults["ead_export_default"]["_NUMBERED_CS_"])],
                          [sg.Checkbox("Convert to EAD3", key="_USE_EAD3_",
                                       default=defaults["ead_export_default"]["_USE_EAD3_"])],
+                         [sg.Checkbox("Remove non-alphanumeric characters from filename", key="_RMV_NANC_",
+                                      default=defaults["ead_export_default"]["_RMV_NANC_"])],
                          [sg.Checkbox("Keep raw ASpace Exports", key="_KEEP_RAW_",
                                       default=defaults["ead_export_default"]["_KEEP_RAW_"])],
                          [sg.FolderBrowse(" Set raw ASpace output folder: ",
@@ -1155,6 +1164,7 @@ def get_ead_options(defaults):
                             defaults["ead_export_default"]["_INCLUDE_DAOS_"] = values_eadopt["_INCLUDE_DAOS_"]
                             defaults["ead_export_default"]["_NUMBERED_CS_"] = values_eadopt["_NUMBERED_CS_"]
                             defaults["ead_export_default"]["_USE_EAD3_"] = values_eadopt["_USE_EAD3_"]
+                            defaults["ead_export_default"]["_RMV_NANC_"] = values_eadopt["_RMV_NANC_"]
                             defaults["ead_export_default"]["_KEEP_RAW_"] = values_eadopt["_KEEP_RAW_"]
                             defaults["ead_export_default"]["_CLEAN_EADS_"] = values_eadopt["_CLEAN_EADS_"]
                             defaults["ead_export_default"]["_SOURCE_DIR_"] = str(Path(values_eadopt["_SOURCE_DIR_"]))
@@ -1297,12 +1307,12 @@ def get_marcxml(input_ids, defaults, repositories, client, values_simple, gui_wi
     for input_id in resources:
         if export_all is True:
             logger.info(f'Beginning MARCXML export: EXPORT_ALL')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"], export_all=True)
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["marc_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["marc_export_default"]["_RMV_NANC_"], export_all=True)
         else:
             logger.info(f'Beginning MARCXML export: {resources}')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["marc_export_default"]["_OUTPUT_DIR_"])
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["marc_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["marc_export_default"]["_RMV_NANC_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             logger.info(f'Exporting: {input_id}')
@@ -1367,6 +1377,7 @@ def get_marc_options(defaults):
     This function opens a window in the GUI that allows a user to choose specific export options. These options include:
 
         1. Include unpublished components (default is false)
+        2. Remove all non-alphanumeric characters from exported files' filenames (default is true)
         2. Open output folder on export (default is false)
         3. Set output folder
 
@@ -1386,8 +1397,10 @@ def get_marc_options(defaults):
                     sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True, key="_MARCOPT_HELP_")],
                    [sg.Checkbox("Include unpublished components", key="_INCLUDE_UNPUB_",
                                 default=defaults["marc_export_default"]["_INCLUDE_UNPUB_"])],
-                   [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
-                                default=defaults["marc_export_default"]["_KEEP_RAW_"])],
+                   [sg.Checkbox("Remove non-alphanumeric characters from filename", key="_RMV_NANC_",
+                                default=defaults["marc_export_default"]["_RMV_NANC_"])],
+                   [sg.Checkbox("Open output folder on export", key="_OPEN_OUTPUT_",
+                                default=defaults["marc_export_default"]["_OPEN_OUTPUT_"])],
                    [sg.FolderBrowse(" Set output folder: ",
                                     initial_folder=defaults["marc_export_default"]["_OUTPUT_DIR_"]),
                     sg.InputText(default_text=defaults["marc_export_default"]["_OUTPUT_DIR_"], key="_MARC_OUT_DIR_")],
@@ -1414,7 +1427,8 @@ def get_marc_options(defaults):
                 logger.info(f'User selected MARCXML options: {values_marc}')
                 with open("defaults.json", "w") as defaults_marc:
                     defaults["marc_export_default"]["_INCLUDE_UNPUB_"] = values_marc["_INCLUDE_UNPUB_"]
-                    defaults["marc_export_default"]["_KEEP_RAW_"] = values_marc["_KEEP_RAW_"]
+                    defaults["marc_export_default"]["_RMV_NANC_"] = values_marc["_RMV_NANC_"]
+                    defaults["marc_export_default"]["_OPEN_OUTPUT_"] = values_marc["_OPEN_OUTPUT_"]
                     defaults["marc_export_default"]["_OUTPUT_DIR_"] = str(Path(values_marc["_MARC_OUT_DIR_"]))
                     json.dump(defaults, defaults_marc)
                     defaults_marc.close()
@@ -1459,12 +1473,12 @@ def get_pdfs(input_ids, defaults, repositories, client, values_simple, gui_windo
     for input_id in resources:
         if export_all is True:
             logger.info(f'Beginning PDF export: EXPORT_ALL')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"], export_all=True)
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["pdf_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["pdf_export_default"]["_RMV_NANC_"], export_all=True)
         else:
             logger.info(f'Beginning PDF export: {resources}')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["pdf_export_default"]["_OUTPUT_DIR_"])
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["pdf_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["pdf_export_default"]["_RMV_NANC_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             logger.info(f'Exporting: {input_id}')
@@ -1533,8 +1547,9 @@ def get_pdf_options(defaults):
         2. Include digital objects (default is true)
         3. Use numbered container levels (default is true)
         4. Convert to EAD3 (default is false)
-        5. Open ASpace Exports on Export (default is false)
-        6. Set output folder
+        5. Remove all non-alphanumeric characters from exported files' filenames (default is true)
+        6. Open ASpace Exports on Export (default is false)
+        7. Set output folder
 
     For an in-depth review on how this code is structured, see the wiki:
     https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_pdf_options
@@ -1556,8 +1571,10 @@ def get_pdf_options(defaults):
                                default=defaults["pdf_export_default"]["_NUMBERED_CS_"])],
                   [sg.Checkbox("Convert to EAD3", key="_USE_EAD3_",
                                default=defaults["pdf_export_default"]["_USE_EAD3_"])],
-                  [sg.Checkbox("Open output folder on export", key="_KEEP_RAW_",
-                               default=defaults["pdf_export_default"]["_KEEP_RAW_"])],
+                  [sg.Checkbox("Remove non-alphanumeric characters from filename", key="_RMV_NANC_",
+                               default=defaults["pdf_export_default"]["_RMV_NANC_"])],
+                  [sg.Checkbox("Open output folder on export", key="_OPEN_OUTPUT_",
+                               default=defaults["pdf_export_default"]["_OPEN_OUTPUT_"])],
                   [sg.FolderBrowse(" Set output folder: ",
                                    initial_folder=defaults["pdf_export_default"]["_OUTPUT_DIR_"]),
                    sg.InputText(default_text=defaults["pdf_export_default"]["_OUTPUT_DIR_"], key="_OUTPUT_DIR_")],
@@ -1587,7 +1604,8 @@ def get_pdf_options(defaults):
                     defaults["pdf_export_default"]["_INCLUDE_DAOS_"] = values_pdf["_INCLUDE_DAOS_"]
                     defaults["pdf_export_default"]["_NUMBERED_CS_"] = values_pdf["_NUMBERED_CS_"]
                     defaults["pdf_export_default"]["_USE_EAD3_"] = values_pdf["_USE_EAD3_"]
-                    defaults["pdf_export_default"]["_KEEP_RAW_"] = values_pdf["_KEEP_RAW_"]
+                    defaults["pdf_export_default"]["_RMV_NANC_"] = values_pdf["_RMV_NANC_"]
+                    defaults["pdf_export_default"]["_OPEN_OUTPUT_"] = values_pdf["_OPEN_OUTPUT_"]
                     defaults["pdf_export_default"]["_OUTPUT_DIR_"] = str(Path(values_pdf["_OUTPUT_DIR_"]))
                     json.dump(defaults, defaults_pdf)
                     defaults_pdf.close()
@@ -1632,13 +1650,12 @@ def get_contlabels(input_ids, defaults, repositories, client, values_simple, gui
     for input_id in resources:
         if export_all is True:
             logger.info(f'Beginning CONTLABELS export: EXPORT_ALL')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"],
-                                           export_all=True)
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["labels_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["labels_export_default"]["_RMV_NANC_"], export_all=True)
         else:
             logger.info(f'Beginning CONTLABELS export: {resources}')
-            resource_export = asx.ASExport(input_id, repo_id, client,
-                                           output_dir=defaults["labels_export_default"]["_OUTPUT_DIR_"])
+            resource_export = asx.ASExport(input_id, repo_id, client, defaults["labels_export_default"]["_OUTPUT_DIR_"],
+                                           defaults["labels_export_default"]["_RMV_NANC_"])
         resource_export.fetch_results()
         if resource_export.error is None:
             logger.info(f'Exporting: {input_id}')
@@ -1693,6 +1710,69 @@ def get_all_contlabels(input_ids, defaults, repositories, client, gui_window):
     logger.info(f'Finished CONTLABELS exports: {export_all_counter}')
     print("\n" + "-" * 55 + "Finished {} exports".format(str(export_all_counter)) + "-" * trailing_line + "\n")
     gui_window.write_event_value('-CONTLABEL_THREAD-', (threading.current_thread().name,))
+
+
+def get_contlabel_options(defaults):
+    """
+    Write the options selected to the defaults.json file.
+
+    This function opens a window in the GUI that allows a user to choose specific export options. These options include:
+
+        1. Remove all non-alphanumeric characters from exported files' filenames (default is true)
+        2. Open output folder on export (default is false)
+        3. Set output folder
+
+    The function will write the options selected to the defaults.json file.
+
+    For an in-depth review on how this code is structured, see the wiki:
+    https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/Code-Structure#get_marc_options
+
+    Args:
+        defaults (dict): contains the data from defaults.json file, all data the user has specified as default
+
+    Returns:
+        None
+    """
+    window_conopt_active = True
+    conopt_layout = [[sg.Text("Choose Container Labels Export Options", font=("Roboto", 14)),
+                      sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
+                              key="_LABELS_HELP_")],
+                     [sg.Checkbox("Remove non-alphanumeric characters from filename", key="_RMV_NANC_",
+                                  default=defaults["labels_export_default"]["_RMV_NANC_"])],
+                     [sg.Checkbox("Open output folder on export", key="_OPEN_OUTPUT_",
+                                  default=defaults["labels_export_default"]["_OPEN_OUTPUT_"])],
+                     [sg.FolderBrowse(" Set output folder: ",
+                                      initial_folder=defaults["labels_export_default"]["_OUTPUT_DIR_"]),
+                      sg.InputText(default_text=defaults["labels_export_default"]["_OUTPUT_DIR_"], key="_CONT_OUT_DIR_")
+                      ],
+                     [sg.Button(" Save Settings ", key="_SAVE_SETTINGS_LABELS_", bind_return_key=True)]
+                     ]
+    window_conopt = sg.Window("Container Labels Export Options", conopt_layout)
+    while window_conopt_active is True:
+        event_conopt, values_conopt = window_conopt.Read()
+        logger.info(f'User initiated Container Labels Options')
+        if event_conopt is None or event_conopt == 'Cancel':
+            logger.info(f'User cancelled Container Labels Options')
+            window_conopt_active = False
+            window_conopt.close()
+        if event_conopt == "_LABELS_HELP_":
+            logger.info(f'User opened Container Labels Options Help button')
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#container-labels-screen",  # TODO: Make Container Label options manual page
+                            new=2)
+        if event_conopt == "_SAVE_SETTINGS_LABELS_":
+            if os.path.isdir(values_conopt["_CONT_OUT_DIR_"]) is False:
+                logger.info(f'User input an invalid Container Label _CONT_OUT_DIR_: {values_conopt["_CONT_OUT_DIR_"]}')
+                sg.popup("WARNING!\nYour input for the export output is invalid.\nPlease try another directory")
+            else:
+                logger.info(f'User selected Container Labels options: {values_conopt}')
+                with open("defaults.json", "w") as defaults_labels:
+                    defaults["labels_export_default"]["_RMV_NANC_"] = values_conopt["_RMV_NANC_"]
+                    defaults["labels_export_default"]["_OPEN_OUTPUT_"] = values_conopt["_OPEN_OUTPUT_"]
+                    defaults["labels_export_default"]["_OUTPUT_DIR_"] = str(Path(values_conopt["_CONT_OUT_DIR_"]))
+                    json.dump(defaults, defaults_labels)
+                    defaults_labels.close()
+            window_conopt_active = False
+        window_conopt.close()
 
 
 def upload_files_xtf(defaults, xtf_hostname, xtf_username, xtf_password, xtf_remote_path, xtf_index_path,

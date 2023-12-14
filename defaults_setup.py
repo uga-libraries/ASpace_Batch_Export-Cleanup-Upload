@@ -23,13 +23,13 @@ def set_defaults_file():
     source_pdfs = str(Path(os.getcwd(), "source_pdfs"))
     source_labels = str(Path(os.getcwd(), "source_labels"))
     xtf_default = ["ead_export_default", "_INCLUDE_UNPUB_", "_INCLUDE_DAOS_", "_NUMBERED_CS_", "_USE_EAD3_",
-                   "_KEEP_RAW_", "_CLEAN_EADS_", "_OUTPUT_DIR_", "_SOURCE_DIR_", "marc_export_default",
-                   "pdf_export_default", "labels_export_default", "ead_cleanup_defaults", "_ADD_EADID_", "_DEL_NOTES_",
-                   "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_", "_DEL_CONTAIN_", "_ADD_PHYSLOC_",
-                   "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_", "_DEL_ALLNS_", "as_api",
-                   "repo_default", "_REPO_NAME_", "_REPO_ID_", "xtf_default", "xtf_version", "xtf_host",
-                   "xtf_remote_path", "xtf_local_path", "xtf_indexer_path", "xtf_lazyindex_path", "_REINDEX_AUTO_",
-                   "_UPDATE_PERMISSIONS_"]
+                   "_KEEP_RAW_", "_CLEAN_EADS_", "_OUTPUT_DIR_", "_SOURCE_DIR_", "_RMV_NANC_", "_OPEN_OUTPUT_",
+                   "marc_export_default", "pdf_export_default", "labels_export_default", "ead_cleanup_defaults",
+                   "_ADD_EADID_", "_DEL_NOTES_", "_CLN_EXTENTS_", "_ADD_CERTAIN_", "_ADD_LABEL_", "_DEL_LANGTRAIL_",
+                   "_DEL_CONTAIN_", "_ADD_PHYSLOC_", "_DEL_ATIDS_", "_DEL_ARCHIDS_", "_CNT_XLINKS_", "_DEL_NMSPCS_",
+                   "_DEL_ALLNS_", "as_api", "repo_default", "_REPO_NAME_", "_REPO_ID_", "xtf_default", "xtf_version",
+                   "xtf_host", "xtf_remote_path", "xtf_local_path", "xtf_indexer_path", "xtf_lazyindex_path",
+                   "_REINDEX_AUTO_", "_UPDATE_PERMISSIONS_"]
     defaults_keys = []
     filepath_keys = ["_OUTPUT_DIR_", "_SOURCE_DIR_", "xtf_local_path"]
     try:
@@ -55,13 +55,16 @@ def set_defaults_file():
         print("Generating new defaults file...", end='', flush=True)
         with open("defaults.json", "w") as DEFAULTS:
             defaults = {"ead_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_CLEAN_EADS_": True,
-                                               "_OUTPUT_DIR_": clean_eads, "_SOURCE_DIR_": source_eads},
-                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_KEEP_RAW_": False,
+                                               "_USE_EAD3_": False, "_RMV_NANC_": True, "_KEEP_RAW_": False,
+                                               "_CLEAN_EADS_": True, "_OUTPUT_DIR_": clean_eads,
+                                               "_SOURCE_DIR_": source_eads},
+                        "marc_export_default": {"_INCLUDE_UNPUB_": False, "_RMV_NANC_": True, "_OPEN_OUTPUT_": False,
                                                 "_OUTPUT_DIR_": source_marcs},
                         "pdf_export_default": {"_INCLUDE_UNPUB_": False, "_INCLUDE_DAOS_": True, "_NUMBERED_CS_": True,
-                                               "_USE_EAD3_": False, "_KEEP_RAW_": False, "_OUTPUT_DIR_": source_pdfs},
-                        "labels_export_default": {"_OUTPUT_DIR_": source_labels},
+                                               "_USE_EAD3_": False,  "_RMV_NANC_": True,"_OPEN_OUTPUT_": False,
+                                               "_OUTPUT_DIR_": source_pdfs},
+                        "labels_export_default": {"_RMV_NANC_": True, "_OPEN_OUTPUT_": False,
+                                                  "_OUTPUT_DIR_": source_labels},
                         "ead_cleanup_defaults": {"_ADD_EADID_": True, "_DEL_NOTES_": True, "_CLN_EXTENTS_": True,
                                                  "_ADD_CERTAIN_": True, "_ADD_LABEL_": True, "_DEL_LANGTRAIL_": True,
                                                  "_DEL_CONTAIN_": True, "_ADD_PHYSLOC_": True, "_DEL_ATIDS_": True,
@@ -96,7 +99,7 @@ def create_default_folders():
     Returns:
         None
     """
-    # search for existance of a clean_eads folder for ArchivesSpace EAD records
+    # search for existence of a clean_eads folder for ArchivesSpace EAD records
     try:
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
@@ -111,7 +114,7 @@ def create_default_folders():
         clean_path = os.path.join(current_directory, folder)
         os.mkdir(clean_path)
         print(" Done.")
-    # search for existance of a source folder for ArchivesSpace EAD records
+    # search for existence of a source folder for ArchivesSpace EAD records
     try:
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
@@ -126,7 +129,7 @@ def create_default_folders():
         source_path = os.path.join(current_directory, folder)
         os.mkdir(source_path)
         print("{} folder created\n".format(folder))
-    # search for existance of a source folder for ArchivesSpace MARCXML records
+    # search for existence of a source folder for ArchivesSpace MARCXML records
     try:
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
@@ -141,7 +144,7 @@ def create_default_folders():
         source_path = os.path.join(current_directory, folder)
         os.mkdir(source_path)
         print("{} folder created\n".format(folder))
-    # search for existance of a source folder for ArchivesSpace PDF records
+    # search for existence of a source folder for ArchivesSpace PDF records
     try:
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
@@ -156,7 +159,7 @@ def create_default_folders():
         source_path = os.path.join(current_directory, folder)
         os.mkdir(source_path)
         print("{} folder created\n".format(folder))
-    # search for existance of a source folder for ArchivesSpace Container Labels
+    # search for existence of a source folder for ArchivesSpace Container Labels
     try:
         current_directory = os.getcwd()
         for root, directories, files in os.walk(current_directory):
