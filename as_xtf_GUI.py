@@ -164,9 +164,7 @@ def run_gui(defaults):
                                    tooltip=' Export container labels for resources ', disabled=False),
                          sg.Button(button_text=" EXPORT ALL ", key="_EXPORT_ALLCONTLABELS_", disabled=False,
                                    tooltip=" Export all published resources as container label files ")],
-                        [sg.Text("Options", font=("Roboto", 13)),
-                         sg.Text("Help", font=("Roboto", 11), text_color="blue", enable_events=True,
-                                 key="_CONTOPT_HELP_")],
+                        [sg.Text("Options", font=("Roboto", 13))],
                         [sg.Button(" Labels Export Options ", key="_LABELS_OPTIONS_",
                                    tooltip=' Choose how you would like to export container labels ')],
                         [sg.Button(button_text=" Open Output ", key="_OPEN_LABEL_DEST_",
@@ -458,11 +456,6 @@ def run_gui(defaults):
             open_folder(defaults, "source_labels", "labels_export_default", "_OUTPUT_DIR_")
         if event_simple == "_LABELS_OPTIONS_" or event_simple == "Change Container Labels Export Options":
             get_contlabel_options(defaults)
-        if event_simple == "_CONTOPT_HELP_":
-            logger.info(f'User opened CONTLABELS Options Help button')
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#conta"
-                            "iner-labels-screen",
-                            new=2)
         # ------------- EXPORT THREADS -------------
         if event_simple in (EAD_EXPORT_THREAD, MARCXML_EXPORT_THREAD, PDF_EXPORT_THREAD, CONTLABEL_EXPORT_THREAD):
             window_simple[f'{"_EXPORT_EAD_"}'].update(disabled=False)
@@ -1767,7 +1760,7 @@ def get_contlabel_options(defaults):
             window_conopt.close()
         if event_conopt == "_LABELS_HELP_":
             logger.info(f'User opened Container Labels Options Help button')
-            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#container-labels-screen",  # TODO: Make Container Label options manual page
+            webbrowser.open("https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual#label-export-options",
                             new=2)
         if event_conopt == "_SAVE_SETTINGS_LABELS_":
             if os.path.isdir(values_conopt["_CONT_OUT_DIR_"]) is False:

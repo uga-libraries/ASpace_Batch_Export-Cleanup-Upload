@@ -22,7 +22,7 @@ class ASExport:
             client (ASnake.client object): a client object from ASnake.client to allow to connect to the ASpace API
             output_dir (str): filepath containing the folder a user wants files to be exported to
         """
-        self.input_id = input_id  # TODO: Replace using the user input as filename and use the ID from ASpace (not number, but user supplied in ASpace
+        self.input_id = input_id
         """str: user generated resource identifier"""
         self.filename = None
         """str: the name assigned to the exported file"""
@@ -95,7 +95,7 @@ class ASExport:
                 user_id_index = 0
                 if combined_user_id == combined_aspace_id_clean:  # if user-input id matches id in ASpace
                     try:
-                        if self.remove_alphanums is True:  # TODO: confirm this exports RBRL112JRR not closed one and doesn't change the filename to add CLOSED
+                        if self.remove_alphanums is True:
                             self.filename = combined_aspace_id_clean
                         else:
                             self.filename = combined_aspace_id[:-1]
@@ -122,7 +122,7 @@ class ASExport:
                 self.error += "-" * 135
             if non_match_results and match_results:
                 self.result = "Returning {}...\nOther results:\n\n".format(aspace_id)
-                for ident, title in non_match_results.items():  # TODO: add match_results to self.results - above code is grabbing the 2nd result and exporting the filename of RBRL112JRRCLOSED
+                for ident, title in non_match_results.items():
                     self.result += "Resource ID: {:15} {}{:<5} Title: {} \n\n".format(ident, "|", "", title)
                 self.result += "-" * 135
 
