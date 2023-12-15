@@ -475,7 +475,7 @@ def run_gui(defaults):
             window_simple[f'{"_EXPORT_ALLPDFS_"}'].update(disabled=False)
             # The following 2 ifs - can I reference event from inside another event?
             if event_simple == MARCXML_EXPORT_THREAD:
-                if defaults["marc_export_default"]["_KEEP_RAW_"] is True:
+                if defaults["marc_export_default"]["_OPEN_OUTPUT_"] is True:
                     logger.info(f'Opening MARCXML exports directory: {defaults["marc_export_default"]["_OUTPUT_DIR_"]}')
                     if not defaults["marc_export_default"]["_OUTPUT_DIR_"]:
                         filepath_marcs = str(Path.cwd().joinpath("source_marcs"))
@@ -483,8 +483,18 @@ def run_gui(defaults):
                     else:
                         filepath_marcs = str(Path(defaults["marc_export_default"]["_OUTPUT_DIR_"]))
                         open_file(filepath_marcs)
+            if event_simple == CONTLABEL_EXPORT_THREAD:
+                if defaults["labels_export_default"]["_OPEN_OUTPUT_"] is True:
+                    logger.info(f'Opening Container Labels exports directory: '
+                                f'{defaults["labels_export_default"]["_OUTPUT_DIR_"]}')
+                    if not defaults["labels_export_default"]["_OUTPUT_DIR_"]:
+                        filepath_labels = str(Path.cwd().joinpath("source_labels"))
+                        open_file(filepath_labels)
+                    else:
+                        filepath_labels = str(Path(defaults["labels_export_default"]["_OUTPUT_DIR_"]))
+                        open_file(filepath_labels)
             if event_simple == PDF_EXPORT_THREAD:
-                if defaults["pdf_export_default"]["_KEEP_RAW_"] is True:
+                if defaults["pdf_export_default"]["_OPEN_OUTPUT_"] is True:
                     logger.info(f'Opening PDF exports directory: {defaults["pdf_export_default"]["_OUTPUT_DIR_"]}')
                     if not defaults["pdf_export_default"]["_OUTPUT_DIR_"]:
                         filepath_pdfs = str(Path.cwd().joinpath("source_pdfs"))
