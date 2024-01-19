@@ -1,4 +1,6 @@
-# ArchivesSpace Batching
+# ArchivesSpace Batch Exporter
+
+## Overview
 
 This application batch exports records from ArchivesSpace in EAD, MARCXML, Container Label, or PDF. Additionally, it 
 can run exported EAD records through a series of cleanup processes. Lastly, a user can choose to connect to an 
@@ -8,14 +10,28 @@ XTF-based finding aid website server to upload .xml or .pdf files to their insta
 
 ## Getting Started
 
-### For Windows Users
+### Dependencies
+- [ArchivesSnake](https://github.com/archivesspace-labs/ArchivesSnake) - Library used for interacting with the 
+ArchivesSpace API
+- [cx_Freeze](https://cx-freeze.readthedocs.io/en/latest/) - Generated the executable file
+- [Inno](https://jrsoftware.org/isinfo.php) - Generated Windows installer (for GitHub action only or local .exe generation)
+- [loguru](https://pypi.org/project/loguru/) - Logging package
+- [lxml](https://lxml.de/) - Parsing XML files for cleanup
+- [paramiko](https://www.paramiko.org/) - Connecting to XTF server for file upload/indexing/delete
+- [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI) - The GUI used
+- [requests](https://requests.readthedocs.io/en/latest/) - Used for validating API link
+- [scp](https://github.com/jbardin/scp.py) - Manages client for uploading/indexing/deleting files from XTF server
+
+### Installation
+
+#### For Windows Users
 1. Go to [Releases](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/releases) and download the 
 .exe file from the latest release.
 2. Follow the on-screen instructions.
 3. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
 through the program and its features can be found on the Wiki page.
 
-### For Mac Users
+#### For Mac Users
 1. Install Python 3 on your computer. You can install python using the following link:
 https://www.python.org/downloads/mac-osx/
 2. Download the GitHub repo using the Code button in the top right corner of the repo, then unzip the downloaded file.
@@ -24,7 +40,10 @@ https://www.python.org/downloads/mac-osx/
 5. The [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) walking you 
 through the program and its features can be found on the Wiki page.
 
-### For Developers
+### Script Arguments
+
+Open your console of choice and navigate to the project directory and run `python3 as_xtf_GUI.py` to start the program. 
+See #Prerequisites for more info.
 
 #### Prerequisites
 1. Install Python 3 on your computer. You can install python using the following link:
@@ -41,7 +60,7 @@ and XTF lazy index path to update the .lazy files with appropriate permissions f
 4. If you need to reset the defaults or rerun setup, delete the folders within the repository and defaults.json file 
 and rerun as_xtf_GUI.py.
 
-## Testing
+### Testing
 There are currently no unittests associated with this project.
 
 Right now, the best way to test the program is to input resource identifiers and try uploading
@@ -68,30 +87,14 @@ You can also try using the following, which will generate more than 1 result in 
 * ms1170
 * RBRL/220/ROGP
 
-## Built With
-* [PySimpleGUI](https://github.com/PySimpleGUI/PySimpleGUI) - The GUI used
-* [ArchivesSnake](https://github.com/archivesspace-labs/ArchivesSnake) - Library used for interacting with the 
-ArchivesSpace API
-* [Paramiko](https://github.com/paramiko/paramiko) - SSH and client library
-* [lxml](https://github.com/lxml/lxml) - Used for parsing and modifying .xml files
-* [cx_Freeze](https://cx-freeze.readthedocs.io/en/latest/) - Generated the executable file
-* [Inno](https://jrsoftware.org/isinfo.php) - Generated Windows installer
+## Workflow
+See the [User Manual](https://github.com/uga-libraries/ASpace_Batch_Export-Cleanup-Upload/wiki/User-Manual) for a 
+complete walkthrough of the application
 
-## Contributing
-See the CONTRIBUTING.md for more information.
-
-## Versioning
-Trying our best to adhere to [SemVer](https://semver.org/).
-
-## Authors
+## Author
 * Corey Schmidt - Project Management Librarian/Archivist at the University of Georgia Libraries
 
-## License Information
-
-This program is licensed under a Creative Commons Attribution Share Alike 4.0 International. Please see LICENSE.txt for 
-more information.
-
-### Special Thanks to:
+## Acknowledgements:
 * Adriane Hanson - Head of Digital Stewardship at the University of Georgia Libraries
 * ArchivesSpace community
 * Kevin Cottrell - GALILEO/Library Infrastructure Systems Architect at the University of Georgia Libraries
