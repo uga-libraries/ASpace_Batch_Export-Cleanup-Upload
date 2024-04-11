@@ -9,7 +9,10 @@ import time
 from loguru import logger
 from pathlib import Path
 
-import PySimpleGUI as sg
+from tkinter import *
+from tkinter import ttk
+import tkinter as tk
+from typing import Literal
 from asnake.client import ASnakeClient
 from asnake.client.web_client import ASnakeAuthError
 
@@ -52,7 +55,6 @@ def run_gui(defaults):
         None
     """
     gc.disable()
-    sg.theme('LightBlue2')
     logger.info("ArchivesSpace Login popup initiated")
     as_username, as_password, as_api, close_program_as, client, asp_version, repositories, resources, xtf_version = \
         get_aspace_log(defaults, xtf_checkbox=True)
@@ -744,92 +746,110 @@ def get_aspace_log(defaults, xtf_checkbox, as_un=None, as_pw=None, as_ap=None, a
     xtf_version = xtf_ver
     if xtf_checkbox is True:
         save_button_asp = " Save and Continue "
+        xtf_state = ACTIVE
     else:
         save_button_asp = " Save and Close "
+        xtf_state = DISABLED
     window_asplog_active = True
     correct_creds = False
     close_program = False
+
     while correct_creds is False:
-        asplog_col1 = [[sg.Text("ArchivesSpace username:", font=("Roboto", 11))],
-                       [sg.Text("ArchivesSpace password:", font=("Roboto", 11))],
-                       [sg.Text("ArchivesSpace API URL:", font=("Roboto", 11))]]
-        asplog_col2 = [[sg.InputText(focus=True, key="_ASPACE_UNAME_")],
-                       [sg.InputText(password_char='*', key="_ASPACE_PWORD_")],
-                       [sg.InputText(defaults["as_api"], key="_ASPACE_API_")]]
-        layout_asplog = [
-            [sg.Column(asplog_col1, key="_ASPLOG_COL1_", visible=True),
-             sg.Column(asplog_col2, key="_ASPLOG_COL2_", visible=True)],
-            [sg.Checkbox("Use XTF features of this tool", font=("Roboto", 12), key="_USE_XTF_",
-                         default=defaults["xtf_default"]["xtf_version"], visible=xtf_checkbox)],
-            [sg.Button(save_button_asp, bind_return_key=True, key="_SAVE_CLOSE_LOGIN_")]
-        ]
-        window_login = sg.Window("ArchivesSpace Login Credentials", layout_asplog)
-        while window_asplog_active is True:
-            event_log, values_log = window_login.Read()
-            if event_log == "_SAVE_CLOSE_LOGIN_":
-                logger.info(f'User initiated ASpace login')
-                connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
-                                              username=values_log["_ASPACE_UNAME_"],
-                                              password=values_log["_ASPACE_PWORD_"])
-                try:
-                    requests.get(values_log["_ASPACE_API_"])
-                except Exception as api_error:
-                    sg.Popup("Your API credentials were entered incorrectly.\n"
-                             "Please try again.\n\n" + api_error.__str__())
-                    logger.error(f'Error with validating API credentials: {api_error};'
-                                 f' API: {values_log["_ASPACE_API_"]}')
-                else:
-                    try:
-                        connect_client.authorize()
-                    except ASnakeAuthError as e:
-                        error_message = ""
-                        if ":" in str(e):
-                            error_divided = str(e).split(":")
-                            for line in error_divided:
-                                error_message += line + "\n"
-                        else:
-                            error_message = str(e)
-                        sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
-                                 error_message)
-                        logger.error(f'Username and/or password failed: {error_message}')
-                    else:
-                        client = connect_client
-                        as_username = values_log["_ASPACE_UNAME_"]
-                        as_password = values_log["_ASPACE_PWORD_"]
-                        as_api = values_log["_ASPACE_API_"]
-                        xtf_version = values_log["_USE_XTF_"]
-                        asp_version = client.get("/version").content.decode().split(" ")[1].replace("(",
-                                                                                                    "").replace(")", "")
-                        logger.info(f'ArchivesSpace Info: \nAPI: {values_log["_ASPACE_API_"]}\nVersion: {asp_version}')
-                        with open("defaults.json",
-                                  "w") as defaults_asp:  # If connection is successful, save ASpace API in defaults.json
-                            defaults["as_api"] = as_api
-                            defaults["xtf_default"]["xtf_version"] = xtf_version
-                            json.dump(defaults, defaults_asp)
-                            defaults_asp.close()
-                        if len(repositories) == 1:  # Get repositories info
-                            repo_results = client.get('/repositories')
-                            repo_results_dec = json.loads(repo_results.content.decode())
-                            for result in repo_results_dec:
-                                uri_components = result["uri"].split("/")
-                                repositories[result["name"]] = int(uri_components[-1])
-                            for repository in repo_results.json():  # Get resource ids
-                                resources = client.get(f"{repository['uri']}/resources", params={"all_ids":
-                                                                                                 True}).json()
-                                uri_components = repository["uri"].split("/")
-                                repository_id = int(uri_components[-1])
-                                resource_ids[repository_id] = [resource_id for resource_id in resources]
-                        window_asplog_active = False
-                        correct_creds = True
-            if event_log is None or event_log == 'Cancel':
-                logger.info(f'User cancelled ASpace login')
-                window_login.close()
-                window_asplog_active = False
-                correct_creds = True
-                close_program = True
-                break
-        window_login.close()
-    return as_username, as_password, as_api, close_program, client, asp_version, repositories, resource_ids, xtf_version
+        window_login = Tk()
+        window_login.title("ArchivesSpace Login")
+        as_un_label = tk.Label(window_login, text="ArchivesSpace username:")
+        as_pw_label = tk.Label(window_login, text="ArchivesSpace password:")
+        as_api_label = tk.Label(window_login, text="ArchivesSpace API URL:", justify=LEFT)
+
+        as_un_label.grid(column=0, row=0)
+        as_pw_label.grid(column=0, row=1)
+        as_api_label.grid(column=0, row=2)
+
+        xtf_value = BooleanVar(value=defaults["xtf_default"]["xtf_version"])
+        xtf_option = tk.Checkbutton(window_login, text="Use XTF features of this tool", name="_USE_XTF_",
+                                    variable=xtf_value, state=xtf_state)
+        xtf_option.grid(column=0, row=3)
+
+        save_button = tk.Button(window_login, text=save_button_asp, name="_SAVE_CLOSE_LOGIN_")
+        save_button.grid(column=0, row=4)
+
+        input_un = tk.Entry(takefocus=True, name="_ASPACE_UNAME_", width=50)
+        input_un.focus_force()
+        input_pw = tk.Entry(show="*", width=50)
+        input_api = tk.Entry(width=50)
+        input_api.insert(0, defaults["as_api"])
+
+        input_un.grid(column=1, row=0)
+        input_pw.grid(column=1, row=1)
+        input_api.grid(column=1, row=2)
+
+        # TODO: figure out below - activate saving aspace login credentials on button click, warning popup if error
+    #     while window_asplog_active is True:
+    #         event_log, values_log = window_login.Read()
+    #         if event_log == "_SAVE_CLOSE_LOGIN_":
+    #             logger.info(f'User initiated ASpace login')
+    #             connect_client = ASnakeClient(baseurl=values_log["_ASPACE_API_"],
+    #                                           username=values_log["_ASPACE_UNAME_"],
+    #                                           password=values_log["_ASPACE_PWORD_"])
+    #             try:
+    #                 requests.get(values_log["_ASPACE_API_"])
+    #             except Exception as api_error:
+    #                 sg.Popup("Your API credentials were entered incorrectly.\n"
+    #                          "Please try again.\n\n" + api_error.__str__())
+    #                 logger.error(f'Error with validating API credentials: {api_error};'
+    #                              f' API: {values_log["_ASPACE_API_"]}')
+    #             else:
+    #                 try:
+    #                     connect_client.authorize()
+    #                 except ASnakeAuthError as e:
+    #                     error_message = ""
+    #                     if ":" in str(e):
+    #                         error_divided = str(e).split(":")
+    #                         for line in error_divided:
+    #                             error_message += line + "\n"
+    #                     else:
+    #                         error_message = str(e)
+    #                     sg.Popup("Your username and/or password were entered incorrectly. Please try again.\n\n" +
+    #                              error_message)
+    #                     logger.error(f'Username and/or password failed: {error_message}')
+    #                 else:
+    #                     client = connect_client
+    #                     as_username = values_log["_ASPACE_UNAME_"]
+    #                     as_password = values_log["_ASPACE_PWORD_"]
+    #                     as_api = values_log["_ASPACE_API_"]
+    #                     xtf_version = values_log["_USE_XTF_"]
+    #                     asp_version = client.get("/version").content.decode().split(" ")[1].replace("(",
+    #                                                                                                 "").replace(")", "")
+    #                     logger.info(f'ArchivesSpace Info: \nAPI: {values_log["_ASPACE_API_"]}\nVersion: {asp_version}')
+    #                     with open("defaults.json",
+    #                               "w") as defaults_asp:  # If connection is successful, save ASpace API in defaults.json
+    #                         defaults["as_api"] = as_api
+    #                         defaults["xtf_default"]["xtf_version"] = xtf_version
+    #                         json.dump(defaults, defaults_asp)
+    #                         defaults_asp.close()
+    #                     if len(repositories) == 1:  # Get repositories info
+    #                         repo_results = client.get('/repositories')
+    #                         repo_results_dec = json.loads(repo_results.content.decode())
+    #                         for result in repo_results_dec:
+    #                             uri_components = result["uri"].split("/")
+    #                             repositories[result["name"]] = int(uri_components[-1])
+    #                         for repository in repo_results.json():  # Get resource ids
+    #                             resources = client.get(f"{repository['uri']}/resources", params={"all_ids":
+    #                                                                                              True}).json()
+    #                             uri_components = repository["uri"].split("/")
+    #                             repository_id = int(uri_components[-1])
+    #                             resource_ids[repository_id] = [resource_id for resource_id in resources]
+    #                     window_asplog_active = False
+    #                     correct_creds = True
+    #         if event_log is None or event_log == 'Cancel':
+    #             logger.info(f'User cancelled ASpace login')
+    #             window_login.close()
+    #             window_asplog_active = False
+    #             correct_creds = True
+    #             close_program = True
+    #             break
+    #     window_login.close()
+    # return as_username, as_password, as_api, close_program, client, asp_version, repositories, resource_ids, xtf_version
 
 
 def get_xtf_log(defaults, login=True, xtf_un=None, xtf_pw=None, xtf_ht=None, xtf_rp=None, xtf_ip=None, xtf_lp=None):
@@ -2253,6 +2273,6 @@ def export_error(resource_export, error_message, export_counter, resources, gui_
 
 # sg.theme_previewer()
 if __name__ == "__main__":
-    logger.info(f'Version Info:\n{sg.get_versions()}')
+    # logger.info(f'Version Info:\n{sg.get_versions()}')
     delete_log_files()
     run_gui(setup_files())

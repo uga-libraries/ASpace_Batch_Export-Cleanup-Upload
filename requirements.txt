@@ -6,3 +6,4 @@ scp==0.14.5
 ArchivesSnake==0.10.1
 requests==2.31.0
 cx_Freeze==6.15.16
+ttkbootstrap==1.10.1
