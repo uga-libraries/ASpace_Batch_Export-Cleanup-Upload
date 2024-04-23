@@ -1,5 +1,5 @@
 loguru==0.7.2
-lxml==5.2.0
+lxml==5.2.1
 paramiko==3.4.0
 PySimpleGUI==4.60.5
 scp==0.14.5
