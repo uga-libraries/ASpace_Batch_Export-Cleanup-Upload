@@ -5,4 +5,4 @@ PySimpleGUI==5.0.4
 scp==0.14.5
 ArchivesSnake==0.10.1
 requests==2.32.2
-cx-Freeze==7.0.0
+cx-Freeze==7.1.0
