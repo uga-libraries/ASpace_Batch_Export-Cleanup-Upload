@@ -4,5 +4,5 @@ paramiko==3.4.0
 PySimpleGUI==5.0.4
 scp==0.15.0
 ArchivesSnake==0.10.1
-requests==2.32.2
+requests==2.32.3
 cx-Freeze==7.1.1
