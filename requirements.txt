@@ -1,8 +1,8 @@
 loguru==0.7.2
 lxml==5.2.2
 paramiko==3.4.0
-PySimpleGUI==5.0.5
+PySimpleGUI==5.0.5.3
 scp==0.15.0
 ArchivesSnake==0.10.1
 requests==2.32.3
-cx-Freeze==7.1.1
+cx_Freeze==7.1.1
