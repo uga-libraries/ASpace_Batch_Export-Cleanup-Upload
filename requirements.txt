@@ -5,4 +5,4 @@ PySimpleGUI @ https://PySimpleGUI.net/wheels/PySimpleGUI-5.0.5.3-py3-none-any.wh
 scp==0.15.0
 ArchivesSnake==0.10.1
 requests==2.32.3
-cx_Freeze==7.2.1
+cx_Freeze==7.2.3
