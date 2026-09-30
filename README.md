@@ -6,6 +6,8 @@ This application batch exports records from ArchivesSpace in EAD, MARCXML, Conta
 can run exported EAD records through a series of cleanup processes. Lastly, a user can choose to connect to an 
 XTF-based finding aid website server to upload .xml or .pdf files to their instance of XTF.
 
+This has been replaced by a Ruby on Rails application maintained by UGA Libraries' developers.
+
 ![EAD_Export_Demo](https://user-images.githubusercontent.com/62658840/129760524-5895c29c-1b82-4572-9b68-6952a6710b0e.gif)
 
 ## Getting Started
